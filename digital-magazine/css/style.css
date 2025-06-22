@@ -3,7 +3,9 @@
 /* Import Design Tokens and Typography */
 @import url('_variables.css');
 @import url('_typography.css');
-/* Will add _layout.css, _components.css, _effects.css later */
+@import url('_layout.css');
+@import url('_components.css');
+@import url('_effects.css');
 
 /* Basic Body Styling & Resets */
 *,

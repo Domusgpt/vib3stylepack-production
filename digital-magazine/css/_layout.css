@@ -1,0 +1,165 @@
+/* digital-magazine/css/_layout.css */
+
+/* Page Container */
+.page-container {
+    max-width: 1400px; /* Slightly wider for a more expansive feel */
+    margin: 0 auto;
+    padding: 0 var(--space-lg); /* Horizontal padding */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure footer can be at the bottom */
+}
+
+/* Site Header Layout */
+#site-header {
+    padding: var(--space-lg) var(--space-md);
+    margin-bottom: var(--space-md); /* Space between header and nav */
+    /* Component styling (glassmorphism) will be in _components.css */
+}
+
+#site-header .header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+/* Primary Navigation Layout */
+#primary-navigation {
+    padding: var(--space-sm) 0;
+    margin-bottom: var(--space-xl); /* More space before main content */
+    /* Component styling (glassmorphism) will be in _components.css */
+}
+
+#primary-navigation ul#nav-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap; /* Allow nav items to wrap on smaller screens */
+    gap: var(--space-sm);
+}
+
+/* Main Content Area */
+main {
+    flex-grow: 1; /* Allows main to take up available space, pushing footer down */
+    padding: var(--space-md) 0; /* Vertical padding for main content area */
+}
+
+/* Section Styling */
+main section {
+    margin-bottom: var(--space-xxl); /* Generous spacing between content sections */
+}
+
+.section-title {
+    font-size: var(--font-size-xxl); /* From _typography.css */
+    margin-bottom: var(--space-lg);
+    text-align: center; /* Default for section titles */
+    color: var(--color-neon-magenta); /* Differentiate section titles */
+    text-shadow: 0 0 8px rgba(var(--color-neon-magenta-rgb), 0.5);
+}
+
+/* Featured Article Section Layout */
+#featured-article-section {
+    /* Specific layout for featured article can be added if needed,
+       e.g., centering its placeholder or defining max-width */
+}
+
+#featured-article-placeholder {
+    padding: var(--space-xl); /* Generous padding for featured content */
+    min-height: 300px; /* Example min height */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* Component styling (glassmorphism) in _components.css */
+}
+
+/* Latest Articles Grid Layout */
+.article-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); /* Responsive columns */
+    gap: var(--space-xl); /* Generous gap for cards */
+}
+
+.article-card-placeholder { /* Placeholder styling, real cards in _components.css */
+    min-height: 250px; /* Example min height */
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* Component styling (glassmorphism) in _components.css */
+}
+
+
+/* Site Footer Layout */
+#site-footer {
+    padding: var(--space-xl) var(--space-md);
+    margin-top: auto; /* Pushes footer to bottom if content is short */
+    /* Component styling (glassmorphism) in _components.css */
+}
+
+#site-footer .footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+
+/* Responsive Breakpoints (Initial Basic Adjustments) */
+@media (max-width: 1024px) {
+    .page-container {
+        padding: 0 var(--space-md);
+    }
+
+    .article-grid-container {
+        gap: var(--space-lg);
+    }
+}
+
+@media (max-width: 768px) {
+    #site-header {
+        padding: var(--space-md);
+    }
+    #site-header .header-content .site-title { /* Accessing site title via class */
+        font-size: var(--font-size-xl); /* Reduce site title size */
+    }
+     #site-header .header-content .tagline {
+        font-size: var(--font-size-sm);
+    }
+
+
+    #primary-navigation ul#nav-list {
+        flex-direction: column; /* Stack nav items vertically */
+        align-items: center;
+        gap: var(--space-xs);
+    }
+    #primary-navigation ul#nav-list li a {
+        padding: var(--space-xs); /* Reduce padding for stacked items */
+    }
+
+
+    .section-title {
+        font-size: var(--font-size-xl); /* Reduce section title size */
+        margin-bottom: var(--space-md);
+    }
+
+    .article-grid-container {
+        grid-template-columns: 1fr; /* Stack cards on mobile */
+        gap: var(--space-md);
+    }
+
+    #featured-article-placeholder,
+    .article-card-placeholder {
+        padding: var(--space-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .page-container {
+        padding: 0 var(--space-sm);
+    }
+     #site-header .header-content .site-title {
+        font-size: var(--font-size-lg); /* Further reduce site title */
+    }
+}
