@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB3STYLEPACK - ENHANCED VAPORWAVE SYSTEM</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: white;
+            font-family: 'Orbitron', 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            cursor: crosshair;
+            background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%);
+        }
+        
+        /* ENHANCED LAYOUT SYSTEM */
+        .main-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* VISUALIZER INSTANCES - SLOWER, MORE GEOMETRIC */
+        .visualizer-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .visualizer-instance {
+            position: absolute;
+            pointer-events: auto;
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        /* ENHANCED POSITIONING WITH TRANSITIONS */
+        #instance-0 { /* Background Board */
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; opacity: 0.4;
+            filter: blur(0.5px);
+        }
+        
+        #instance-1 { /* Left Panel */
+            top: 10%; left: 5%; width: 30%; height: 70%;
+            z-index: 3; opacity: 0.85;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        #instance-2 { /* Right Panel */
+            top: 10%; right: 5%; width: 30%; height: 70%;
+            z-index: 3; opacity: 0.85;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 0, 255, 0.3);
+        }
+        
+        #instance-3 { /* Top Header */
+            top: 5%; left: 50%; transform: translateX(-50%);
+            width: 50%; height: 15%;
+            z-index: 4; opacity: 0.95;
+            border-radius: 30px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 0, 0.4);
+        }
+        
+        #instance-4 { /* Bottom Status */
+            bottom: 5%; left: 50%; transform: translateX(-50%);
+            width: 60%; height: 12%;
+            z-index: 4; opacity: 0.9;
+            border-radius: 25px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 128, 0, 0.4);
+        }
+        
+        /* VAPORWAVE GLASSMORPHIC CONTENT */
+        .content-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            z-index: 5;
+            pointer-events: none;
+            background: linear-gradient(135deg, 
+                rgba(0, 255, 255, 0.1) 0%,
+                rgba(255, 0, 255, 0.05) 50%,
+                rgba(255, 255, 0, 0.1) 100%
+            );
+            backdrop-filter: blur(3px);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* VAPORWAVE TYPOGRAPHY */
+        .content-title {
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin-bottom: 12px;
+            color: #ffffff;
+            text-shadow: 
+                0 0 5px #00ffff,
+                0 0 10px #00ffff,
+                0 0 15px #00ffff,
+                0 0 20px #ff00ff;
+            transition: all 0.8s ease;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .content-subtitle {
+            font-size: 0.9rem;
+            color: #00ffff;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px #00ffff;
+            transition: all 0.8s ease;
+            letter-spacing: 1px;
+        }
+        
+        .content-description {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.4;
+            max-width: 90%;
+            transition: all 0.8s ease;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+        
+        /* ENHANCED UI BUTTONS */
+        .ui-button {
+            padding: 10px 20px;
+            background: linear-gradient(45deg, 
+                rgba(0, 255, 255, 0.2) 0%,
+                rgba(255, 0, 255, 0.2) 100%
+            );
+            border: 1px solid rgba(0, 255, 255, 0.5);
+            border-radius: 10px;
+            color: #00ffff;
+            cursor: pointer;
+            pointer-events: auto;
+            margin: 6px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px #00ffff;
+            backdrop-filter: blur(5px);
+        }
+        
+        .ui-button:hover {
+            background: linear-gradient(45deg, 
+                rgba(0, 255, 255, 0.4) 0%,
+                rgba(255, 0, 255, 0.4) 100%
+            );
+            transform: translateY(-2px);
+            box-shadow: 
+                0 5px 15px rgba(0, 255, 255, 0.3),
+                0 0 20px rgba(255, 0, 255, 0.2);
+            border-color: #00ffff;
+        }
+        
+        /* SCROLL PROGRESS INDICATOR */
+        .scroll-progress {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            z-index: 1000;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .scroll-fill {
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(to top,
+                #00ffff 0%,
+                #ff00ff 50%,
+                #ffff00 100%
+            );
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        /* CHAOS INTENSITY OVERLAY */
+        .chaos-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255, 0, 255, 0.1) 2px,
+                    rgba(255, 0, 255, 0.1) 4px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 255, 255, 0.1) 2px,
+                    rgba(0, 255, 255, 0.1) 4px
+                );
+            transition: opacity 0.3s ease;
+        }
+        
+        .chaos-overlay.active {
+            opacity: 1;
+            animation: chaosFlicker 0.1s infinite;
+        }
+        
+        @keyframes chaosFlicker {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        
+        /* STATE CONTROLS - ENHANCED */
+        .state-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 20px;
+            background: linear-gradient(135deg,
+                rgba(0, 0, 0, 0.8) 0%,
+                rgba(25, 0, 50, 0.8) 100%
+            );
+            padding: 20px 30px;
+            border-radius: 25px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .state-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .state-dot.active {
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            box-shadow: 
+                0 0 20px #00ffff,
+                0 0 40px #ff00ff;
+            transform: scale(1.4);
+        }
+        
+        .state-dot:hover {
+            background: rgba(0, 255, 255, 0.4);
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+        
+        /* ENHANCED STATE INDICATOR */
+        .state-indicator {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg,
+                rgba(0, 0, 0, 0.9) 0%,
+                rgba(25, 0, 50, 0.9) 100%
+            );
+            padding: 18px;
+            border-radius: 15px;
+            border: 1px solid #00ffff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            z-index: 2000;
+            min-width: 220px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .state-row {
+            margin: 5px 0;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        
+        .state-value {
+            color: #ffffff;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        /* TRANSITION EFFECTS */
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0;
+            background: radial-gradient(circle at center,
+                rgba(0, 255, 255, 0.1) 0%,
+                rgba(255, 0, 255, 0.1) 50%,
+                transparent 100%
+            );
+            transition: opacity 0.8s ease;
+        }
+        
+        .transition-overlay.active {
+            opacity: 1;
+            animation: transitionPulse 0.8s ease-in-out;
+        }
+        
+        @keyframes transitionPulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+        
+        /* SCAN LINES */
+        .scan-lines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 3px,
+                    rgba(0, 255, 255, 0.03) 3px,
+                    rgba(0, 255, 255, 0.03) 6px
+                );
+            animation: scanMove 2s linear infinite;
+        }
+        
+        @keyframes scanMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(6px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- SCAN LINES -->
+    <div class="scan-lines"></div>
+    
+    <!-- CHAOS OVERLAY -->
+    <div class="chaos-overlay" id="chaosOverlay"></div>
+    
+    <!-- TRANSITION OVERLAY -->
+    <div class="transition-overlay" id="transitionOverlay"></div>
+    
+    <!-- ENHANCED STATE INDICATOR -->
+    <div class="state-indicator">
+        <div class="state-row">State: <span class="state-value" id="current-state">HOME</span></div>
+        <div class="state-row">Geometry: <span class="state-value" id="current-geometry">Hypercube</span></div>
+        <div class="state-row">Scroll: <span class="state-value" id="scroll-progress">0/5</span></div>
+        <div class="state-row">Chaos: <span class="state-value" id="chaos-level">0%</span></div>
+        <div class="state-row">Status: <span class="state-value" id="transition-status">Stable</span></div>
+    </div>
+    
+    <!-- SCROLL PROGRESS -->
+    <div class="scroll-progress">
+        <div class="scroll-fill" id="scrollFill"></div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+        
+        <!-- ENHANCED VISUALIZER LAYER -->
+        <div class="visualizer-layer">
+            <canvas id="instance-0" class="visualizer-instance"></canvas>
+            <canvas id="instance-1" class="visualizer-instance"></canvas>
+            <canvas id="instance-2" class="visualizer-instance"></canvas>
+            <canvas id="instance-3" class="visualizer-instance"></canvas>
+            <canvas id="instance-4" class="visualizer-instance"></canvas>
+        </div>
+        
+        <!-- ENHANCED CONTENT OVERLAYS -->
+        
+        <!-- Left Panel Content -->
+        <div class="content-overlay" style="top: 10%; left: 5%; width: 30%; height: 70%; z-index: 6;">
+            <div class="content-title" id="left-title">NAVIGATION</div>
+            <div class="content-subtitle">DIMENSIONAL INTERFACE</div>
+            <div class="content-description" id="left-content">
+                Navigate through hypergeometric state space with precision control systems
+            </div>
+            <button class="ui-button" onclick="cycleState(1)">NEXT DIMENSION</button>
+            <button class="ui-button" onclick="cycleState(-1)">PREV DIMENSION</button>
+        </div>
+        
+        <!-- Right Panel Content -->
+        <div class="content-overlay" style="top: 10%; right: 5%; width: 30%; height: 70%; z-index: 6;">
+            <div class="content-title" id="right-title">OPERATIONS</div>
+            <div class="content-subtitle">QUANTUM CONTROLS</div>
+            <div class="content-description" id="right-content">
+                Execute state-specific operations within current dimensional framework
+            </div>
+            <button class="ui-button" onclick="actionClick('execute')" id="action-1">EXECUTE</button>
+            <button class="ui-button" onclick="actionClick('analyze')" id="action-2">ANALYZE</button>
+        </div>
+        
+        <!-- Top Header Content -->
+        <div class="content-overlay" style="top: 5%; left: 50%; transform: translateX(-50%); width: 50%; height: 15%; z-index: 7;">
+            <div class="content-title" id="header-title">VIB3STYLEPACK</div>
+            <div class="content-subtitle" id="header-subtitle">ENHANCED VAPORWAVE INTERFACE</div>
+        </div>
+        
+        <!-- Bottom Status Content -->
+        <div class="content-overlay" style="bottom: 5%; left: 50%; transform: translateX(-50%); width: 60%; height: 12%; z-index: 7;">
+            <div class="content-description" id="footer-content">
+                Hypergeometric state cycling with enhanced chaos intensity feedback
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- ENHANCED STATE CONTROLS -->
+    <div class="state-controls">
+        <div class="state-dot active" data-state="0" title="HOME - Hypercube"></div>
+        <div class="state-dot" data-state="1" title="TECH - Tetrahedron"></div>
+        <div class="state-dot" data-state="2" title="MEDIA - Sphere"></div>
+        <div class="state-dot" data-state="3" title="AUDIO - Torus"></div>
+        <div class="state-dot" data-state="4" title="QUANTUM - Wave"></div>
+    </div>
+
+    <script>
+        console.log('🌌 VIB3STYLEPACK - ENHANCED VAPORWAVE SYSTEM');
+        
+        // ENHANCED VAPORWAVE VISUALIZER
+        class EnhancedVaporwaveVisualizer {
+            constructor(canvasId, instanceId) {
+                this.canvas = document.getElementById(canvasId);
+                this.instanceId = instanceId;
+                this.gl = this.canvas.getContext('webgl');
+                
+                if (!this.gl) {
+                    console.error(`WebGL not supported for ${canvasId}`);
+                    return;
+                }
+                
+                // Enhanced instance parameters
+                this.instanceParams = {
+                    0: { densityMult: 0.8, speedMult: 0.3, colorShift: 0.0, intensity: 0.4 },    // Background - slower
+                    1: { densityMult: 1.5, speedMult: 0.5, colorShift: 72.0, intensity: 0.7 },   // Left - geometric
+                    2: { densityMult: 1.2, speedMult: 0.4, colorShift: 144.0, intensity: 0.8 },  // Right - precise
+                    3: { densityMult: 2.0, speedMult: 0.6, colorShift: 216.0, intensity: 0.9 },  // Header - prominent
+                    4: { densityMult: 1.0, speedMult: 0.35, colorShift: 288.0, intensity: 0.6 }   // Footer - stable
+                }[instanceId] || { densityMult: 1.0, speedMult: 0.5, colorShift: 0.0, intensity: 0.5 };
+                
+                // State system
+                this.currentState = 0;
+                this.targetState = 0;
+                this.transitionProgress = 1.0;
+                this.chaosIntensity = 0.0;
+                
+                // Enhanced state definitions
+                this.states = [
+                    { // HOME - Hypercube
+                        geometry: 0.0,
+                        density: 8.0,  // Reduced for more geometric feel
+                        speed: 0.8,    // Slower
+                        color: [1.0, 0.0, 1.0],
+                        dimension: 3.5,
+                        name: 'HOME',
+                        geometryName: 'Hypercube'
+                    },
+                    { // TECH - Tetrahedron
+                        geometry: 1.0,
+                        density: 6.0,
+                        speed: 0.6,
+                        color: [0.0, 1.0, 1.0],
+                        dimension: 3.2,
+                        name: 'TECH',
+                        geometryName: 'Tetrahedron'
+                    },
+                    { // MEDIA - Sphere
+                        geometry: 2.0,
+                        density: 10.0,
+                        speed: 1.0,
+                        color: [1.0, 1.0, 0.0],
+                        dimension: 3.8,
+                        name: 'MEDIA',
+                        geometryName: 'Sphere'
+                    },
+                    { // AUDIO - Torus
+                        geometry: 3.0,
+                        density: 7.0,
+                        speed: 0.7,
+                        color: [0.0, 1.0, 0.0],
+                        dimension: 3.6,
+                        name: 'AUDIO',
+                        geometryName: 'Torus'
+                    },
+                    { // QUANTUM - Wave
+                        geometry: 6.0,
+                        density: 12.0,
+                        speed: 0.9,
+                        color: [1.0, 0.0, 0.5],
+                        dimension: 3.9,
+                        name: 'QUANTUM',
+                        geometryName: 'Wave'
+                    }
+                ];
+                
+                // Interaction
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.interactionIntensity = 0.0;
+                
+                this.startTime = Date.now();
+                this.initShaders();
+                this.initBuffers();
+                this.resize();
+                
+                console.log(`✅ Enhanced Vaporwave Visualizer ${instanceId} initialized`);
+            }
+            
+            initShaders() {
+                const vertexShaderSource = `
+                    attribute vec2 a_position;
+                    void main() {
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `
+                    precision highp float;
+                    
+                    uniform vec2 u_resolution;
+                    uniform float u_time;
+                    uniform vec2 u_mouse;
+                    uniform float u_geometry;
+                    uniform float u_density;
+                    uniform float u_speed;
+                    uniform vec3 u_color;
+                    uniform float u_dimension;
+                    uniform float u_intensity;
+                    uniform float u_instanceDensity;
+                    uniform float u_instanceSpeed;
+                    uniform float u_colorShift;
+                    uniform float u_chaosIntensity;
+                    
+                    // 4D rotation matrices - slower, more deliberate
+                    mat4 rotateXW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(c, 0, 0, -s, 0, 1, 0, 0, 0, 0, 1, 0, s, 0, 0, c);
+                    }
+                    
+                    mat4 rotateYW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(1, 0, 0, 0, 0, c, 0, -s, 0, 0, 1, 0, 0, s, 0, c);
+                    }
+                    
+                    vec3 project4Dto3D(vec4 p) {
+                        float w = 2.0 / (2.0 + p.w);
+                        return vec3(p.x * w, p.y * w, p.z * w);
+                    }
+                    
+                    // Enhanced geometry functions - more precise and geometric
+                    float hypercubeLattice(vec3 p, float gridSize) {
+                        vec3 grid = fract(p * gridSize);
+                        vec3 edges = 1.0 - smoothstep(0.0, 0.015, abs(grid - 0.5));  // Sharper edges
+                        return max(max(edges.x, edges.y), edges.z);
+                    }
+                    
+                    float tetrahedronLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float d1 = length(q);
+                        float d2 = length(q - vec3(0.5, 0.0, 0.0));
+                        float d3 = length(q - vec3(0.0, 0.5, 0.0));
+                        float d4 = length(q - vec3(0.0, 0.0, 0.5));
+                        return 1.0 - smoothstep(0.0, 0.06, min(min(d1, d2), min(d3, d4)));  // More geometric
+                    }
+                    
+                    float sphereLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r = length(q);
+                        return 1.0 - smoothstep(0.1, 0.35, r);  // Tighter spheres
+                    }
+                    
+                    float torusLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r1 = sqrt(q.x*q.x + q.y*q.y);
+                        float r2 = sqrt((r1 - 0.2)*(r1 - 0.2) + q.z*q.z);  // Smaller torus
+                        return 1.0 - smoothstep(0.0, 0.08, r2);
+                    }
+                    
+                    float waveLattice(vec3 p, float gridSize) {
+                        vec3 q = p * gridSize;
+                        float wave1 = sin(q.x * 1.5 + u_time * u_speed * 0.0008);  // Slower waves
+                        float wave2 = sin(q.y * 1.5 + u_time * u_speed * 0.001);
+                        float wave3 = sin(q.z * 1.5 + u_time * u_speed * 0.0006);
+                        float interference = wave1 * wave2 * wave3;
+                        return smoothstep(-0.4, 0.4, interference);
+                    }
+                    
+                    float getGeometryValue(vec3 p, float gridSize, float geomType) {
+                        if (geomType < 0.5) return hypercubeLattice(p, gridSize);
+                        else if (geomType < 1.5) return tetrahedronLattice(p, gridSize);
+                        else if (geomType < 2.5) return sphereLattice(p, gridSize);
+                        else if (geomType < 3.5) return torusLattice(p, gridSize);
+                        else return waveLattice(p, gridSize);
+                    }
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    // RGB Glitch effect
+                    vec3 rgbGlitch(vec3 color, vec2 uv, float intensity) {
+                        vec2 offset = vec2(intensity * 0.01, 0.0);
+                        float r = color.r;
+                        float g = color.g;
+                        float b = color.b;
+                        
+                        // Chromatic aberration
+                        r += sin(uv.y * 50.0 + u_time * 0.001) * intensity * 0.1;
+                        g += sin(uv.y * 45.0 + u_time * 0.0013) * intensity * 0.1;
+                        b += sin(uv.y * 55.0 + u_time * 0.0007) * intensity * 0.1;
+                        
+                        return vec3(r, g, b);
+                    }
+                    
+                    // Moire pattern
+                    float moirePattern(vec2 uv, float intensity) {
+                        float freq1 = 20.0 + intensity * 10.0;
+                        float freq2 = 22.0 + intensity * 12.0;
+                        float pattern1 = sin(uv.x * freq1) * sin(uv.y * freq1);
+                        float pattern2 = sin(uv.x * freq2) * sin(uv.y * freq2);
+                        return (pattern1 * pattern2) * intensity * 0.3;
+                    }
+                    
+                    void main() {
+                        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                        float aspectRatio = u_resolution.x / u_resolution.y;
+                        uv.x *= aspectRatio;
+                        uv -= 0.5;
+                        
+                        // Slower, more deliberate 4D space
+                        float time = u_time * 0.0008 * u_speed * u_instanceSpeed;  // Much slower
+                        
+                        // More geometric 4D rotation
+                        vec4 p4d = vec4(uv, sin(time * 0.2) * 0.3, cos(time * 0.15) * 0.3);
+                        
+                        // Slower 4D rotations
+                        p4d = rotateXW(time * 0.3) * p4d;
+                        p4d = rotateYW(time * 0.2) * p4d;
+                        
+                        // Project to 3D
+                        vec3 p = project4Dto3D(p4d);
+                        
+                        // Instance-specific density
+                        float instanceDensity = u_density * u_instanceDensity;
+                        
+                        // Get geometry value
+                        float lattice = getGeometryValue(p, instanceDensity, u_geometry);
+                        
+                        // Enhanced color with chaos effects
+                        float hue = atan(u_color.r, u_color.g) + u_colorShift * 0.017453;
+                        float saturation = 0.9 + lattice * 0.1;
+                        float brightness = 0.3 + lattice * 0.7 + u_intensity * 0.2;
+                        
+                        vec3 color = hsv2rgb(vec3(hue, saturation, brightness));
+                        
+                        // Add moire pattern during chaos
+                        float moire = moirePattern(uv, u_chaosIntensity);
+                        color += vec3(moire);
+                        
+                        // Apply RGB glitch effect during chaos
+                        color = rgbGlitch(color, uv, u_chaosIntensity);
+                        
+                        // Mouse interaction
+                        float mouseDist = length(uv - (u_mouse - 0.5) * vec2(aspectRatio, 1.0));
+                        float mouseGlow = exp(-mouseDist * 2.0) * 0.2;  // Subtle interaction
+                        color += vec3(mouseGlow) * u_color * 0.5;
+                        
+                        gl_FragColor = vec4(color, 0.95);
+                    }
+                `;
+                
+                this.program = this.createProgram(vertexShaderSource, fragmentShaderSource);
+                this.uniforms = {
+                    resolution: this.gl.getUniformLocation(this.program, 'u_resolution'),
+                    time: this.gl.getUniformLocation(this.program, 'u_time'),
+                    mouse: this.gl.getUniformLocation(this.program, 'u_mouse'),
+                    geometry: this.gl.getUniformLocation(this.program, 'u_geometry'),
+                    density: this.gl.getUniformLocation(this.program, 'u_density'),
+                    speed: this.gl.getUniformLocation(this.program, 'u_speed'),
+                    color: this.gl.getUniformLocation(this.program, 'u_color'),
+                    dimension: this.gl.getUniformLocation(this.program, 'u_dimension'),
+                    intensity: this.gl.getUniformLocation(this.program, 'u_intensity'),
+                    instanceDensity: this.gl.getUniformLocation(this.program, 'u_instanceDensity'),
+                    instanceSpeed: this.gl.getUniformLocation(this.program, 'u_instanceSpeed'),
+                    colorShift: this.gl.getUniformLocation(this.program, 'u_colorShift'),
+                    chaosIntensity: this.gl.getUniformLocation(this.program, 'u_chaosIntensity')
+                };
+            }
+            
+            createProgram(vertexSource, fragmentSource) {
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = this.gl.createProgram();
+                this.gl.attachShader(program, vertexShader);
+                this.gl.attachShader(program, fragmentShader);
+                this.gl.linkProgram(program);
+                
+                if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+                    console.error('Program linking failed:', this.gl.getProgramInfoLog(program));
+                    return null;
+                }
+                
+                return program;
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    console.error('Shader compilation failed:', this.gl.getShaderInfoLog(shader));
+                    return null;
+                }
+                
+                return shader;
+            }
+            
+            initBuffers() {
+                const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                
+                this.buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+            
+            resize() {
+                this.canvas.width = this.canvas.clientWidth;
+                this.canvas.height = this.canvas.clientHeight;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            snapToState(stateIndex) {
+                if (stateIndex !== this.targetState) {
+                    this.targetState = stateIndex;
+                    this.transitionProgress = 0.0;
+                }
+            }
+            
+            updateChaos(intensity) {
+                this.chaosIntensity = intensity;
+            }
+            
+            updateInteraction(mouseX, mouseY, intensity) {
+                this.mouseX = mouseX;
+                this.mouseY = mouseY;
+                this.interactionIntensity = intensity;
+            }
+            
+            render() {
+                if (!this.program) return;
+                
+                this.resize();
+                this.gl.useProgram(this.program);
+                
+                // Smooth transition
+                if (this.transitionProgress < 1.0) {
+                    this.transitionProgress = Math.min(1.0, this.transitionProgress + 0.025);  // Slower transition
+                }
+                
+                // Smooth interpolation with cubic easing
+                const currentState = this.states[this.currentState];
+                const targetState = this.states[this.targetState];
+                const t = this.transitionProgress;
+                const smoothT = t * t * (3.0 - 2.0 * t);  // Smooth step
+                
+                const interpolated = {
+                    geometry: currentState.geometry + (targetState.geometry - currentState.geometry) * smoothT,
+                    density: currentState.density + (targetState.density - currentState.density) * smoothT,
+                    speed: currentState.speed + (targetState.speed - currentState.speed) * smoothT,
+                    color: [
+                        currentState.color[0] + (targetState.color[0] - currentState.color[0]) * smoothT,
+                        currentState.color[1] + (targetState.color[1] - currentState.color[1]) * smoothT,
+                        currentState.color[2] + (targetState.color[2] - currentState.color[2]) * smoothT
+                    ],
+                    dimension: currentState.dimension + (targetState.dimension - currentState.dimension) * smoothT
+                };
+                
+                if (this.transitionProgress >= 1.0 && this.currentState !== this.targetState) {
+                    this.currentState = this.targetState;
+                }
+                
+                const time = Date.now() - this.startTime;
+                
+                // Set uniforms
+                this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+                this.gl.uniform1f(this.uniforms.time, time);
+                this.gl.uniform2f(this.uniforms.mouse, this.mouseX, this.mouseY);
+                this.gl.uniform1f(this.uniforms.geometry, interpolated.geometry);
+                this.gl.uniform1f(this.uniforms.density, interpolated.density);
+                this.gl.uniform1f(this.uniforms.speed, interpolated.speed);
+                this.gl.uniform3fv(this.uniforms.color, new Float32Array(interpolated.color));
+                this.gl.uniform1f(this.uniforms.dimension, interpolated.dimension);
+                this.gl.uniform1f(this.uniforms.intensity, this.instanceParams.intensity + this.interactionIntensity * 0.3);
+                this.gl.uniform1f(this.uniforms.instanceDensity, this.instanceParams.densityMult);
+                this.gl.uniform1f(this.uniforms.instanceSpeed, this.instanceParams.speedMult);
+                this.gl.uniform1f(this.uniforms.colorShift, this.instanceParams.colorShift);
+                this.gl.uniform1f(this.uniforms.chaosIntensity, this.chaosIntensity);
+                
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+        }
+        
+        // ENHANCED VAPORWAVE SYSTEM
+        class EnhancedVaporwaveSystem {
+            constructor() {
+                this.instances = [];
+                this.currentState = 0;
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.interactionIntensity = 0.0;
+                
+                // Scroll accumulation system
+                this.scrollAccumulation = 0;
+                this.scrollThreshold = 5;  // Need 5 scrolls to change state
+                this.scrollDecay = 0.95;   // Scroll accumulation decays over time
+                this.chaosIntensity = 0.0;
+                this.isTransitioning = false;
+                
+                // Enhanced content for each state
+                this.stateContent = {
+                    0: { // HOME
+                        leftTitle: 'NAVIGATION',
+                        leftContent: 'Hypercube lattice navigation through dimensional space matrices',
+                        rightTitle: 'OPERATIONS',
+                        rightContent: 'Primary control systems for geometric state manipulation',
+                        headerTitle: 'VIB3STYLEPACK',
+                        headerSubtitle: 'HYPERGEOMETRIC INTERFACE SYSTEM',
+                        footerContent: 'Hypercube state - 4D lattice projections with quantum stability',
+                        action1: 'EXPLORE',
+                        action2: 'CONFIGURE'
+                    },
+                    1: { // TECH
+                        leftTitle: 'DOCUMENTATION',
+                        leftContent: 'Technical specifications and geometric precision analysis protocols',
+                        rightTitle: 'DEVELOPMENT',
+                        rightContent: 'Tetrahedron-based structural analysis and system optimization',
+                        headerTitle: 'TECHNICAL MATRIX',
+                        headerSubtitle: 'GEOMETRIC PRECISION INTERFACE',
+                        footerContent: 'Tetrahedron state - Structural stability patterns and mathematical precision',
+                        action1: 'ANALYZE',
+                        action2: 'OPTIMIZE'
+                    },
+                    2: { // MEDIA
+                        leftTitle: 'GALLERY',
+                        leftContent: 'Spherical content organization and infinite potential browsing',
+                        rightTitle: 'PLAYBACK',
+                        rightContent: 'Dynamic media visualization and immersive content controls',
+                        headerTitle: 'MEDIA NEXUS',
+                        headerSubtitle: 'INFINITE POSSIBILITY SPACE',
+                        footerContent: 'Sphere state - Boundless content exploration and dimensional media',
+                        action1: 'STREAM',
+                        action2: 'BROWSE'
+                    },
+                    3: { // AUDIO
+                        leftTitle: 'CHANNELS',
+                        leftContent: 'Toroidal flow-based audio routing and dimensional sound processing',
+                        rightTitle: 'PROCESSING',
+                        rightContent: 'Continuous audio manipulation and frequency space navigation',
+                        headerTitle: 'AUDIO MATRIX',
+                        headerSubtitle: 'DIMENSIONAL SOUND PROCESSING',
+                        footerContent: 'Torus state - Continuous audio flow patterns and harmonic resonance',
+                        action1: 'RECORD',
+                        action2: 'PROCESS'
+                    },
+                    4: { // QUANTUM
+                        leftTitle: 'RESEARCH',
+                        leftContent: 'Wave function probability calculations and quantum state analysis',
+                        rightTitle: 'EXPERIMENTS',
+                        rightContent: 'Quantum-inspired computation controls and interference patterns',
+                        headerTitle: 'QUANTUM LAB',
+                        headerSubtitle: 'WAVE FUNCTION INTERFACE',
+                        footerContent: 'Wave state - Probability interference patterns and quantum computation',
+                        action1: 'MEASURE',
+                        action2: 'COLLAPSE'
+                    }
+                };
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                console.log('🎨 Initializing Enhanced Vaporwave System...');
+                
+                // Create 5 enhanced visualizer instances
+                for (let i = 0; i < 5; i++) {
+                    const instance = new EnhancedVaporwaveVisualizer(`instance-${i}`, i);
+                    this.instances.push(instance);
+                }
+                
+                this.setupInteractions();
+                this.setupStateControls();
+                this.setupEnhancedScrolling();
+                this.startRenderLoop();
+                this.updateContent();
+                
+                console.log('✅ Enhanced Vaporwave System ready - scroll accumulation & chaos effects active');
+            }
+            
+            setupInteractions() {
+                // Mouse tracking
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX / window.innerWidth;
+                    this.mouseY = 1.0 - (e.clientY / window.innerHeight);
+                    this.interactionIntensity = Math.min(1.0, Math.sqrt(e.movementX*e.movementX + e.movementY*e.movementY) / 40);
+                    
+                    this.instances.forEach(instance => {
+                        instance.updateInteraction(this.mouseX, this.mouseY, this.interactionIntensity);
+                    });
+                });
+            }
+            
+            setupStateControls() {
+                document.querySelectorAll('.state-dot').forEach((dot, index) => {
+                    dot.addEventListener('click', () => {
+                        this.snapToState(index);
+                        this.resetScrollAccumulation();
+                        
+                        document.querySelectorAll('.state-dot').forEach(d => d.classList.remove('active'));
+                        dot.classList.add('active');
+                    });
+                });
+            }
+            
+            setupEnhancedScrolling() {
+                let scrollTimeout;
+                
+                document.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    
+                    if (this.isTransitioning) return;
+                    
+                    // Accumulate scroll
+                    const direction = e.deltaY > 0 ? 1 : -1;
+                    this.scrollAccumulation += direction;
+                    
+                    // Update chaos intensity based on accumulation
+                    this.chaosIntensity = Math.min(1.0, Math.abs(this.scrollAccumulation) / this.scrollThreshold);
+                    
+                    // Update all instances with chaos
+                    this.instances.forEach(instance => {
+                        instance.updateChaos(this.chaosIntensity);
+                    });
+                    
+                    // Update UI feedback
+                    this.updateScrollFeedback();
+                    
+                    // Check if threshold reached
+                    if (Math.abs(this.scrollAccumulation) >= this.scrollThreshold) {
+                        const newState = (this.currentState + (direction > 0 ? 1 : -1) + 5) % 5;
+                        this.triggerStateTransition(newState);
+                    }
+                    
+                    // Auto-decay scroll accumulation
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(() => {
+                        this.decayScrollAccumulation();
+                    }, 100);
+                });
+            }
+            
+            updateScrollFeedback() {
+                // Update scroll progress indicator
+                const progress = Math.abs(this.scrollAccumulation) / this.scrollThreshold * 100;
+                document.getElementById('scrollFill').style.height = `${Math.min(100, progress)}%`;
+                
+                // Update state indicator
+                document.getElementById('scroll-progress').textContent = `${Math.abs(this.scrollAccumulation).toFixed(1)}/${this.scrollThreshold}`;
+                document.getElementById('chaos-level').textContent = `${(this.chaosIntensity * 100).toFixed(0)}%`;
+                
+                // Show chaos overlay if building up
+                const chaosOverlay = document.getElementById('chaosOverlay');
+                if (this.chaosIntensity > 0.3) {
+                    chaosOverlay.classList.add('active');
+                } else {
+                    chaosOverlay.classList.remove('active');
+                }
+                
+                // Update status
+                if (this.chaosIntensity > 0.7) {
+                    document.getElementById('transition-status').textContent = 'Critical';
+                } else if (this.chaosIntensity > 0.3) {
+                    document.getElementById('transition-status').textContent = 'Building';
+                } else {
+                    document.getElementById('transition-status').textContent = 'Stable';
+                }
+            }
+            
+            decayScrollAccumulation() {
+                this.scrollAccumulation *= this.scrollDecay;
+                if (Math.abs(this.scrollAccumulation) < 0.1) {
+                    this.scrollAccumulation = 0;
+                    this.chaosIntensity = 0;
+                    
+                    // Reset chaos on all instances
+                    this.instances.forEach(instance => {
+                        instance.updateChaos(0);
+                    });
+                    
+                    document.getElementById('chaosOverlay').classList.remove('active');
+                }
+                
+                this.updateScrollFeedback();
+                
+                if (this.scrollAccumulation !== 0) {
+                    setTimeout(() => this.decayScrollAccumulation(), 100);
+                }
+            }
+            
+            resetScrollAccumulation() {
+                this.scrollAccumulation = 0;
+                this.chaosIntensity = 0;
+                this.instances.forEach(instance => {
+                    instance.updateChaos(0);
+                });
+                this.updateScrollFeedback();
+            }
+            
+            triggerStateTransition(newState) {
+                if (newState === this.currentState || this.isTransitioning) return;
+                
+                console.log(`🌊 SMOOTH TRANSITION TO STATE: ${newState}`);
+                
+                this.isTransitioning = true;
+                this.currentState = newState;
+                
+                // Trigger transition overlay effect
+                const transitionOverlay = document.getElementById('transitionOverlay');
+                transitionOverlay.classList.add('active');
+                setTimeout(() => {
+                    transitionOverlay.classList.remove('active');
+                }, 800);
+                
+                // Snap all instances to new state
+                this.instances.forEach(instance => {
+                    instance.snapToState(newState);
+                });
+                
+                // Update content with smooth transition
+                this.updateContent();
+                
+                // Update active dot
+                document.querySelectorAll('.state-dot').forEach(d => d.classList.remove('active'));
+                document.querySelectorAll('.state-dot')[newState].classList.add('active');
+                
+                // Update state indicator
+                const state = this.instances[0].states[newState];
+                document.getElementById('current-state').textContent = state.name;
+                document.getElementById('current-geometry').textContent = state.geometryName;
+                
+                // Reset scroll accumulation
+                this.resetScrollAccumulation();
+                
+                setTimeout(() => {
+                    this.isTransitioning = false;
+                }, 1000);
+            }
+            
+            snapToState(stateIndex) {
+                this.triggerStateTransition(stateIndex);
+            }
+            
+            updateContent() {
+                const content = this.stateContent[this.currentState];
+                
+                // Update all content with smooth transitions
+                document.getElementById('left-title').textContent = content.leftTitle;
+                document.getElementById('left-content').textContent = content.leftContent;
+                document.getElementById('right-title').textContent = content.rightTitle;
+                document.getElementById('right-content').textContent = content.rightContent;
+                document.getElementById('header-title').textContent = content.headerTitle;
+                document.getElementById('header-subtitle').textContent = content.headerSubtitle;
+                document.getElementById('footer-content').textContent = content.footerContent;
+                document.getElementById('action-1').textContent = content.action1;
+                document.getElementById('action-2').textContent = content.action2;
+            }
+            
+            startRenderLoop() {
+                const render = () => {
+                    this.instances.forEach(instance => {
+                        instance.render();
+                    });
+                    requestAnimationFrame(render);
+                };
+                
+                render();
+                console.log('🎬 Enhanced vaporwave render loop started');
+            }
+        }
+        
+        // Utility functions
+        function cycleState(direction) {
+            const newState = (window.enhancedVaporwaveSystem.currentState + direction + 5) % 5;
+            window.enhancedVaporwaveSystem.snapToState(newState);
+        }
+        
+        function actionClick(action) {
+            console.log(`Action: ${action}`);
+            const state = window.enhancedVaporwaveSystem.instances[0].states[window.enhancedVaporwaveSystem.currentState];
+            document.getElementById('footer-content').textContent = `${action.toUpperCase()} operation executed in ${state.name} dimensional space`;
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            console.log('🚀 Initializing Enhanced Vaporwave System...');
+            const system = new EnhancedVaporwaveSystem();
+            window.enhancedVaporwaveSystem = system;
+        });
+        
+    </script>
+</body>
+</html>

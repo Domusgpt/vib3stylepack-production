@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB3STYLEPACK - NEOSKEUOMORPHIC HOLOGRAPHIC UI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: white;
+            font-family: 'Orbitron', 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            cursor: crosshair;
+            background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%);
+        }
+        
+        /* HOLOGRAPHIC DEPTH SYSTEM */
+        .holographic-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            perspective: 1200px;
+            transform-style: preserve-3d;
+        }
+        
+        /* DEPTH LAYERS */
+        .depth-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease-out;
+        }
+        
+        .depth-layer.background {
+            z-index: 1;
+            transform: translateZ(-100px);
+        }
+        
+        .depth-layer.midground {
+            z-index: 5;
+            transform: translateZ(0px);
+        }
+        
+        .depth-layer.foreground {
+            z-index: 10;
+            transform: translateZ(50px);
+        }
+        
+        .depth-layer.accent {
+            z-index: 15;
+            transform: translateZ(100px);
+        }
+        
+        /* NEOSKEUOMORPHIC CARDS */
+        .neomorphic-card {
+            position: absolute;
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            overflow: hidden;
+            transform-style: preserve-3d;
+            
+            /* Neoskeuomorphic shadow system */
+            box-shadow: 
+                /* Outer shadows for depth */
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 8px 16px rgba(0, 0, 0, 0.3),
+                /* Inner highlights for glass effect */
+                inset 0 1px 2px rgba(255, 255, 255, 0.1),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.1),
+                /* Holographic rim lighting */
+                0 0 0 1px rgba(0, 255, 255, 0.2),
+                0 0 20px rgba(0, 255, 255, 0.1);
+        }
+        
+        .neomorphic-card:hover {
+            transform: translateY(-8px) rotateX(2deg) rotateY(1deg);
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.5),
+                0 12px 24px rgba(0, 0, 0, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.15),
+                inset 0 -2px 2px rgba(0, 0, 0, 0.15),
+                0 0 0 2px rgba(0, 255, 255, 0.4),
+                0 0 40px rgba(0, 255, 255, 0.2),
+                0 0 80px rgba(255, 0, 255, 0.1);
+        }
+        
+        .neomorphic-card.clicked {
+            transform: translateY(-2px) rotateX(-1deg) rotateY(-0.5deg);
+            box-shadow: 
+                0 10px 20px rgba(0, 0, 0, 0.6),
+                0 4px 8px rgba(0, 0, 0, 0.5),
+                inset 0 3px 6px rgba(255, 255, 255, 0.2),
+                inset 0 -3px 3px rgba(0, 0, 0, 0.2),
+                0 0 0 3px rgba(255, 255, 0, 0.6),
+                0 0 60px rgba(255, 255, 0, 0.3);
+        }
+        
+        /* VISUALIZER LAYERS WITH DIFFERENT ROLES */
+        .visualizer-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        /* Shadow/accent visualizer */
+        .shadow-visualizer {
+            opacity: 0.6;
+            filter: blur(2px) brightness(0.7);
+            mix-blend-mode: multiply;
+            transform: translate(4px, 4px);
+        }
+        
+        /* Highlight visualizer */
+        .highlight-visualizer {
+            opacity: 0.4;
+            filter: blur(1px) brightness(1.5);
+            mix-blend-mode: screen;
+            transform: translate(-2px, -2px);
+        }
+        
+        /* Main content visualizer */
+        .content-visualizer {
+            opacity: 0.8;
+            mix-blend-mode: normal;
+        }
+        
+        /* Accent rim visualizer */
+        .accent-visualizer {
+            opacity: 0.3;
+            filter: blur(3px);
+            mix-blend-mode: color-dodge;
+            transform: scale(1.02);
+        }
+        
+        /* GRID OVERLAY SYSTEM */
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+            opacity: 0.1;
+            transition: opacity 0.3s ease;
+            background: 
+                /* Primary grid */
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 20px,
+                    rgba(0, 255, 255, 0.1) 20px,
+                    rgba(0, 255, 255, 0.1) 21px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 20px,
+                    rgba(0, 255, 255, 0.1) 20px,
+                    rgba(0, 255, 255, 0.1) 21px
+                ),
+                /* Secondary grid */
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 40px,
+                    rgba(255, 0, 255, 0.05) 40px,
+                    rgba(255, 0, 255, 0.05) 41px
+                );
+        }
+        
+        .grid-overlay.active {
+            opacity: 0.3;
+            animation: gridPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes gridPulse {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.4; }
+        }
+        
+        /* DYNAMIC LAYOUT POSITIONS */
+        
+        /* HOME LAYOUT - Holographic Grid */
+        .layout-home .neomorphic-card:nth-child(1) { /* Header */
+            top: 5%; left: 50%; transform: translateX(-50%);
+            width: 70%; height: 18%;
+        }
+        
+        .layout-home .neomorphic-card:nth-child(2) { /* Left Nav */
+            top: 25%; left: 5%;
+            width: 28%; height: 65%;
+        }
+        
+        .layout-home .neomorphic-card:nth-child(3) { /* Right Actions */
+            top: 25%; right: 5%;
+            width: 28%; height: 65%;
+        }
+        
+        .layout-home .neomorphic-card:nth-child(4) { /* Center Content */
+            top: 30%; left: 50%; transform: translateX(-50%);
+            width: 35%; height: 50%;
+        }
+        
+        .layout-home .neomorphic-card:nth-child(5) { /* Footer Status */
+            bottom: 5%; left: 50%; transform: translateX(-50%);
+            width: 60%; height: 12%;
+        }
+        
+        /* TECH LAYOUT - Geometric Precision */
+        .layout-tech .neomorphic-card:nth-child(1) { /* Full Width Header */
+            top: 2%; left: 2%;
+            width: 96%; height: 10%;
+        }
+        
+        .layout-tech .neomorphic-card:nth-child(2) { /* Left Tools */
+            top: 15%; left: 2%;
+            width: 20%; height: 80%;
+        }
+        
+        .layout-tech .neomorphic-card:nth-child(3) { /* Right Workspace */
+            top: 15%; right: 2%;
+            width: 50%; height: 80%;
+        }
+        
+        .layout-tech .neomorphic-card:nth-child(4) { /* Center Console */
+            top: 15%; left: 24%;
+            width: 22%; height: 45%;
+        }
+        
+        .layout-tech .neomorphic-card:nth-child(5) { /* Bottom Monitor */
+            bottom: 15%; left: 24%;
+            width: 22%; height: 33%;
+        }
+        
+        /* MEDIA LAYOUT - Radial Holographic */
+        .layout-media .neomorphic-card:nth-child(1) { /* Central Hub */
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 40%; height: 45%;
+            border-radius: 50%;
+        }
+        
+        .layout-media .neomorphic-card:nth-child(2) { /* Top Left Satellite */
+            top: 12%; left: 12%;
+            width: 30%; height: 25%;
+            border-radius: 40px;
+            transform: rotate(-15deg);
+        }
+        
+        .layout-media .neomorphic-card:nth-child(3) { /* Top Right Satellite */
+            top: 12%; right: 12%;
+            width: 30%; height: 25%;
+            border-radius: 40px;
+            transform: rotate(15deg);
+        }
+        
+        .layout-media .neomorphic-card:nth-child(4) { /* Bottom Left Satellite */
+            bottom: 12%; left: 12%;
+            width: 30%; height: 25%;
+            border-radius: 40px;
+            transform: rotate(15deg);
+        }
+        
+        .layout-media .neomorphic-card:nth-child(5) { /* Bottom Right Satellite */
+            bottom: 12%; right: 12%;
+            width: 30%; height: 25%;
+            border-radius: 40px;
+            transform: rotate(-15deg);
+        }
+        
+        /* CONTENT OVERLAYS */
+        .card-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 25;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, 
+                rgba(0, 255, 255, 0.03) 0%,
+                rgba(255, 0, 255, 0.02) 50%,
+                rgba(255, 255, 0, 0.03) 100%
+            );
+        }
+        
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            color: #ffffff;
+            text-shadow: 
+                0 0 10px #00ffff,
+                0 0 20px #00ffff40,
+                0 0 30px #ff00ff20;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+        
+        .card-subtitle {
+            font-size: 0.75rem;
+            color: #00ffff;
+            margin-bottom: 12px;
+            text-shadow: 0 0 8px #00ffff80;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .card-description {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.3;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* ENHANCED UI BUTTONS */
+        .holo-button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, 
+                rgba(0, 255, 255, 0.15) 0%,
+                rgba(255, 0, 255, 0.1) 50%,
+                rgba(0, 255, 255, 0.15) 100%
+            );
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            border-radius: 12px;
+            color: #00ffff;
+            cursor: pointer;
+            margin: 4px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            font-family: inherit;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px #00ffff;
+            backdrop-filter: blur(10px);
+            
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(0, 255, 255, 0.2);
+        }
+        
+        .holo-button:hover {
+            background: linear-gradient(135deg, 
+                rgba(0, 255, 255, 0.25) 0%,
+                rgba(255, 0, 255, 0.2) 50%,
+                rgba(0, 255, 255, 0.25) 100%
+            );
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 
+                0 8px 16px rgba(0, 255, 255, 0.2),
+                inset 0 2px 2px rgba(255, 255, 255, 0.15),
+                0 0 0 2px rgba(0, 255, 255, 0.4),
+                0 0 20px rgba(0, 255, 255, 0.3);
+            border-color: #00ffff;
+        }
+        
+        .holo-button:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.4),
+                inset 0 3px 6px rgba(0, 0, 0, 0.2),
+                0 0 0 3px rgba(255, 255, 0, 0.6),
+                0 0 30px rgba(255, 255, 0, 0.4);
+        }
+        
+        /* INTERACTIVE FEEDBACK SYSTEMS */
+        .interaction-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.6) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 30;
+            animation: rippleExpand 0.6s ease-out forwards;
+        }
+        
+        @keyframes rippleExpand {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                width: 100px;
+                height: 100px;
+                opacity: 0;
+            }
+        }
+        
+        /* ENHANCED CONTROLS */
+        .scroll-progress {
+            position: fixed;
+            top: 50%;
+            right: 25px;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 3px;
+            z-index: 1000;
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            box-shadow: 
+                0 0 10px rgba(0, 255, 255, 0.2),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+        
+        .scroll-fill {
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(to top,
+                #00ffff 0%,
+                #ff00ff 30%,
+                #ffff00 60%,
+                #ff0080 100%
+            );
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+        }
+        
+        .chaos-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            background: 
+                repeating-linear-gradient(
+                    22.5deg,
+                    transparent,
+                    transparent 3px,
+                    rgba(255, 0, 255, 0.03) 3px,
+                    rgba(255, 0, 255, 0.03) 6px
+                ),
+                repeating-linear-gradient(
+                    67.5deg,
+                    transparent,
+                    transparent 3px,
+                    rgba(0, 255, 255, 0.03) 3px,
+                    rgba(0, 255, 255, 0.03) 6px
+                );
+            transition: opacity 0.2s ease;
+        }
+        
+        .chaos-overlay.active {
+            opacity: 1;
+            animation: chaosFlicker 0.12s infinite;
+        }
+        
+        @keyframes chaosFlicker {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        .state-controls {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 18px;
+            background: linear-gradient(135deg,
+                rgba(0, 0, 0, 0.8) 0%,
+                rgba(25, 0, 50, 0.7) 100%
+            );
+            padding: 18px 28px;
+            border-radius: 30px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(25px);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.6),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(0, 255, 255, 0.2);
+        }
+        
+        .state-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+        
+        .state-dot.active {
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            box-shadow: 
+                0 0 20px #00ffff,
+                0 0 40px #ff00ff,
+                0 4px 8px rgba(0, 0, 0, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2);
+            transform: scale(1.5);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .state-indicator {
+            position: fixed;
+            top: 25px;
+            left: 25px;
+            background: linear-gradient(135deg,
+                rgba(0, 0, 0, 0.9) 0%,
+                rgba(25, 0, 50, 0.8) 100%
+            );
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid #00ffff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.75rem;
+            z-index: 2000;
+            min-width: 200px;
+            backdrop-filter: blur(25px);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.6),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(0, 255, 255, 0.2);
+        }
+        
+        .state-row {
+            margin: 4px 0;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        
+        .state-value {
+            color: #ffffff;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- GRID OVERLAY -->
+    <div class="grid-overlay" id="gridOverlay"></div>
+    
+    <!-- CHAOS OVERLAY -->
+    <div class="chaos-overlay" id="chaosOverlay"></div>
+    
+    <!-- STATE INDICATOR -->
+    <div class="state-indicator">
+        <div class="state-row">Layout: <span class="state-value" id="current-layout">HOME</span></div>
+        <div class="state-row">Depth: <span class="state-value" id="depth-level">Holographic</span></div>
+        <div class="state-row">Scroll: <span class="state-value" id="scroll-progress">0/5</span></div>
+        <div class="state-row">Chaos: <span class="state-value" id="chaos-level">0%</span></div>
+        <div class="state-row">Mouse: <span class="state-value" id="mouse-reactive">Active</span></div>
+    </div>
+    
+    <!-- SCROLL PROGRESS -->
+    <div class="scroll-progress">
+        <div class="scroll-fill" id="scrollFill"></div>
+    </div>
+
+    <!-- HOLOGRAPHIC CONTAINER -->
+    <div class="holographic-container layout-home" id="holoContainer">
+        
+        <!-- BACKGROUND DEPTH LAYER -->
+        <div class="depth-layer background" id="backgroundLayer">
+            <canvas class="visualizer-canvas" id="background-visualizer"></canvas>
+        </div>
+        
+        <!-- SHADOW DEPTH LAYER -->
+        <div class="depth-layer midground" id="shadowLayer">
+            <canvas class="visualizer-canvas shadow-visualizer" id="shadow-visualizer"></canvas>
+        </div>
+        
+        <!-- NEOSKEUOMORPHIC CARDS -->
+        <div class="depth-layer foreground" id="cardsLayer">
+            
+            <div class="neomorphic-card" id="card-1">
+                <canvas class="visualizer-canvas content-visualizer" id="card-visualizer-1"></canvas>
+                <canvas class="visualizer-canvas highlight-visualizer" id="highlight-visualizer-1"></canvas>
+                <div class="card-content">
+                    <div class="card-title" id="card-title-1">NEURAL NEXUS</div>
+                    <div class="card-subtitle" id="card-subtitle-1">HOLOGRAPHIC INTERFACE</div>
+                    <div class="card-description" id="card-description-1">
+                        Central command hub with neoskeuomorphic depth and holographic projection
+                    </div>
+                </div>
+            </div>
+            
+            <div class="neomorphic-card" id="card-2">
+                <canvas class="visualizer-canvas content-visualizer" id="card-visualizer-2"></canvas>
+                <canvas class="visualizer-canvas highlight-visualizer" id="highlight-visualizer-2"></canvas>
+                <div class="card-content">
+                    <div class="card-title" id="card-title-2">DIMENSIONAL NAV</div>
+                    <div class="card-subtitle" id="card-subtitle-2">SPATIAL CONTROL</div>
+                    <div class="card-description" id="card-description-2">
+                        Navigate through hypergeometric space with reactive depth sensing
+                    </div>
+                    <button class="holo-button" onclick="actionClick('navigate')">EXPLORE SPACE</button>
+                </div>
+            </div>
+            
+            <div class="neomorphic-card" id="card-3">
+                <canvas class="visualizer-canvas content-visualizer" id="card-visualizer-3"></canvas>
+                <canvas class="visualizer-canvas highlight-visualizer" id="highlight-visualizer-3"></canvas>
+                <div class="card-content">
+                    <div class="card-title" id="card-title-3">QUANTUM OPS</div>
+                    <div class="card-subtitle" id="card-subtitle-3">REALITY CONTROL</div>
+                    <div class="card-description" id="card-description-3">
+                        Execute dimensional operations with holographic feedback systems
+                    </div>
+                    <button class="holo-button" onclick="actionClick('execute')">EXECUTE</button>
+                </div>
+            </div>
+            
+            <div class="neomorphic-card" id="card-4">
+                <canvas class="visualizer-canvas content-visualizer" id="card-visualizer-4"></canvas>
+                <canvas class="visualizer-canvas highlight-visualizer" id="highlight-visualizer-4"></canvas>
+                <div class="card-content">
+                    <div class="card-title" id="card-title-4">DATA MATRIX</div>
+                    <div class="card-subtitle" id="card-subtitle-4">INFORMATION HUB</div>
+                    <div class="card-description" id="card-description-4">
+                        Central data processing with reactive geometric visualization
+                    </div>
+                </div>
+            </div>
+            
+            <div class="neomorphic-card" id="card-5">
+                <canvas class="visualizer-canvas content-visualizer" id="card-visualizer-5"></canvas>
+                <canvas class="visualizer-canvas highlight-visualizer" id="highlight-visualizer-5"></canvas>
+                <div class="card-content">
+                    <div class="card-title" id="card-title-5">SYSTEM PULSE</div>
+                    <div class="card-subtitle" id="card-subtitle-5">STATUS MATRIX</div>
+                    <div class="card-description" id="card-description-5">
+                        Real-time holographic monitoring with neomorphic depth feedback
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- ACCENT DEPTH LAYER -->
+        <div class="depth-layer accent" id="accentLayer">
+            <canvas class="visualizer-canvas accent-visualizer" id="accent-visualizer"></canvas>
+        </div>
+        
+    </div>
+    
+    <!-- STATE CONTROLS -->
+    <div class="state-controls">
+        <div class="state-dot active" data-state="0" title="HOME - Holographic Grid"></div>
+        <div class="state-dot" data-state="1" title="TECH - Geometric Precision"></div>
+        <div class="state-dot" data-state="2" title="MEDIA - Radial Holographic"></div>
+        <div class="state-dot" data-state="3" title="AUDIO - Flow Patterns"></div>
+        <div class="state-dot" data-state="4" title="QUANTUM - Wave Nexus"></div>
+    </div>
+
+    <script>
+        console.log('🌌 VIB3STYLEPACK - NEOSKEUOMORPHIC HOLOGRAPHIC UI');
+        
+        // ENHANCED HOLOGRAPHIC VISUALIZER
+        class HolographicVisualizer {
+            constructor(canvasId, role = 'content', reactivity = 1.0) {
+                this.canvas = document.getElementById(canvasId);
+                this.role = role; // 'background', 'shadow', 'content', 'highlight', 'accent'
+                this.reactivity = reactivity; // 0.5 = subtle, 1.0 = normal, 1.5 = highly reactive
+                this.gl = this.canvas.getContext('webgl');
+                
+                if (!this.gl) {
+                    console.error(`WebGL not supported for ${canvasId}`);
+                    return;
+                }
+                
+                // Role-specific parameters
+                this.roleParams = {
+                    'background': { 
+                        densityMult: 0.4, speedMult: 0.2, colorShift: 0.0, intensity: 0.2,
+                        mouseReactivity: 0.3, clickReactivity: 0.1 
+                    },
+                    'shadow': { 
+                        densityMult: 0.8, speedMult: 0.3, colorShift: 180.0, intensity: 0.4,
+                        mouseReactivity: 0.5, clickReactivity: 0.3 
+                    },
+                    'content': { 
+                        densityMult: 1.0 + Math.random() * 0.5, speedMult: 0.6 + Math.random() * 0.3, 
+                        colorShift: Math.random() * 360, intensity: 0.7 + Math.random() * 0.2,
+                        mouseReactivity: 1.0, clickReactivity: 0.8 
+                    },
+                    'highlight': { 
+                        densityMult: 1.5, speedMult: 0.8, colorShift: 60.0, intensity: 0.6,
+                        mouseReactivity: 1.2, clickReactivity: 1.0 
+                    },
+                    'accent': { 
+                        densityMult: 0.6, speedMult: 0.4, colorShift: 300.0, intensity: 0.3,
+                        mouseReactivity: 1.5, clickReactivity: 1.2 
+                    }
+                }[role] || { densityMult: 1.0, speedMult: 0.5, colorShift: 0.0, intensity: 0.5, mouseReactivity: 1.0, clickReactivity: 0.5 };
+                
+                // Enhanced state system
+                this.currentState = 0;
+                this.targetState = 0;
+                this.transitionProgress = 1.0;
+                this.chaosIntensity = 0.0;
+                
+                // Mouse interaction
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.mouseIntensity = 0.0;
+                this.clickIntensity = 0.0;
+                this.clickDecay = 0.95;
+                
+                // Grid density changes
+                this.baseDensity = 6.0 + Math.random() * 4.0;
+                this.densityVariation = 0.0;
+                this.densityTarget = 0.0;
+                
+                // Enhanced state definitions
+                this.states = [
+                    { // HOME
+                        geometry: 0.0, density: this.baseDensity, speed: 0.5,
+                        color: [1.0, 0.0, 1.0], dimension: 3.5,
+                        name: 'HOME', geometryName: 'Hypercube'
+                    },
+                    { // TECH
+                        geometry: 1.0, density: this.baseDensity * 0.7, speed: 0.3,
+                        color: [0.0, 1.0, 1.0], dimension: 3.2,
+                        name: 'TECH', geometryName: 'Tetrahedron'
+                    },
+                    { // MEDIA
+                        geometry: 2.0, density: this.baseDensity * 1.3, speed: 0.8,
+                        color: [1.0, 1.0, 0.0], dimension: 3.8,
+                        name: 'MEDIA', geometryName: 'Sphere'
+                    },
+                    { // AUDIO
+                        geometry: 3.0, density: this.baseDensity * 0.9, speed: 0.6,
+                        color: [0.0, 1.0, 0.0], dimension: 3.6,
+                        name: 'AUDIO', geometryName: 'Torus'
+                    },
+                    { // QUANTUM
+                        geometry: 6.0, density: this.baseDensity * 1.5, speed: 0.7,
+                        color: [1.0, 0.0, 0.5], dimension: 3.9,
+                        name: 'QUANTUM', geometryName: 'Wave'
+                    }
+                ];
+                
+                this.startTime = Date.now();
+                this.initShaders();
+                this.initBuffers();
+                this.resize();
+                
+                console.log(`✅ Holographic Visualizer (${role}) - Reactivity: ${reactivity}x`);
+            }
+            
+            initShaders() {
+                const vertexShaderSource = `
+                    attribute vec2 a_position;
+                    void main() {
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `
+                    precision highp float;
+                    
+                    uniform vec2 u_resolution;
+                    uniform float u_time;
+                    uniform vec2 u_mouse;
+                    uniform float u_geometry;
+                    uniform float u_density;
+                    uniform float u_speed;
+                    uniform vec3 u_color;
+                    uniform float u_intensity;
+                    uniform float u_roleDensity;
+                    uniform float u_roleSpeed;
+                    uniform float u_colorShift;
+                    uniform float u_chaosIntensity;
+                    uniform float u_mouseIntensity;
+                    uniform float u_clickIntensity;
+                    uniform float u_densityVariation;
+                    
+                    // Enhanced 4D rotation matrices
+                    mat4 rotateXW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(c, 0, 0, -s, 0, 1, 0, 0, 0, 0, 1, 0, s, 0, 0, c);
+                    }
+                    
+                    mat4 rotateYW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(1, 0, 0, 0, 0, c, 0, -s, 0, 0, 1, 0, 0, s, 0, c);
+                    }
+                    
+                    mat4 rotateZW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, c, -s, 0, 0, s, c);
+                    }
+                    
+                    vec3 project4Dto3D(vec4 p) {
+                        float w = 2.5 / (2.5 + p.w);
+                        return vec3(p.x * w, p.y * w, p.z * w);
+                    }
+                    
+                    // Enhanced geometric functions with more detail
+                    float hypercubeLattice(vec3 p, float gridSize) {
+                        vec3 grid = fract(p * gridSize);
+                        vec3 edges = 1.0 - smoothstep(0.0, 0.008, abs(grid - 0.5));
+                        
+                        // Add corner intersections
+                        float corners = length(grid - 0.5);
+                        corners = 1.0 - smoothstep(0.0, 0.1, corners);
+                        
+                        return max(max(max(edges.x, edges.y), edges.z), corners * 0.3);
+                    }
+                    
+                    float tetrahedronLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        
+                        // Tetrahedron vertices
+                        float d1 = length(q);
+                        float d2 = length(q - vec3(0.4, 0.0, 0.0));
+                        float d3 = length(q - vec3(0.0, 0.4, 0.0));
+                        float d4 = length(q - vec3(0.0, 0.0, 0.4));
+                        
+                        float vertices = 1.0 - smoothstep(0.0, 0.04, min(min(d1, d2), min(d3, d4)));
+                        
+                        // Edge connections
+                        float edges = 0.0;
+                        edges = max(edges, 1.0 - smoothstep(0.0, 0.02, abs(length(q.xy) - 0.2)));
+                        edges = max(edges, 1.0 - smoothstep(0.0, 0.02, abs(length(q.yz) - 0.2)));
+                        edges = max(edges, 1.0 - smoothstep(0.0, 0.02, abs(length(q.xz) - 0.2)));
+                        
+                        return max(vertices, edges * 0.5);
+                    }
+                    
+                    float sphereLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r = length(q);
+                        
+                        // Multiple sphere sizes for detail
+                        float main = 1.0 - smoothstep(0.05, 0.25, r);
+                        float detail = 1.0 - smoothstep(0.15, 0.35, r);
+                        
+                        return max(main, detail * 0.3);
+                    }
+                    
+                    float torusLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r1 = length(q.xy);
+                        float r2 = sqrt((r1 - 0.15)*(r1 - 0.15) + q.z*q.z);
+                        
+                        float main = 1.0 - smoothstep(0.0, 0.05, r2);
+                        
+                        // Add inner detail
+                        float inner = 1.0 - smoothstep(0.0, 0.08, abs(r1 - 0.15));
+                        
+                        return max(main, inner * 0.4);
+                    }
+                    
+                    float waveLattice(vec3 p, float gridSize) {
+                        vec3 q = p * gridSize;
+                        
+                        // Multiple wave frequencies
+                        float wave1 = sin(q.x * 1.0 + u_time * u_speed * 0.0005);
+                        float wave2 = sin(q.y * 1.2 + u_time * u_speed * 0.0007);
+                        float wave3 = sin(q.z * 0.8 + u_time * u_speed * 0.0003);
+                        
+                        float interference = wave1 * wave2 * wave3;
+                        
+                        // Add harmonic details
+                        float harmonics = sin(q.x * 3.0) * sin(q.y * 3.0) * 0.3;
+                        
+                        return smoothstep(-0.2, 0.2, interference + harmonics);
+                    }
+                    
+                    float getGeometryValue(vec3 p, float gridSize, float geomType) {
+                        if (geomType < 0.5) return hypercubeLattice(p, gridSize);
+                        else if (geomType < 1.5) return tetrahedronLattice(p, gridSize);
+                        else if (geomType < 2.5) return sphereLattice(p, gridSize);
+                        else if (geomType < 3.5) return torusLattice(p, gridSize);
+                        else return waveLattice(p, gridSize);
+                    }
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    // Enhanced effect functions
+                    vec3 rgbGlitch(vec3 color, vec2 uv, float intensity) {
+                        vec2 offset = vec2(intensity * 0.005, 0.0);
+                        float r = color.r + sin(uv.y * 30.0 + u_time * 0.001) * intensity * 0.06;
+                        float g = color.g + sin(uv.y * 28.0 + u_time * 0.0012) * intensity * 0.06;
+                        float b = color.b + sin(uv.y * 32.0 + u_time * 0.0008) * intensity * 0.06;
+                        return vec3(r, g, b);
+                    }
+                    
+                    float moirePattern(vec2 uv, float intensity) {
+                        float freq1 = 12.0 + intensity * 6.0 + u_densityVariation * 3.0;
+                        float freq2 = 14.0 + intensity * 8.0 + u_densityVariation * 4.0;
+                        float pattern1 = sin(uv.x * freq1) * sin(uv.y * freq1);
+                        float pattern2 = sin(uv.x * freq2) * sin(uv.y * freq2);
+                        return (pattern1 * pattern2) * intensity * 0.15;
+                    }
+                    
+                    // Grid overlay function
+                    float gridOverlay(vec2 uv, float intensity) {
+                        vec2 grid = fract(uv * (8.0 + u_densityVariation * 4.0));
+                        float lines = 0.0;
+                        lines = max(lines, 1.0 - smoothstep(0.0, 0.02, abs(grid.x - 0.5)));
+                        lines = max(lines, 1.0 - smoothstep(0.0, 0.02, abs(grid.y - 0.5)));
+                        return lines * intensity * 0.1;
+                    }
+                    
+                    void main() {
+                        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                        float aspectRatio = u_resolution.x / u_resolution.y;
+                        uv.x *= aspectRatio;
+                        uv -= 0.5;
+                        
+                        // Enhanced 4D space with mouse reactivity
+                        float time = u_time * 0.0004 * u_speed * u_roleSpeed;
+                        
+                        // Mouse influence on rotation
+                        float mouseInfluence = u_mouseIntensity * 0.5;
+                        vec2 mouseOffset = (u_mouse - 0.5) * mouseInfluence;
+                        
+                        vec4 p4d = vec4(uv + mouseOffset * 0.1, 
+                                       sin(time * 0.1) * 0.15, 
+                                       cos(time * 0.08) * 0.15);
+                        
+                        // Enhanced 4D rotations with mouse reactivity
+                        p4d = rotateXW(time * 0.2 + mouseOffset.y * 0.5) * p4d;
+                        p4d = rotateYW(time * 0.15 + mouseOffset.x * 0.5) * p4d;
+                        p4d = rotateZW(time * 0.25 + u_clickIntensity * 0.3) * p4d;
+                        
+                        vec3 p = project4Dto3D(p4d);
+                        
+                        // Dynamic density with variation
+                        float roleDensity = (u_density + u_densityVariation) * u_roleDensity;
+                        
+                        // Get geometry value
+                        float lattice = getGeometryValue(p, roleDensity, u_geometry);
+                        
+                        // Enhanced coloring with mouse reactivity
+                        float hue = atan(u_color.r, u_color.g) + u_colorShift * 0.017453 + u_mouseIntensity * 0.2;
+                        float saturation = 0.8 + lattice * 0.2 + u_clickIntensity * 0.1;
+                        float brightness = 0.2 + lattice * 0.8 + u_intensity * 0.2 + u_mouseIntensity * 0.15;
+                        
+                        vec3 color = hsv2rgb(vec3(hue, saturation, brightness));
+                        
+                        // Add enhanced effects
+                        color += vec3(moirePattern(uv, u_chaosIntensity));
+                        color += vec3(gridOverlay(uv, u_mouseIntensity));
+                        color = rgbGlitch(color, uv, u_chaosIntensity);
+                        
+                        // Mouse interaction glow
+                        float mouseDist = length(uv - (u_mouse - 0.5) * vec2(aspectRatio, 1.0));
+                        float mouseGlow = exp(-mouseDist * 1.5) * u_mouseIntensity * 0.2;
+                        color += vec3(mouseGlow) * u_color * 0.6;
+                        
+                        // Click pulse effect
+                        float clickPulse = u_clickIntensity * exp(-mouseDist * 2.0) * 0.3;
+                        color += vec3(clickPulse, clickPulse * 0.5, clickPulse * 1.5);
+                        
+                        gl_FragColor = vec4(color, 0.95);
+                    }
+                `;
+                
+                this.program = this.createProgram(vertexShaderSource, fragmentShaderSource);
+                this.uniforms = {
+                    resolution: this.gl.getUniformLocation(this.program, 'u_resolution'),
+                    time: this.gl.getUniformLocation(this.program, 'u_time'),
+                    mouse: this.gl.getUniformLocation(this.program, 'u_mouse'),
+                    geometry: this.gl.getUniformLocation(this.program, 'u_geometry'),
+                    density: this.gl.getUniformLocation(this.program, 'u_density'),
+                    speed: this.gl.getUniformLocation(this.program, 'u_speed'),
+                    color: this.gl.getUniformLocation(this.program, 'u_color'),
+                    intensity: this.gl.getUniformLocation(this.program, 'u_intensity'),
+                    roleDensity: this.gl.getUniformLocation(this.program, 'u_roleDensity'),
+                    roleSpeed: this.gl.getUniformLocation(this.program, 'u_roleSpeed'),
+                    colorShift: this.gl.getUniformLocation(this.program, 'u_colorShift'),
+                    chaosIntensity: this.gl.getUniformLocation(this.program, 'u_chaosIntensity'),
+                    mouseIntensity: this.gl.getUniformLocation(this.program, 'u_mouseIntensity'),
+                    clickIntensity: this.gl.getUniformLocation(this.program, 'u_clickIntensity'),
+                    densityVariation: this.gl.getUniformLocation(this.program, 'u_densityVariation')
+                };
+            }
+            
+            createProgram(vertexSource, fragmentSource) {
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = this.gl.createProgram();
+                this.gl.attachShader(program, vertexShader);
+                this.gl.attachShader(program, fragmentShader);
+                this.gl.linkProgram(program);
+                
+                if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+                    console.error('Program linking failed:', this.gl.getProgramInfoLog(program));
+                    return null;
+                }
+                
+                return program;
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    console.error('Shader compilation failed:', this.gl.getShaderInfoLog(shader));
+                    return null;
+                }
+                
+                return shader;
+            }
+            
+            initBuffers() {
+                const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                
+                this.buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+            
+            resize() {
+                this.canvas.width = this.canvas.clientWidth;
+                this.canvas.height = this.canvas.clientHeight;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            snapToState(stateIndex) {
+                if (stateIndex !== this.targetState) {
+                    this.targetState = stateIndex;
+                    this.transitionProgress = 0.0;
+                }
+            }
+            
+            updateChaos(intensity) {
+                this.chaosIntensity = intensity;
+            }
+            
+            updateInteraction(mouseX, mouseY, intensity) {
+                // Apply role-specific reactivity
+                this.mouseX = mouseX;
+                this.mouseY = mouseY;
+                this.mouseIntensity = intensity * this.roleParams.mouseReactivity * this.reactivity;
+            }
+            
+            triggerClick(x, y) {
+                // Apply role-specific click reactivity
+                this.clickIntensity = Math.min(1.0, this.clickIntensity + this.roleParams.clickReactivity * this.reactivity);
+            }
+            
+            updateDensity(variation) {
+                this.densityTarget = variation;
+            }
+            
+            render() {
+                if (!this.program) return;
+                
+                this.resize();
+                this.gl.useProgram(this.program);
+                
+                // Smooth transition
+                if (this.transitionProgress < 1.0) {
+                    this.transitionProgress = Math.min(1.0, this.transitionProgress + 0.02);
+                }
+                
+                // Smooth density variation
+                this.densityVariation += (this.densityTarget - this.densityVariation) * 0.05;
+                
+                // Click intensity decay
+                this.clickIntensity *= this.clickDecay;
+                
+                const currentState = this.states[this.currentState];
+                const targetState = this.states[this.targetState];
+                const t = this.transitionProgress;
+                const smoothT = t * t * (3.0 - 2.0 * t);
+                
+                const interpolated = {
+                    geometry: currentState.geometry + (targetState.geometry - currentState.geometry) * smoothT,
+                    density: currentState.density + (targetState.density - currentState.density) * smoothT,
+                    speed: currentState.speed + (targetState.speed - currentState.speed) * smoothT,
+                    color: [
+                        currentState.color[0] + (targetState.color[0] - currentState.color[0]) * smoothT,
+                        currentState.color[1] + (targetState.color[1] - currentState.color[1]) * smoothT,
+                        currentState.color[2] + (targetState.color[2] - currentState.color[2]) * smoothT
+                    ]
+                };
+                
+                if (this.transitionProgress >= 1.0 && this.currentState !== this.targetState) {
+                    this.currentState = this.targetState;
+                }
+                
+                const time = Date.now() - this.startTime;
+                
+                // Set uniforms
+                this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+                this.gl.uniform1f(this.uniforms.time, time);
+                this.gl.uniform2f(this.uniforms.mouse, this.mouseX, this.mouseY);
+                this.gl.uniform1f(this.uniforms.geometry, interpolated.geometry);
+                this.gl.uniform1f(this.uniforms.density, interpolated.density);
+                this.gl.uniform1f(this.uniforms.speed, interpolated.speed);
+                this.gl.uniform3fv(this.uniforms.color, new Float32Array(interpolated.color));
+                this.gl.uniform1f(this.uniforms.intensity, this.roleParams.intensity);
+                this.gl.uniform1f(this.uniforms.roleDensity, this.roleParams.densityMult);
+                this.gl.uniform1f(this.uniforms.roleSpeed, this.roleParams.speedMult);
+                this.gl.uniform1f(this.uniforms.colorShift, this.roleParams.colorShift);
+                this.gl.uniform1f(this.uniforms.chaosIntensity, this.chaosIntensity);
+                this.gl.uniform1f(this.uniforms.mouseIntensity, this.mouseIntensity);
+                this.gl.uniform1f(this.uniforms.clickIntensity, this.clickIntensity);
+                this.gl.uniform1f(this.uniforms.densityVariation, this.densityVariation);
+                
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+        }
+        
+        // NEOSKEUOMORPHIC HOLOGRAPHIC SYSTEM
+        class NeoskeuomorphicHolographicSystem {
+            constructor() {
+                this.visualizers = [];
+                this.currentState = 0;
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.mouseIntensity = 0.0;
+                
+                // Scroll system
+                this.scrollAccumulation = 0;
+                this.scrollThreshold = 5;
+                this.scrollDecay = 0.95;
+                this.chaosIntensity = 0.0;
+                this.isTransitioning = false;
+                
+                // Layout system
+                this.layoutNames = ['HOME', 'TECH', 'MEDIA', 'AUDIO', 'QUANTUM'];
+                this.layoutClasses = ['layout-home', 'layout-tech', 'layout-media', 'layout-audio', 'layout-quantum'];
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                console.log('🎨 Initializing Neoskeuomorphic Holographic System...');
+                
+                // Create visualizers with different roles and reactivity levels
+                const configs = [
+                    { id: 'background-visualizer', role: 'background', reactivity: 0.5 },
+                    { id: 'shadow-visualizer', role: 'shadow', reactivity: 0.7 },
+                    { id: 'card-visualizer-1', role: 'content', reactivity: 1.0 },
+                    { id: 'highlight-visualizer-1', role: 'highlight', reactivity: 1.2 },
+                    { id: 'card-visualizer-2', role: 'content', reactivity: 1.1 },
+                    { id: 'highlight-visualizer-2', role: 'highlight', reactivity: 1.3 },
+                    { id: 'card-visualizer-3', role: 'content', reactivity: 0.9 },
+                    { id: 'highlight-visualizer-3', role: 'highlight', reactivity: 1.1 },
+                    { id: 'card-visualizer-4', role: 'content', reactivity: 1.2 },
+                    { id: 'highlight-visualizer-4', role: 'highlight', reactivity: 1.4 },
+                    { id: 'card-visualizer-5', role: 'content', reactivity: 0.8 },
+                    { id: 'highlight-visualizer-5', role: 'highlight', reactivity: 1.0 },
+                    { id: 'accent-visualizer', role: 'accent', reactivity: 1.5 }
+                ];
+                
+                configs.forEach(config => {
+                    const visualizer = new HolographicVisualizer(config.id, config.role, config.reactivity);
+                    this.visualizers.push(visualizer);
+                });
+                
+                this.setupInteractions();
+                this.setupStateControls();
+                this.setupEnhancedScrolling();
+                this.startRenderLoop();
+                
+                console.log('✅ Neoskeuomorphic Holographic System ready - 13 visualizers with depth layers');
+            }
+            
+            setupInteractions() {
+                // Enhanced mouse tracking
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX / window.innerWidth;
+                    this.mouseY = 1.0 - (e.clientY / window.innerHeight);
+                    this.mouseIntensity = Math.min(1.0, Math.sqrt(e.movementX*e.movementX + e.movementY*e.movementY) / 40);
+                    
+                    // Update all visualizers with mouse data
+                    this.visualizers.forEach(viz => {
+                        viz.updateInteraction(this.mouseX, this.mouseY, this.mouseIntensity);
+                    });
+                    
+                    // Update grid overlay
+                    const gridOverlay = document.getElementById('gridOverlay');
+                    if (this.mouseIntensity > 0.3) {
+                        gridOverlay.classList.add('active');
+                    } else {
+                        gridOverlay.classList.remove('active');
+                    }
+                    
+                    // Update density variation based on mouse position
+                    const densityVar = Math.sin(this.mouseX * Math.PI) * Math.sin(this.mouseY * Math.PI) * 2.0;
+                    this.visualizers.forEach(viz => {
+                        viz.updateDensity(densityVar);
+                    });
+                });
+                
+                // Enhanced click interactions
+                document.addEventListener('click', (e) => {
+                    const rect = document.body.getBoundingClientRect();
+                    const clickX = (e.clientX - rect.left) / rect.width;
+                    const clickY = 1.0 - ((e.clientY - rect.top) / rect.height);
+                    
+                    // Trigger click effect on all visualizers
+                    this.visualizers.forEach(viz => {
+                        viz.triggerClick(clickX, clickY);
+                    });
+                    
+                    // Create ripple effect
+                    this.createRipple(e.clientX, e.clientY);
+                });
+                
+                // Card interactions
+                document.querySelectorAll('.neomorphic-card').forEach(card => {
+                    card.addEventListener('mouseenter', () => {
+                        card.style.transition = 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    });
+                    
+                    card.addEventListener('mouseleave', () => {
+                        card.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    });
+                    
+                    card.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        card.classList.add('clicked');
+                        setTimeout(() => {
+                            card.classList.remove('clicked');
+                        }, 300);
+                    });
+                });
+            }
+            
+            createRipple(x, y) {
+                const ripple = document.createElement('div');
+                ripple.className = 'interaction-ripple';
+                ripple.style.left = (x - 50) + 'px';
+                ripple.style.top = (y - 50) + 'px';
+                document.body.appendChild(ripple);
+                
+                setTimeout(() => {
+                    document.body.removeChild(ripple);
+                }, 600);
+            }
+            
+            setupStateControls() {
+                document.querySelectorAll('.state-dot').forEach((dot, index) => {
+                    dot.addEventListener('click', () => {
+                        this.snapToState(index);
+                        this.resetScrollAccumulation();
+                        
+                        document.querySelectorAll('.state-dot').forEach(d => d.classList.remove('active'));
+                        dot.classList.add('active');
+                    });
+                });
+            }
+            
+            setupEnhancedScrolling() {
+                let scrollTimeout;
+                
+                document.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    
+                    if (this.isTransitioning) return;
+                    
+                    const direction = e.deltaY > 0 ? 1 : -1;
+                    this.scrollAccumulation += direction;
+                    
+                    this.chaosIntensity = Math.min(1.0, Math.abs(this.scrollAccumulation) / this.scrollThreshold);
+                    
+                    this.visualizers.forEach(viz => {
+                        viz.updateChaos(this.chaosIntensity);
+                    });
+                    
+                    this.updateScrollFeedback();
+                    
+                    if (Math.abs(this.scrollAccumulation) >= this.scrollThreshold) {
+                        const newState = (this.currentState + (direction > 0 ? 1 : -1) + 5) % 5;
+                        this.triggerStateTransition(newState);
+                    }
+                    
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(() => {
+                        this.decayScrollAccumulation();
+                    }, 100);
+                });
+            }
+            
+            updateScrollFeedback() {
+                const progress = Math.abs(this.scrollAccumulation) / this.scrollThreshold * 100;
+                document.getElementById('scrollFill').style.height = `${Math.min(100, progress)}%`;
+                
+                document.getElementById('scroll-progress').textContent = `${Math.abs(this.scrollAccumulation).toFixed(1)}/${this.scrollThreshold}`;
+                document.getElementById('chaos-level').textContent = `${(this.chaosIntensity * 100).toFixed(0)}%`;
+                
+                const chaosOverlay = document.getElementById('chaosOverlay');
+                const gridOverlay = document.getElementById('gridOverlay');
+                if (this.chaosIntensity > 0.3) {
+                    chaosOverlay.classList.add('active');
+                    gridOverlay.classList.add('active');
+                } else {
+                    chaosOverlay.classList.remove('active');
+                    if (this.mouseIntensity <= 0.3) {
+                        gridOverlay.classList.remove('active');
+                    }
+                }
+            }
+            
+            decayScrollAccumulation() {
+                this.scrollAccumulation *= this.scrollDecay;
+                if (Math.abs(this.scrollAccumulation) < 0.1) {
+                    this.scrollAccumulation = 0;
+                    this.chaosIntensity = 0;
+                    
+                    this.visualizers.forEach(viz => {
+                        viz.updateChaos(0);
+                    });
+                    
+                    document.getElementById('chaosOverlay').classList.remove('active');
+                }
+                
+                this.updateScrollFeedback();
+                
+                if (this.scrollAccumulation !== 0) {
+                    setTimeout(() => this.decayScrollAccumulation(), 100);
+                }
+            }
+            
+            resetScrollAccumulation() {
+                this.scrollAccumulation = 0;
+                this.chaosIntensity = 0;
+                this.visualizers.forEach(viz => {
+                    viz.updateChaos(0);
+                });
+                this.updateScrollFeedback();
+            }
+            
+            triggerStateTransition(newState) {
+                if (newState === this.currentState || this.isTransitioning) return;
+                
+                console.log(`🌀 HOLOGRAPHIC TRANSITION TO: ${this.layoutNames[newState]}`);
+                
+                this.isTransitioning = true;
+                this.currentState = newState;
+                
+                // Change layout class
+                const holoContainer = document.getElementById('holoContainer');
+                holoContainer.className = `holographic-container ${this.layoutClasses[newState]}`;
+                
+                // Snap all visualizers to new state
+                this.visualizers.forEach(viz => {
+                    viz.snapToState(newState);
+                });
+                
+                document.querySelectorAll('.state-dot').forEach(d => d.classList.remove('active'));
+                document.querySelectorAll('.state-dot')[newState].classList.add('active');
+                
+                document.getElementById('current-layout').textContent = this.layoutNames[newState];
+                
+                this.resetScrollAccumulation();
+                
+                setTimeout(() => {
+                    this.isTransitioning = false;
+                }, 1000);
+            }
+            
+            snapToState(stateIndex) {
+                this.triggerStateTransition(stateIndex);
+            }
+            
+            startRenderLoop() {
+                const render = () => {
+                    this.visualizers.forEach(viz => {
+                        viz.render();
+                    });
+                    requestAnimationFrame(render);
+                };
+                
+                render();
+                console.log('🎬 Neoskeuomorphic holographic render loop started');
+            }
+        }
+        
+        // Utility functions
+        function actionClick(action) {
+            console.log(`Holographic Action: ${action}`);
+            const layoutName = window.neoskeuomorphicSystem.layoutNames[window.neoskeuomorphicSystem.currentState];
+            document.getElementById('card-description-5').textContent = `${action.toUpperCase()} protocol executed in ${layoutName} holographic space`;
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            console.log('🚀 Initializing Neoskeuomorphic Holographic System...');
+            const system = new NeoskeuomorphicHolographicSystem();
+            window.neoskeuomorphicSystem = system;
+        });
+        
+    </script>
+</body>
+</html>
