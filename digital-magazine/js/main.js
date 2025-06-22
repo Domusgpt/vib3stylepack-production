@@ -1,39 +1,99 @@
 import { VIB3StyleSystem } from './VIB3StyleSystem.js';
-import { loadSiteMeta, loadFeaturedArticle, loadLatestArticles } from './content-loader.js';
+import { loadSiteMeta, loadFeaturedArticle, loadLatestArticles, loadFullArticle } from './content-loader.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOM fully loaded and parsed. Initializing Vib3code Digital Magazine Systems...");
 
-    // Initialize VIB3StyleSystem first, as content loading might add elements
-    // that need to be styled or made interactive by VIB3, or VIB3 might affect layout.
-    // However, VIB3 scans on init. Dynamically added elements won't be picked up
-    // without a re-scan or explicit initialization call to VIB3 system.
-    // For Phase 2, we assume placeholders are styled, and newly created elements
-    // by content-loader will have data-attributes but might not be fully VIB3-active yet.
-
     const vib3System = new VIB3StyleSystem();
-    // Store it globally if content-loader needs to hint at re-scanning (conceptual for now)
+    // For potential future use if VIB3 system needs global access for re-scans
     // window.Vib3codeApp = { vib3System };
 
     try {
-        await vib3System.init('../presets.json'); // Path relative to digital-magazine/js/
+        await vib3System.init('../presets.json');
         console.log("Vib3code VIB3StyleSystem initialized successfully.");
 
-        // Load content after VIB3 system is ready (or at least its presets are loaded)
-        await loadSiteMeta();
-        await loadFeaturedArticle('ema-report-monolith'); // Default featured article
-        await loadLatestArticles(3); // Load up to 3 latest articles
-
-        // After content is loaded, if VIB3StyleSystem had a method to process new elements,
-        // it would be called here. e.g.:
-        // if (vib3System.scanNewElements) {
-        //     vib3System.scanNewElements(document.getElementById('latest-articles-grid'));
-        // }
-        // For now, the newly created cards in loadLatestArticles have the data-attributes
-        // but won't be processed by the initial VIB3 scan.
-
+        // Common setup for all pages
+        await loadSiteMeta(); // Loads site title, tagline, navigation
         updateFooterYear();
-        console.log("Dynamic content loaded.");
+
+        // Page-specific content loading
+        const pagePath = window.location.pathname.split("/").pop();
+
+        if (pagePath === 'index.html' || pagePath === '') { // Homepage
+            await loadFeaturedArticle('ema-report-monolith');
+            await loadLatestArticles(3);
+            console.log("Homepage dynamic content loaded.");
+        } else if (pagePath === 'article.html') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const articleSlug = urlParams.get('slug');
+            if (articleSlug) {
+                await loadFullArticle(articleSlug);
+                console.log(`Article page dynamic content for "${articleSlug}" loaded.`);
+            } else {
+                console.error("Article slug not found in URL for article.html");
+                // Optionally display an error message on the page
+                const articleBodyEl = document.getElementById('article-body');
+                if (articleBodyEl) articleBodyEl.innerHTML = "<p>Error: Article slug not provided in the URL.</p>";
+            }
+        } else if (pagePath === 'category.html') {
+import { VIB3StyleSystem } from './VIB3StyleSystem.js';
+import { loadSiteMeta, loadFeaturedArticle, loadLatestArticles, loadFullArticle, loadCategoryPage } from './content-loader.js';
+import { fadeInPage } from './article-transitions.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("DOM fully loaded and parsed. Initializing Vib3code Digital Magazine Systems...");
+
+    // Initialize page fade-in effect immediately
+    fadeInPage();
+
+    const vib3System = new VIB3StyleSystem();
+    // For potential future use if VIB3 system needs global access for re-scans
+    window.Vib3codeApp = { vib3System };
+
+    try {
+        await vib3System.init('../presets.json');
+        console.log("Vib3code VIB3StyleSystem initialized successfully.");
+
+        // Common setup for all pages
+        await loadSiteMeta();
+        updateFooterYear();
+
+        // Page-specific content loading
+        const pagePath = window.location.pathname.split("/").pop();
+
+        if (pagePath === 'index.html' || pagePath === '') { // Homepage
+            await loadFeaturedArticle('ema-report-monolith');
+            await loadLatestArticles(3);
+            console.log("Homepage dynamic content loaded.");
+        } else if (pagePath === 'article.html') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const articleSlug = urlParams.get('slug');
+            if (articleSlug) {
+                await loadFullArticle(articleSlug);
+                console.log(`Article page dynamic content for "${articleSlug}" loaded.`);
+            } else {
+                console.error("Article slug not found in URL for article.html");
+                const articleBodyEl = document.getElementById('article-body');
+                if (articleBodyEl) articleBodyEl.innerHTML = "<p>Error: Article slug not provided in the URL.</p>";
+            }
+        } else if (pagePath === 'category.html') {
+            const urlParamsCategory = new URLSearchParams(window.location.search);
+            const categoryId = urlParamsCategory.get('id');
+            if (categoryId) {
+                await loadCategoryPage(categoryId); // This now also handles VIB3 background update via window.Vib3codeApp
+                console.log(`Category page dynamic content for "${categoryId}" loaded.`);
+            } else {
+                console.error("Category ID not found in URL for category.html");
+                const categoryGridEl = document.getElementById('category-articles-grid');
+                if (categoryGridEl) categoryGridEl.innerHTML = "<p>Error: Category ID not provided in the URL.</p>";
+            }
+        }
+
+        // VIB3StyleSystem re-scan for dynamically added elements (conceptual)
+        // if (vib3System.scanNewElements) { // If such a method existed
+        //    vib3System.scanNewElements(document.body); // Or more targeted elements
+        // }
+        console.log("Page initialization and content loading sequence complete.");
 
     } catch (error) {
         console.error("Error during initialization or content loading:", error);

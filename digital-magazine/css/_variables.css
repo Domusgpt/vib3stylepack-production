@@ -80,4 +80,6 @@
     --color-medium-grey-rgb: 44, 44, 44;
     --color-white-rgb: 255, 255, 255;
 
+    /* Transitions */
+    --page-transition-duration: 0.3s; /* Matches JS PAGE_TRANSITION_DURATION */
 }

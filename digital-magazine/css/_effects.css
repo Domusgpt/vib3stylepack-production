@@ -136,3 +136,32 @@
 
 /* Add --color-white-rgb to _variables.css if not present */
 /* :root { --color-white-rgb: 255, 255, 255; } */
+
+/* --- Page Transition Effects --- */
+body {
+    /* Starts transparent, JS will add 'page-fade-in' to make it visible */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out; /* Matches PAGE_TRANSITION_DURATION in JS */
+}
+
+body.page-fade-in {
+    opacity: 1;
+}
+
+body.page-fade-out {
+    opacity: 0 !important; /* Important to override initial or fade-in state */
+}
+
+/* --- Page Transition Effects --- */
+body {
+    opacity: 0; /* Start pages transparent */
+    transition: opacity var(--page-transition-duration, 0.3s) ease-in-out;
+}
+
+body.page-fade-in {
+    opacity: 1;
+}
+
+body.page-fade-out {
+    opacity: 0 !important; /* Ensure it fades out even if page-fade-in is also present initially */
+}
