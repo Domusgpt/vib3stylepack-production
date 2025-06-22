@@ -165,6 +165,48 @@
         .status-row {
             margin: 0.3rem 0;
         }
+        
+        /* VIB3 UI Component Animations */
+        @keyframes pulse {
+            0% { transform: scale(1.0); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1.0); }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 60%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            80% { transform: translateY(-5px); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* VIB3 UI Component Styling */
+        .vib3-ui-component {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .vib3-ui-component:hover {
+            filter: brightness(1.1);
+        }
+        
+        .vib3-nav-item:hover {
+            transform: translateX(5px);
+            background: rgba(0,255,255,0.1);
+            padding-left: 0.5rem;
+        }
+        
+        .vib3-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,255,0,0.3);
+        }
+        
+        .vib3-action-btn:active {
+            transform: translateY(0px);
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Serif+Pro:wght@400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -295,7 +337,8 @@
         <div class="status-row">Geometry: <span id="current-geometry">hypercube</span></div>
         <div class="status-row">Modifier: <span id="current-modifier">1.0</span></div>
         <div class="status-row">Contexts: <span id="context-count">0</span></div>
-        <div class="status-row">Elements: <span id="element-count">0</span></div>
+        <div class="status-row">UI Components: <span id="ui-component-count">0</span></div>
+        <div class="status-row">Active Instances: <span id="active-instance-count">0</span></div>
     </div>
 
     <!-- VIB3STYLEPACK Configuration -->

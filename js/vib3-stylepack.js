@@ -330,7 +330,8 @@ class VIB3StylePack {
             const elements = {
                 systemStatus: document.getElementById('system-status'),
                 contextCount: document.getElementById('context-count'),
-                elementCount: document.getElementById('element-count')
+                uiComponentCount: document.getElementById('ui-component-count'),
+                activeInstanceCount: document.getElementById('active-instance-count')
             };
             
             if (elements.systemStatus) {
@@ -344,9 +345,26 @@ class VIB3StylePack {
                 elements.contextCount.style.color = contextCount <= 6 ? '#0f0' : '#f00';
             }
             
-            if (elements.elementCount && this.elementMapper) {
-                const status = this.elementMapper.getStatus();
-                elements.elementCount.textContent = status.totalElements;
+            if (elements.uiComponentCount && this.multiVisualizerSystem) {
+                let uiComponentCount = 0;
+                this.multiVisualizerSystem.sectionInstances.forEach(instances => {
+                    instances.forEach(instance => {
+                        if (instance.uiComponent) uiComponentCount++;
+                    });
+                });
+                elements.uiComponentCount.textContent = uiComponentCount;
+                elements.uiComponentCount.style.color = uiComponentCount > 0 ? '#0f0' : '#ff0';
+            }
+            
+            if (elements.activeInstanceCount && this.multiVisualizerSystem) {
+                let activeCount = 0;
+                this.multiVisualizerSystem.sectionInstances.forEach(instances => {
+                    instances.forEach(instance => {
+                        if (instance.isActive) activeCount++;
+                    });
+                });
+                elements.activeInstanceCount.textContent = activeCount;
+                elements.activeInstanceCount.style.color = activeCount > 0 ? '#0f0' : '#ff0';
             }
         };
         

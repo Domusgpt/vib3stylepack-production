@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB3StylePack UI Components Test</title>
+    <style>
+        body {
+            background: #1a1a2e;
+            color: white;
+            font-family: monospace;
+            margin: 0;
+            padding: 20px;
+        }
+        .test-section {
+            min-height: 50vh;
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #333;
+            position: relative;
+        }
+        .debug-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #0ff;
+            max-width: 300px;
+            z-index: 9999;
+        }
+        .error-log {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(100,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+        }
+        .success-log {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,100,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 VIB3StylePack UI Components Test</h1>
+    
+    <div class="debug-panel">
+        <h3>System Status</h3>
+        <div>Status: <span id="test-status">Loading...</span></div>
+        <div>Sections: <span id="test-sections">0</span></div>
+        <div>Instances: <span id="test-instances">0</span></div>
+        <div>UI Components: <span id="test-ui-components">0</span></div>
+        <div>Errors: <span id="test-errors">0</span></div>
+    </div>
+    
+    <div class="error-log" id="error-log" style="display:none;">
+        <h4>🚨 Errors:</h4>
+        <div id="error-list"></div>
+    </div>
+    
+    <div class="success-log" id="success-log" style="display:none;">
+        <h4>✅ Success:</h4>
+        <div id="success-list"></div>
+    </div>
+
+    <!-- Test Section 1 - Home -->
+    <section class="test-section" data-vib3-section="home" data-vib3-geometry="hypercube" data-vib3-modifier="1.0">
+        <h2>🏠 Home Section (Hypercube)</h2>
+        <p>Testing multi-visualizer UI components with navigation panels, action buttons, and floating controls.</p>
+    </section>
+
+    <!-- Test Section 2 - Articles -->
+    <section class="test-section" data-vib3-section="articles" data-vib3-geometry="tetrahedron" data-vib3-modifier="0.8">
+        <h2>📖 Articles Section (Tetrahedron)</h2>
+        <p>Testing stable geometric UI components with structured navigation.</p>
+    </section>
+
+    <!-- VIB3STYLEPACK Scripts -->
+    <script src="js/vib34d-core.js"></script>
+    <script src="js/vib3-multi-visualizer-system.js"></script>
+    <script src="js/vib3-home-master.js"></script>
+    <script src="js/vib3-portal-scroll.js"></script>
+    <script src="js/vib3-element-mapper.js"></script>
+    <script src="js/vib3-content-reactor.js"></script>
+    <script src="js/vib3-stylepack.js"></script>
+
+    <script>
+        // Test and Debug System
+        let testStats = {
+            errors: 0,
+            successes: 0,
+            instances: 0,
+            uiComponents: 0
+        };
+
+        // Capture console messages
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            logMessage('success', args.join(' '));
+        };
+
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            logMessage('error', args.join(' '));
+            testStats.errors++;
+            updateTestStatus();
+        };
+
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            logMessage('error', '⚠️ ' + args.join(' '));
+        };
+
+        function logMessage(type, message) {
+            const logElement = document.getElementById(type === 'error' ? 'error-list' : 'success-list');
+            const logContainer = document.getElementById(type === 'error' ? 'error-log' : 'success-log');
+            
+            if (logElement) {
+                const messageDiv = document.createElement('div');
+                messageDiv.textContent = new Date().toLocaleTimeString() + ': ' + message;
+                messageDiv.style.fontSize = '0.8rem';
+                messageDiv.style.marginBottom = '3px';
+                logElement.appendChild(messageDiv);
+                
+                logContainer.style.display = 'block';
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+
+            if (type === 'success') {
+                testStats.successes++;
+            }
+            updateTestStatus();
+        }
+
+        function updateTestStatus() {
+            document.getElementById('test-status').textContent = testStats.errors > 0 ? '❌ Errors' : '✅ Running';
+            document.getElementById('test-errors').textContent = testStats.errors;
+            
+            // Count sections
+            const sections = document.querySelectorAll('[data-vib3-section]');
+            document.getElementById('test-sections').textContent = sections.length;
+            
+            // Count instances and UI components
+            setTimeout(() => {
+                const instances = document.querySelectorAll('canvas[id*="vib34d"]');
+                const uiComponents = document.querySelectorAll('.vib3-ui-component');
+                
+                document.getElementById('test-instances').textContent = instances.length;
+                document.getElementById('test-ui-components').textContent = uiComponents.length;
+                
+                testStats.instances = instances.length;
+                testStats.uiComponents = uiComponents.length;
+            }, 2000);
+        }
+
+        // Initialize test status
+        updateTestStatus();
+
+        // Test UI component interactions after system loads
+        setTimeout(() => {
+            console.log('🧪 Testing UI component interactions...');
+            
+            // Find and test UI components
+            const uiComponents = document.querySelectorAll('.vib3-ui-component');
+            console.log(`🎯 Found ${uiComponents.length} UI components to test`);
+            
+            uiComponents.forEach((component, index) => {
+                setTimeout(() => {
+                    try {
+                        // Simulate click
+                        const clickEvent = new MouseEvent('click', {
+                            bubbles: true,
+                            cancelable: true,
+                            clientX: component.offsetLeft + component.offsetWidth / 2,
+                            clientY: component.offsetTop + component.offsetHeight / 2
+                        });
+                        component.dispatchEvent(clickEvent);
+                        console.log(`✅ Tested click on UI component ${index + 1}`);
+                    } catch (error) {
+                        console.error(`🚨 Error testing UI component ${index + 1}:`, error);
+                    }
+                }, index * 500);
+            });
+        }, 5000);
+
+        // Performance monitoring
+        setInterval(() => {
+            const activeInstances = document.querySelectorAll('canvas[id*="vib34d"]');
+            const activeComponents = document.querySelectorAll('.vib3-ui-component');
+            
+            console.log(`📊 Performance check: ${activeInstances.length} instances, ${activeComponents.length} UI components active`);
+        }, 10000);
+    </script>
+</body>
+</html>
