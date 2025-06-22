@@ -38,4 +38,288 @@ class VIB3ElementMapper {
         // Scan for elements with data-vib3-element attributes
         const elements = document.querySelectorAll('[data-vib3-element]');
         
-        elements.forEach((element, index) => {\n            const role = element.dataset.vib3Element;\n            const sectionElement = element.closest('[data-vib3-section]');\n            const sectionKey = sectionElement ? sectionElement.dataset.vib3Section : 'global';\n            \n            const elementData = {\n                element: element,\n                role: role,\n                sectionKey: sectionKey,\n                id: `element-${index}`,\n                bounds: element.getBoundingClientRect(),\n                isHovered: false,\n                isActive: false\n            };\n            \n            this.mappedElements.set(element, elementData);\n            \n            // Group by section\n            if (!this.sectionElements.has(sectionKey)) {\n                this.sectionElements.set(sectionKey, []);\n            }\n            this.sectionElements.get(sectionKey).push(elementData);\n            \n            console.log(`📍 Mapped ${role} element in section ${sectionKey}`);\n        });\n    }\n    \n    setupElementInteractions() {\n        this.mappedElements.forEach((elementData, element) => {\n            // Hover effects\n            element.addEventListener('mouseenter', () => {\n                this.activateElement(elementData);\n            });\n            \n            element.addEventListener('mouseleave', () => {\n                this.deactivateElement(elementData);\n            });\n            \n            // Click effects\n            element.addEventListener('click', () => {\n                this.triggerElementEffect(elementData);\n            });\n            \n            // Focus for accessibility\n            element.addEventListener('focus', () => {\n                this.activateElement(elementData);\n            });\n            \n            element.addEventListener('blur', () => {\n                this.deactivateElement(elementData);\n            });\n        });\n        \n        console.log('🎯 Element interactions configured');\n    }\n    \n    createElementVariations() {\n        // Create geometry variations for each section based on its elements\n        this.sectionElements.forEach((elements, sectionKey) => {\n            const variations = [];\n            \n            // Always include background variation\n            const backgroundRole = this.config.elementRoles.background;\n            variations.push({\n                role: 'background',\n                modifier: backgroundRole.modifier,\n                color: backgroundRole.color,\n                opacity: backgroundRole.opacity\n            });\n            \n            // Add variations for each unique element role in this section\n            const uniqueRoles = [...new Set(elements.map(el => el.role))];\n            \n            uniqueRoles.forEach(role => {\n                if (role !== 'background' && this.config.elementRoles[role]) {\n                    const roleConfig = this.config.elementRoles[role];\n                    variations.push({\n                        role: role,\n                        modifier: roleConfig.modifier,\n                        color: roleConfig.color,\n                        opacity: roleConfig.opacity\n                    });\n                }\n            });\n            \n            // Send variations to section renderer\n            if (this.styleSystem.sectionRenderers && this.styleSystem.sectionRenderers.has(sectionKey)) {\n                const renderer = this.styleSystem.sectionRenderers.get(sectionKey);\n                renderer.setElementVariations(variations);\n                \n                console.log(`🎨 Set ${variations.length} variations for section ${sectionKey}`);\n            }\n        });\n    }\n    \n    activateElement(elementData) {\n        if (elementData.isHovered) return;\n        \n        elementData.isHovered = true;\n        elementData.isActive = true;\n        \n        // Visual feedback\n        elementData.element.style.transform = 'scale(1.02)';\n        \n        // Geometry effect enhancement\n        this.enhanceElementGeometry(elementData, 1.5);\n        \n        console.log(`✨ Activated ${elementData.role} element`);\n    }\n    \n    deactivateElement(elementData) {\n        elementData.isHovered = false;\n        elementData.isActive = false;\n        \n        // Reset visual feedback\n        elementData.element.style.transform = '';\n        \n        // Reset geometry effect\n        this.enhanceElementGeometry(elementData, 1.0);\n    }\n    \n    triggerElementEffect(elementData) {\n        // Click creates visual ripple effect\n        const { element, role, sectionKey } = elementData;\n        \n        // Add visual feedback\n        element.style.transition = 'transform 0.1s ease';\n        element.style.transform = 'scale(0.98)';\n        \n        setTimeout(() => {\n            element.style.transform = elementData.isHovered ? 'scale(1.02)' : '';\n        }, 100);\n        \n        // Send click effect to geometry renderer\n        this.sendElementInteraction(elementData, {\n            type: 'click',\n            intensity: 0.8,\n            role: role\n        });\n        \n        console.log(`💫 Triggered ${role} element effect`);\n    }\n    \n    enhanceElementGeometry(elementData, intensityMultiplier) {\n        // Send enhancement to specific section renderer\n        this.sendElementInteraction(elementData, {\n            type: 'element_hover',\n            role: elementData.role,\n            intensity: intensityMultiplier,\n            isActive: elementData.isActive\n        });\n    }\n    \n    sendElementInteraction(elementData, interactionData) {\n        const { sectionKey } = elementData;\n        \n        // Send to section renderer\n        if (this.styleSystem.sectionRenderers && this.styleSystem.sectionRenderers.has(sectionKey)) {\n            const renderer = this.styleSystem.sectionRenderers.get(sectionKey);\n            \n            // Enhance interaction data with element-specific info\n            const enhancedData = {\n                ...interactionData,\n                elementData: elementData,\n                sectionKey: sectionKey\n            };\n            \n            renderer.updateInteraction(enhancedData);\n        }\n        \n        // Also send to home-master for global effects\n        if (this.styleSystem.homeMaster) {\n            this.styleSystem.homeMaster.updateMasterInteraction({\n                type: 'element_interaction',\n                elementRole: elementData.role,\n                sectionKey: sectionKey,\n                ...interactionData\n            });\n        }\n    }\n    \n    // Update element positions (for responsive layouts)\n    updateElementBounds() {\n        this.mappedElements.forEach((elementData) => {\n            elementData.bounds = elementData.element.getBoundingClientRect();\n        });\n        \n        console.log('📐 Updated element bounds');\n    }\n    \n    // Add new element dynamically\n    addElement(element) {\n        const role = element.dataset.vib3Element;\n        if (!role) return;\n        \n        const sectionElement = element.closest('[data-vib3-section]');\n        const sectionKey = sectionElement ? sectionElement.dataset.vib3Section : 'global';\n        \n        const elementData = {\n            element: element,\n            role: role,\n            sectionKey: sectionKey,\n            id: `element-${this.mappedElements.size}`,\n            bounds: element.getBoundingClientRect(),\n            isHovered: false,\n            isActive: false\n        };\n        \n        this.mappedElements.set(element, elementData);\n        \n        // Setup interactions\n        this.setupElementInteractions();\n        \n        // Update section variations\n        this.createElementVariations();\n        \n        console.log(`➕ Added new ${role} element to section ${sectionKey}`);\n    }\n    \n    // Remove element\n    removeElement(element) {\n        const elementData = this.mappedElements.get(element);\n        if (elementData) {\n            this.mappedElements.delete(element);\n            \n            // Remove from section list\n            const sectionElements = this.sectionElements.get(elementData.sectionKey);\n            if (sectionElements) {\n                const index = sectionElements.indexOf(elementData);\n                if (index > -1) {\n                    sectionElements.splice(index, 1);\n                }\n            }\n            \n            console.log(`➖ Removed ${elementData.role} element`);\n        }\n    }\n    \n    // Get element data for debugging\n    getElementData(element) {\n        return this.mappedElements.get(element);\n    }\n    \n    // Get all elements in section\n    getSectionElements(sectionKey) {\n        return this.sectionElements.get(sectionKey) || [];\n    }\n    \n    // Get status for debugging\n    getStatus() {\n        const elementsByRole = {};\n        const elementsBySection = {};\n        \n        this.mappedElements.forEach((elementData) => {\n            // Count by role\n            elementsByRole[elementData.role] = (elementsByRole[elementData.role] || 0) + 1;\n            \n            // Count by section\n            elementsBySection[elementData.sectionKey] = (elementsBySection[elementData.sectionKey] || 0) + 1;\n        });\n        \n        return {\n            totalElements: this.mappedElements.size,\n            elementsByRole,\n            elementsBySection,\n            sectionCount: this.sectionElements.size\n        };\n    }\n    \n    destroy() {\n        // Remove all event listeners\n        this.mappedElements.forEach((elementData, element) => {\n            element.style.transform = '';\n            element.style.transition = '';\n        });\n        \n        this.mappedElements.clear();\n        this.sectionElements.clear();\n        \n        console.log('🗑️ Element mapper destroyed');\n    }\n}\n\nwindow.VIB3ElementMapper = VIB3ElementMapper;\nconsole.log('✅ VIB3STYLEPACK Element Mapper loaded - HTML to geometry mapping ready');
+        elements.forEach((element, index) => {
+            const role = element.dataset.vib3Element;
+            const sectionElement = element.closest('[data-vib3-section]');
+            const sectionKey = sectionElement ? sectionElement.dataset.vib3Section : 'global';
+            
+            const elementData = {
+                element: element,
+                role: role,
+                sectionKey: sectionKey,
+                id: `element-${index}`,
+                bounds: element.getBoundingClientRect(),
+                isHovered: false,
+                isActive: false
+            };
+            
+            this.mappedElements.set(element, elementData);
+            
+            // Group by section
+            if (!this.sectionElements.has(sectionKey)) {
+                this.sectionElements.set(sectionKey, []);
+            }
+            this.sectionElements.get(sectionKey).push(elementData);
+            
+            console.log(`📍 Mapped ${role} element in section ${sectionKey}`);
+        });
+    }
+    
+    setupElementInteractions() {
+        this.mappedElements.forEach((elementData, element) => {
+            // Hover effects
+            element.addEventListener('mouseenter', () => {
+                this.activateElement(elementData);
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                this.deactivateElement(elementData);
+            });
+            
+            // Click effects
+            element.addEventListener('click', () => {
+                this.triggerElementEffect(elementData);
+            });
+            
+            // Focus for accessibility
+            element.addEventListener('focus', () => {
+                this.activateElement(elementData);
+            });
+            
+            element.addEventListener('blur', () => {
+                this.deactivateElement(elementData);
+            });
+        });
+        
+        console.log('🎯 Element interactions configured');
+    }
+    
+    createElementVariations() {
+        // Create geometry variations for each section based on its elements
+        this.sectionElements.forEach((elements, sectionKey) => {
+            const variations = [];
+            
+            // Always include background variation
+            const backgroundRole = this.config.elementRoles.background;
+            variations.push({
+                role: 'background',
+                modifier: backgroundRole.modifier,
+                color: backgroundRole.color,
+                opacity: backgroundRole.opacity
+            });
+            
+            // Add variations for each unique element role in this section
+            const uniqueRoles = [...new Set(elements.map(el => el.role))];
+            
+            uniqueRoles.forEach(role => {
+                if (role !== 'background' && this.config.elementRoles[role]) {
+                    const roleConfig = this.config.elementRoles[role];
+                    variations.push({
+                        role: role,
+                        modifier: roleConfig.modifier,
+                        color: roleConfig.color,
+                        opacity: roleConfig.opacity
+                    });
+                }
+            });
+            
+            // Send variations to section renderer
+            if (this.styleSystem.sectionRenderers && this.styleSystem.sectionRenderers.has(sectionKey)) {
+                const renderer = this.styleSystem.sectionRenderers.get(sectionKey);
+                renderer.setElementVariations(variations);
+                
+                console.log(`🎨 Set ${variations.length} variations for section ${sectionKey}`);
+            }
+        });
+    }
+    
+    activateElement(elementData) {
+        if (elementData.isHovered) return;
+        
+        elementData.isHovered = true;
+        elementData.isActive = true;
+        
+        // Visual feedback
+        elementData.element.style.transform = 'scale(1.02)';
+        
+        // Geometry effect enhancement
+        this.enhanceElementGeometry(elementData, 1.5);
+        
+        console.log(`✨ Activated ${elementData.role} element`);
+    }
+    
+    deactivateElement(elementData) {
+        elementData.isHovered = false;
+        elementData.isActive = false;
+        
+        // Reset visual feedback
+        elementData.element.style.transform = '';
+        
+        // Reset geometry effect
+        this.enhanceElementGeometry(elementData, 1.0);
+    }
+    
+    triggerElementEffect(elementData) {
+        // Click creates visual ripple effect
+        const { element, role, sectionKey } = elementData;
+        
+        // Add visual feedback
+        element.style.transition = 'transform 0.1s ease';
+        element.style.transform = 'scale(0.98)';
+        
+        setTimeout(() => {
+            element.style.transform = elementData.isHovered ? 'scale(1.02)' : '';
+        }, 100);
+        
+        // Send click effect to geometry renderer
+        this.sendElementInteraction(elementData, {
+            type: 'click',
+            intensity: 0.8,
+            role: role
+        });
+        
+        console.log(`💫 Triggered ${role} element effect`);
+    }
+    
+    enhanceElementGeometry(elementData, intensityMultiplier) {
+        // Send enhancement to specific section renderer
+        this.sendElementInteraction(elementData, {
+            type: 'element_hover',
+            role: elementData.role,
+            intensity: intensityMultiplier,
+            isActive: elementData.isActive
+        });
+    }
+    
+    sendElementInteraction(elementData, interactionData) {
+        const { sectionKey } = elementData;
+        
+        // Send to section renderer
+        if (this.styleSystem.sectionRenderers && this.styleSystem.sectionRenderers.has(sectionKey)) {
+            const renderer = this.styleSystem.sectionRenderers.get(sectionKey);
+            
+            // Enhance interaction data with element-specific info
+            const enhancedData = {
+                ...interactionData,
+                elementData: elementData,
+                sectionKey: sectionKey
+            };
+            
+            renderer.updateInteraction(enhancedData);
+        }
+        
+        // Also send to home-master for global effects
+        if (this.styleSystem.homeMaster) {
+            this.styleSystem.homeMaster.updateMasterInteraction({
+                type: 'element_interaction',
+                elementRole: elementData.role,
+                sectionKey: sectionKey,
+                ...interactionData
+            });
+        }
+    }
+    
+    // Update element positions (for responsive layouts)
+    updateElementBounds() {
+        this.mappedElements.forEach((elementData) => {
+            elementData.bounds = elementData.element.getBoundingClientRect();
+        });
+        
+        console.log('📐 Updated element bounds');
+    }
+    
+    // Add new element dynamically
+    addElement(element) {
+        const role = element.dataset.vib3Element;
+        if (!role) return;
+        
+        const sectionElement = element.closest('[data-vib3-section]');
+        const sectionKey = sectionElement ? sectionElement.dataset.vib3Section : 'global';
+        
+        const elementData = {
+            element: element,
+            role: role,
+            sectionKey: sectionKey,
+            id: `element-${this.mappedElements.size}`,
+            bounds: element.getBoundingClientRect(),
+            isHovered: false,
+            isActive: false
+        };
+        
+        this.mappedElements.set(element, elementData);
+        
+        // Setup interactions
+        this.setupElementInteractions();
+        
+        // Update section variations
+        this.createElementVariations();
+        
+        console.log(`➕ Added new ${role} element to section ${sectionKey}`);
+    }
+    
+    // Remove element
+    removeElement(element) {
+        const elementData = this.mappedElements.get(element);
+        if (elementData) {
+            this.mappedElements.delete(element);
+            
+            // Remove from section list
+            const sectionElements = this.sectionElements.get(elementData.sectionKey);
+            if (sectionElements) {
+                const index = sectionElements.indexOf(elementData);
+                if (index > -1) {
+                    sectionElements.splice(index, 1);
+                }
+            }
+            
+            console.log(`➖ Removed ${elementData.role} element`);
+        }
+    }
+    
+    // Get element data for debugging
+    getElementData(element) {
+        return this.mappedElements.get(element);
+    }
+    
+    // Get all elements in section
+    getSectionElements(sectionKey) {
+        return this.sectionElements.get(sectionKey) || [];
+    }
+    
+    // Get status for debugging
+    getStatus() {
+        const elementsByRole = {};
+        const elementsBySection = {};
+        
+        this.mappedElements.forEach((elementData) => {
+            // Count by role
+            elementsByRole[elementData.role] = (elementsByRole[elementData.role] || 0) + 1;
+            
+            // Count by section
+            elementsBySection[elementData.sectionKey] = (elementsBySection[elementData.sectionKey] || 0) + 1;
+        });
+        
+        return {
+            totalElements: this.mappedElements.size,
+            elementsByRole,
+            elementsBySection,
+            sectionCount: this.sectionElements.size
+        };
+    }
+    
+    destroy() {
+        // Remove all event listeners
+        this.mappedElements.forEach((elementData, element) => {
+            element.style.transform = '';
+            element.style.transition = '';
+        });
+        
+        this.mappedElements.clear();
+        this.sectionElements.clear();
+        
+        console.log('🗑️ Element mapper destroyed');
+    }
+}
+
+window.VIB3ElementMapper = VIB3ElementMapper;
+console.log('✅ VIB3STYLEPACK Element Mapper loaded - HTML to geometry mapping ready');

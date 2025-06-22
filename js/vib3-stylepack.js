@@ -52,8 +52,9 @@ class VIB3StylePack {
         this.homeMaster = null;
         this.portalScroll = null;
         this.elementMapper = null;
+        this.multiVisualizerSystem = null;
         
-        // Section renderers (one per section)
+        // Section renderers (MULTIPLE per section)
         this.sectionRenderers = new Map();
         this.sections = new Map();
         
@@ -74,11 +75,384 @@ class VIB3StylePack {
             // Step 2: Detect and setup sections
             await this.detectSections();
             
-            // Step 3: Create section renderers (canvas consolidation)
-            await this.createSectionRenderers();
+            // Step 3: Initialize Multi-Visualizer System (MULTIPLE instances per section)
+            await this.initializeMultiVisualizerSystem();
             
             // Step 4: Initialize element mapper
             await this.initializeElementMapper();
             
             // Step 5: Initialize portal scroll system
-            if (this.config.enablePortalScroll) {\n                await this.initializePortalScroll();\n            }\n            \n            // Step 6: Setup global interactions\n            await this.setupGlobalInteractions();\n            \n            // Step 7: Start render loop\n            this.startRenderLoop();\n            \n            // Step 8: Update status display\n            this.updateStatusDisplay();\n            \n            this.isInitialized = true;\n            console.log(`✅ VIB3STYLEPACK initialized with ${this.sectionRenderers.size} renderers`);\n            \n        } catch (error) {\n            console.error('🚨 VIB3STYLEPACK initialization failed:', error);\n        }\n    }\n    \n    async initializeHomeMaster() {\n        if (typeof VIB3HomeMaster === 'undefined') {\n            console.error('🚨 VIB3HomeMaster not loaded');\n            return;\n        }\n        \n        this.homeMaster = new VIB3HomeMaster({\n            sectionModifiers: this.config.sectionModifiers\n        });\n        \n        console.log('🏠 Home-Master system initialized');\n    }\n    \n    async detectSections() {\n        const sectionElements = document.querySelectorAll('[data-vib3-section]');\n        \n        sectionElements.forEach((element) => {\n            const sectionKey = element.dataset.vib3Section;\n            const geometry = element.dataset.vib3Geometry || this.config.sectionGeometries[sectionKey] || 'hypercube';\n            const modifier = parseFloat(element.dataset.vib3Modifier) || this.config.sectionModifiers[sectionKey] || 1.0;\n            \n            this.sections.set(sectionKey, {\n                element: element,\n                geometry: geometry,\n                modifier: modifier,\n                isVisible: false,\n                isActive: false\n            });\n            \n            console.log(`📍 Detected section [${sectionKey}] with geometry: ${geometry}`);\n        });\n        \n        console.log(`📍 Detected ${this.sections.size} sections`);\n    }\n    \n    async createSectionRenderers() {\n        // Create ONE renderer per section (canvas consolidation)\n        for (let [sectionKey, sectionData] of this.sections) {\n            await this.createSectionRenderer(sectionKey, sectionData);\n        }\n        \n        console.log(`🎨 Created ${this.sectionRenderers.size} section renderers`);\n    }\n    \n    async createSectionRenderer(sectionKey, sectionData) {\n        if (typeof VIB3Core === 'undefined') {\n            console.error('🚨 VIB3Core not loaded');\n            return;\n        }\n        \n        // Create canvas for this section\n        const canvas = document.createElement('canvas');\n        canvas.id = `vib3-canvas-${sectionKey}`;\n        canvas.className = 'vib3-section-canvas';\n        canvas.style.cssText = `\n            position: absolute;\n            top: 0;\n            left: 0;\n            width: 100%;\n            height: 100%;\n            pointer-events: none;\n            z-index: 1;\n        `;\n        \n        // Size canvas\n        canvas.width = window.innerWidth;\n        canvas.height = window.innerHeight;\n        \n        // Add to section\n        sectionData.element.style.position = 'relative';\n        sectionData.element.insertBefore(canvas, sectionData.element.firstChild);\n        \n        // Create renderer\n        const renderer = new VIB3Core(canvas, {\n            sectionKey: sectionKey,\n            geometry: sectionData.geometry,\n            modifier: sectionData.modifier\n        });\n        \n        this.sectionRenderers.set(sectionKey, renderer);\n        \n        console.log(`🎨 Created renderer for section [${sectionKey}]`);\n    }\n    \n    async initializeElementMapper() {\n        if (typeof VIB3ElementMapper === 'undefined') {\n            console.error('🚨 VIB3ElementMapper not loaded');\n            return;\n        }\n        \n        this.elementMapper = new VIB3ElementMapper(this, {\n            elementRoles: this.config.elementRoles\n        });\n        \n        console.log('🗺️ Element mapper initialized');\n    }\n    \n    async initializePortalScroll() {\n        if (typeof VIB3PortalScroll === 'undefined') {\n            console.error('🚨 VIB3PortalScroll not loaded');\n            return;\n        }\n        \n        this.portalScroll = new VIB3PortalScroll(this, {\n            snapToSections: this.config.snapToSections,\n            transitionDuration: this.config.transitionDuration\n        });\n        \n        console.log('🌀 Portal scroll system initialized');\n    }\n    \n    async setupGlobalInteractions() {\n        // Mouse movement\n        document.addEventListener('mousemove', (e) => {\n            const mouseX = e.clientX / window.innerWidth;\n            const mouseY = e.clientY / window.innerHeight;\n            \n            // Send to all renderers\n            this.sectionRenderers.forEach((renderer) => {\n                renderer.updateInteraction({\n                    type: 'mouse',\n                    mouseX: mouseX,\n                    mouseY: mouseY,\n                    intensity: 0.2\n                });\n            });\n            \n            // Send to home-master\n            if (this.homeMaster) {\n                this.homeMaster.updateMasterInteraction({\n                    type: 'mouse',\n                    mouseX: mouseX,\n                    mouseY: mouseY,\n                    intensity: 0.1\n                });\n            }\n        });\n        \n        // Click interactions\n        document.addEventListener('click', (e) => {\n            const clickX = e.clientX / window.innerWidth;\n            const clickY = e.clientY / window.innerHeight;\n            \n            // Send click to all renderers\n            this.sectionRenderers.forEach((renderer) => {\n                renderer.updateInteraction({\n                    type: 'click',\n                    mouseX: clickX,\n                    mouseY: clickY,\n                    intensity: 0.8\n                });\n            });\n            \n            // Send to home-master\n            if (this.homeMaster) {\n                this.homeMaster.updateMasterInteraction({\n                    type: 'click',\n                    intensity: 0.6\n                });\n            }\n        });\n        \n        // Window resize\n        window.addEventListener('resize', () => {\n            this.handleResize();\n        });\n        \n        // Parameter change listener\n        document.addEventListener('vib3-parameters-changed', (e) => {\n            this.handleParameterChange(e.detail);\n        });\n        \n        console.log('🎯 Global interactions configured');\n    }\n    \n    handleParameterChange(detail) {\n        const { derivedParameters, specificSection } = detail;\n        \n        if (specificSection) {\n            // Update specific section\n            const renderer = this.sectionRenderers.get(specificSection);\n            if (renderer) {\n                const params = derivedParameters[specificSection];\n                renderer.updateGeometry(renderer.geometry, params.modifier);\n            }\n        } else {\n            // Update all sections\n            Object.entries(derivedParameters).forEach(([sectionKey, params]) => {\n                const renderer = this.sectionRenderers.get(sectionKey);\n                if (renderer) {\n                    renderer.updateGeometry(renderer.geometry, params.modifier);\n                }\n            });\n        }\n    }\n    \n    handleResize() {\n        this.sectionRenderers.forEach((renderer) => {\n            renderer.resize();\n        });\n        \n        // Update element bounds\n        if (this.elementMapper) {\n            this.elementMapper.updateElementBounds();\n        }\n        \n        console.log('📐 Handled resize');\n    }\n    \n    startRenderLoop() {\n        if (this.renderLoopActive) return;\n        \n        this.renderLoopActive = true;\n        \n        const render = () => {\n            if (!this.renderLoopActive) return;\n            \n            // Render all active section renderers\n            this.sectionRenderers.forEach((renderer, sectionKey) => {\n                const sectionData = this.sections.get(sectionKey);\n                \n                // Only render visible sections\n                if (this.isElementInViewport(sectionData.element)) {\n                    if (!renderer.isActive) {\n                        renderer.start();\n                    }\n                    renderer.render();\n                } else {\n                    if (renderer.isActive) {\n                        renderer.pause();\n                    }\n                }\n            });\n            \n            requestAnimationFrame(render);\n        };\n        \n        render();\n        console.log('🎬 Render loop started');\n    }\n    \n    isElementInViewport(element) {\n        const rect = element.getBoundingClientRect();\n        const windowHeight = window.innerHeight;\n        \n        // Element is visible if any part is in viewport + buffer\n        return (rect.bottom > -200 && rect.top < windowHeight + 200);\n    }\n    \n    updateStatusDisplay() {\n        const updateInterval = 1000; // Update every second\n        \n        const update = () => {\n            const elements = {\n                systemStatus: document.getElementById('system-status'),\n                contextCount: document.getElementById('context-count'),\n                elementCount: document.getElementById('element-count')\n            };\n            \n            if (elements.systemStatus) {\n                elements.systemStatus.textContent = this.isInitialized ? 'Active' : 'Initializing';\n                elements.systemStatus.style.color = this.isInitialized ? '#0f0' : '#ff0';\n            }\n            \n            if (elements.contextCount) {\n                const contextCount = this.sectionRenderers.size;\n                elements.contextCount.textContent = contextCount;\n                elements.contextCount.style.color = contextCount <= 6 ? '#0f0' : '#f00';\n            }\n            \n            if (elements.elementCount && this.elementMapper) {\n                const status = this.elementMapper.getStatus();\n                elements.elementCount.textContent = status.totalElements;\n            }\n        };\n        \n        update();\n        setInterval(update, updateInterval);\n    }\n    \n    // Section transition callback for portal scroll\n    onSectionChange(sectionKey, geometry) {\n        console.log(`📍 Section changed to: ${sectionKey} (${geometry})`);\n        \n        // Update any section-specific logic here\n    }\n    \n    // Public API methods\n    activateSection(sectionKey) {\n        const renderer = this.sectionRenderers.get(sectionKey);\n        if (renderer) {\n            renderer.start();\n            console.log(`🎬 Activated section: ${sectionKey}`);\n        }\n    }\n    \n    pauseSection(sectionKey) {\n        const renderer = this.sectionRenderers.get(sectionKey);\n        if (renderer) {\n            renderer.pause();\n            console.log(`⏸️ Paused section: ${sectionKey}`);\n        }\n    }\n    \n    updateMasterParameters(params) {\n        if (this.homeMaster) {\n            this.homeMaster.updateMasterParameters(params);\n        }\n    }\n    \n    loadPreset(presetName) {\n        if (this.homeMaster) {\n            this.homeMaster.loadPreset(presetName);\n        }\n    }\n    \n    getSystemStatus() {\n        return {\n            isInitialized: this.isInitialized,\n            sectionCount: this.sections.size,\n            rendererCount: this.sectionRenderers.size,\n            elementCount: this.elementMapper ? this.elementMapper.getStatus().totalElements : 0,\n            homeMasterStatus: this.homeMaster ? this.homeMaster.getStatus() : null,\n            portalScrollStatus: this.portalScroll ? this.portalScroll.getScrollState() : null\n        };\n    }\n    \n    destroy() {\n        this.renderLoopActive = false;\n        \n        // Destroy all renderers\n        this.sectionRenderers.forEach((renderer) => {\n            renderer.destroy();\n        });\n        this.sectionRenderers.clear();\n        \n        // Destroy subsystems\n        if (this.portalScroll) {\n            this.portalScroll.destroy();\n        }\n        \n        if (this.elementMapper) {\n            this.elementMapper.destroy();\n        }\n        \n        console.log('🗑️ VIB3STYLEPACK system destroyed');\n    }\n}\n\n// Global initialization\nlet globalVIB3StylePack = null;\n\nfunction initializeVIB3StylePack(config = {}) {\n    if (globalVIB3StylePack) {\n        console.warn('⚠️ VIB3STYLEPACK already initialized');\n        return globalVIB3StylePack;\n    }\n    \n    const finalConfig = { ...window.VIB3Config, ...config };\n    globalVIB3StylePack = new VIB3StylePack(finalConfig);\n    return globalVIB3StylePack;\n}\n\n// Auto-initialize when DOM is ready\nif (document.readyState === 'loading') {\n    document.addEventListener('DOMContentLoaded', () => {\n        setTimeout(() => {\n            initializeVIB3StylePack();\n        }, 100);\n    });\n} else {\n    setTimeout(() => {\n        initializeVIB3StylePack();\n    }, 100);\n}\n\n// Export for global access\nwindow.VIB3StylePack = VIB3StylePack;\nwindow.initializeVIB3StylePack = initializeVIB3StylePack;\nwindow.getVIB3StylePack = () => globalVIB3StylePack;\n\nconsole.log('✅ VIB3STYLEPACK Main System loaded - Auto-initialization enabled');
+            if (this.config.enablePortalScroll) {
+                await this.initializePortalScroll();
+            }
+            
+            // Step 6: Setup global interactions
+            await this.setupGlobalInteractions();
+            
+            // Step 7: Start render loop
+            this.startRenderLoop();
+            
+            // Step 8: Update status display
+            this.updateStatusDisplay();
+            
+            this.isInitialized = true;
+            
+            // Count total instances
+            let totalInstances = 0;
+            if (this.multiVisualizerSystem) {
+                this.multiVisualizerSystem.sectionInstances.forEach(instances => {
+                    totalInstances += instances.length;
+                });
+            }
+            
+            console.log(`✅ VIB3STYLEPACK initialized with ${totalInstances} visualizer instances across ${this.sections.size} sections`);
+            
+        } catch (error) {
+            console.error('🚨 VIB3STYLEPACK initialization failed:', error);
+        }
+    }
+    
+    async initializeHomeMaster() {
+        if (typeof VIB3HomeMaster === 'undefined') {
+            console.error('🚨 VIB3HomeMaster not loaded');
+            return;
+        }
+        
+        this.homeMaster = new VIB3HomeMaster({
+            sectionModifiers: this.config.sectionModifiers
+        });
+        
+        console.log('🏠 Home-Master system initialized');
+    }
+    
+    async detectSections() {
+        const sectionElements = document.querySelectorAll('[data-vib3-section]');
+        
+        console.log(`🔍 Scanning for sections... found ${sectionElements.length} elements`);
+        
+        sectionElements.forEach((element, index) => {
+            const sectionKey = element.dataset.vib3Section;
+            const geometry = element.dataset.vib3Geometry || this.config.sectionGeometries[sectionKey] || 'hypercube';
+            const modifier = parseFloat(element.dataset.vib3Modifier) || this.config.sectionModifiers[sectionKey] || 1.0;
+            
+            console.log(`📍 Section ${index + 1}: [${sectionKey}] -> geometry: ${geometry}, modifier: ${modifier}`, element);
+            
+            this.sections.set(sectionKey, {
+                element: element,
+                geometry: geometry,
+                modifier: modifier,
+                isVisible: false,
+                isActive: false
+            });
+        });
+        
+        console.log(`📍 Final section count: ${this.sections.size}`, Array.from(this.sections.keys()));
+    }
+    
+    async initializeMultiVisualizerSystem() {
+        if (typeof VIB3MultiVisualizerSystem === 'undefined') {
+            console.error('🚨 VIB3MultiVisualizerSystem not loaded');
+            return;
+        }
+        
+        this.multiVisualizerSystem = new VIB3MultiVisualizerSystem(this, {
+            instancesPerSection: 3, // Multiple visualizers per section
+            transitionDuration: 1200,
+            infiniteScrollSpeed: 0.8
+        });
+        
+        console.log('🎨 Multi-Visualizer System initialized - Multiple instances per section created');
+    }
+    
+    async initializeElementMapper() {
+        if (typeof VIB3ElementMapper === 'undefined') {
+            console.error('🚨 VIB3ElementMapper not loaded');
+            return;
+        }
+        
+        this.elementMapper = new VIB3ElementMapper(this, {
+            elementRoles: this.config.elementRoles
+        });
+        
+        console.log('🗺️ Element mapper initialized');
+    }
+    
+    async initializePortalScroll() {
+        if (typeof VIB3PortalScroll === 'undefined') {
+            console.error('🚨 VIB3PortalScroll not loaded');
+            return;
+        }
+        
+        this.portalScroll = new VIB3PortalScroll(this, {
+            snapToSections: this.config.snapToSections,
+            transitionDuration: this.config.transitionDuration
+        });
+        
+        console.log('🌀 Portal scroll system initialized');
+    }
+    
+    async setupGlobalInteractions() {
+        // Mouse movement for GEOMETRIC UI
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX / window.innerWidth;
+            const mouseY = 1.0 - (e.clientY / window.innerHeight); // Flip Y for WebGL
+            
+            // Send to all GEOMETRIC UI renderers
+            this.sectionRenderers.forEach((renderer) => {
+                renderer.updateInteraction({
+                    type: 'mouse',
+                    mouseX: mouseX,
+                    mouseY: mouseY,
+                    intensity: 0.8
+                });
+            });
+            
+            // Send to home-master
+            if (this.homeMaster) {
+                this.homeMaster.updateMasterInteraction({
+                    type: 'mouse',
+                    mouseX: mouseX,
+                    mouseY: mouseY,
+                    intensity: 0.3
+                });
+            }
+        });
+        
+        // Click interactions
+        document.addEventListener('click', (e) => {
+            const clickX = e.clientX / window.innerWidth;
+            const clickY = e.clientY / window.innerHeight;
+            
+            // Send click to all renderers
+            this.sectionRenderers.forEach((renderer) => {
+                renderer.updateInteraction({
+                    type: 'click',
+                    mouseX: clickX,
+                    mouseY: clickY,
+                    intensity: 0.8
+                });
+            });
+            
+            // Send to home-master
+            if (this.homeMaster) {
+                this.homeMaster.updateMasterInteraction({
+                    type: 'click',
+                    intensity: 0.6
+                });
+            }
+        });
+        
+        // Window resize
+        window.addEventListener('resize', () => {
+            this.handleResize();
+        });
+        
+        // Parameter change listener
+        document.addEventListener('vib3-parameters-changed', (e) => {
+            this.handleParameterChange(e.detail);
+        });
+        
+        console.log('🎯 Global interactions configured');
+    }
+    
+    handleParameterChange(detail) {
+        const { derivedParameters, specificSection } = detail;
+        
+        if (specificSection) {
+            // Update specific section
+            const renderer = this.sectionRenderers.get(specificSection);
+            if (renderer) {
+                const params = derivedParameters[specificSection];
+                renderer.updateGeometry(renderer.geometry, params.modifier);
+            }
+        } else {
+            // Update all sections
+            Object.entries(derivedParameters).forEach(([sectionKey, params]) => {
+                const renderer = this.sectionRenderers.get(sectionKey);
+                if (renderer) {
+                    renderer.updateGeometry(renderer.geometry, params.modifier);
+                }
+            });
+        }
+    }
+    
+    handleResize() {
+        this.sectionRenderers.forEach((renderer) => {
+            renderer.resize();
+        });
+        
+        // Update element bounds
+        if (this.elementMapper) {
+            this.elementMapper.updateElementBounds();
+        }
+        
+        console.log('📐 Handled resize');
+    }
+    
+    startRenderLoop() {
+        if (this.renderLoopActive) return;
+        
+        this.renderLoopActive = true;
+        
+        const render = () => {
+            if (!this.renderLoopActive) return;
+            
+            // Render all active multi-visualizer instances
+            if (this.multiVisualizerSystem) {
+                this.multiVisualizerSystem.sectionInstances.forEach((instances, sectionKey) => {
+                    instances.forEach(instance => {
+                        if (instance.isActive) {
+                            instance.renderer.render();
+                        }
+                    });
+                });
+            }
+            
+            requestAnimationFrame(render);
+        };
+        
+        render();
+        console.log('🎬 Render loop started');
+    }
+    
+    isElementInViewport(element) {
+        const rect = element.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        
+        // Element is visible if any part is in viewport + buffer
+        return (rect.bottom > -200 && rect.top < windowHeight + 200);
+    }
+    
+    updateStatusDisplay() {
+        const updateInterval = 1000; // Update every second
+        
+        const update = () => {
+            const elements = {
+                systemStatus: document.getElementById('system-status'),
+                contextCount: document.getElementById('context-count'),
+                elementCount: document.getElementById('element-count')
+            };
+            
+            if (elements.systemStatus) {
+                elements.systemStatus.textContent = this.isInitialized ? 'Active' : 'Initializing';
+                elements.systemStatus.style.color = this.isInitialized ? '#0f0' : '#ff0';
+            }
+            
+            if (elements.contextCount) {
+                const contextCount = this.sectionRenderers.size;
+                elements.contextCount.textContent = contextCount;
+                elements.contextCount.style.color = contextCount <= 6 ? '#0f0' : '#f00';
+            }
+            
+            if (elements.elementCount && this.elementMapper) {
+                const status = this.elementMapper.getStatus();
+                elements.elementCount.textContent = status.totalElements;
+            }
+        };
+        
+        update();
+        setInterval(update, updateInterval);
+    }
+    
+    // Section transition callback for portal scroll
+    onSectionChange(sectionKey, geometry) {
+        console.log(`📍 Section changed to: ${sectionKey} (${geometry})`);
+        
+        // Update any section-specific logic here
+    }
+    
+    // Public API methods
+    activateSection(sectionKey) {
+        const renderer = this.sectionRenderers.get(sectionKey);
+        if (renderer) {
+            renderer.start();
+            console.log(`🎬 Activated section: ${sectionKey}`);
+        }
+    }
+    
+    pauseSection(sectionKey) {
+        const renderer = this.sectionRenderers.get(sectionKey);
+        if (renderer) {
+            renderer.pause();
+            console.log(`⏸️ Paused section: ${sectionKey}`);
+        }
+    }
+    
+    updateMasterParameters(params) {
+        if (this.homeMaster) {
+            this.homeMaster.updateMasterParameters(params);
+        }
+    }
+    
+    loadPreset(presetName) {
+        if (this.homeMaster) {
+            this.homeMaster.loadPreset(presetName);
+        }
+    }
+    
+    getSystemStatus() {
+        return {
+            isInitialized: this.isInitialized,
+            sectionCount: this.sections.size,
+            rendererCount: this.sectionRenderers.size,
+            elementCount: this.elementMapper ? this.elementMapper.getStatus().totalElements : 0,
+            homeMasterStatus: this.homeMaster ? this.homeMaster.getStatus() : null,
+            portalScrollStatus: this.portalScroll ? this.portalScroll.getScrollState() : null
+        };
+    }
+    
+    destroy() {
+        this.renderLoopActive = false;
+        
+        // Destroy all renderers
+        this.sectionRenderers.forEach((renderer) => {
+            renderer.destroy();
+        });
+        this.sectionRenderers.clear();
+        
+        // Destroy subsystems
+        if (this.portalScroll) {
+            this.portalScroll.destroy();
+        }
+        
+        if (this.elementMapper) {
+            this.elementMapper.destroy();
+        }
+        
+        console.log('🗑️ VIB3STYLEPACK system destroyed');
+    }
+}
+
+// Global initialization
+let globalVIB3StylePack = null;
+
+function initializeVIB3StylePack(config = {}) {
+    if (globalVIB3StylePack) {
+        console.warn('⚠️ VIB3STYLEPACK already initialized');
+        return globalVIB3StylePack;
+    }
+    
+    const finalConfig = { ...window.VIB3Config, ...config };
+    globalVIB3StylePack = new VIB3StylePack(finalConfig);
+    return globalVIB3StylePack;
+}
+
+// Auto-initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            initializeVIB3StylePack();
+        }, 100);
+    });
+} else {
+    setTimeout(() => {
+        initializeVIB3StylePack();
+    }, 100);
+}
+
+// Export for global access
+window.VIB3StylePack = VIB3StylePack;
+window.initializeVIB3StylePack = initializeVIB3StylePack;
+window.getVIB3StylePack = () => globalVIB3StylePack;
+
+console.log('✅ VIB3STYLEPACK Main System loaded - Auto-initialization enabled');
