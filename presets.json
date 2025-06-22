@@ -1,0 +1,108 @@
+{
+  "visualStyles": {
+    "default-visual": {
+      "description": "A default visual style for general elements.",
+      "parameters": {
+        "color": [0.2, 0.2, 0.2, 1.0],
+        "shape": "cube",
+        "speed": 0.5,
+        "intensity": 0.5
+      }
+    },
+    "card-visual-style": {
+      "description": "Visual style for cards.",
+      "parameters": {
+        "color": [0.3, 0.3, 0.8, 1.0],
+        "shape": "quad",
+        "speed": 0.2,
+        "intensity": 0.7,
+        "texture": "noise"
+      }
+    },
+    "background-visual-style": {
+      "description": "Visual style for full backgrounds.",
+      "parameters": {
+        "color": [0.1, 0.1, 0.15, 1.0],
+        "shape": "plane",
+        "speed": 0.1,
+        "intensity": 0.3,
+        "shaderEffect": "starfield"
+      }
+    }
+  },
+  "interactionPresets": {
+    "gravitational-well": {
+      "description": "Hovering the target card causes all other cards to react.",
+      "events": ["mouseover", "mouseout"],
+      "targetActions": {
+        "mouseover": {
+          "duration": 300,
+          "params": { "scale": 1.1, "intensity": 1.0, "color": [0.5, 0.8, 0.5, 1.0] }
+        },
+        "mouseout": {
+          "duration": 500,
+          "resetToBase": true
+        }
+      },
+      "ecosystemReactions": [
+        {
+          "selector": ".article-card",
+          "excludeTarget": true,
+          "actions": {
+            "mouseover": {
+              "duration": 500,
+              "params": { "speed": 0.1, "intensity": 0.3, "color": [0.4, 0.4, 0.6, 1.0] }
+            },
+            "mouseout": {
+              "duration": 500,
+              "resetToBase": true
+            }
+          }
+        }
+      ]
+    },
+    "quantum-flip": {
+      "description": "Clicking triggers a system-wide effect.",
+      "events": ["click"],
+      "targetActions": {
+        "click": {
+          "duration": 100,
+          "params": { "intensity": 1.5, "shaderEffect": "invertTemporary" }
+        }
+      },
+      "ecosystemReactions": [
+        {
+          "selector": "[data-vib3-style]",
+          "excludeTarget": false,
+          "actions": {
+            "click": {
+              "duration": 2000,
+              "params": { "colorInvert": true, "speedMultiplier": -1 },
+              "temporary": true,
+              "resetDelay": 2000
+            }
+          }
+        }
+      ]
+    },
+    "button-press": {
+      "description": "Standard button press and release effect.",
+      "events": ["mousedown", "mouseup", "mouseleave"],
+      "targetActions": {
+        "mousedown": {
+          "duration": 100,
+          "params": { "scale": 0.95, "intensity": 0.9 }
+        },
+        "mouseup": {
+          "duration": 200,
+          "resetToBase": true
+        },
+        "mouseleave": {
+          "duration": 200,
+          "resetToBase": true
+        }
+      },
+      "ecosystemReactions": []
+    }
+  }
+}

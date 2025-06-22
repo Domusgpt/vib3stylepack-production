@@ -1,0 +1,128 @@
+/* Basic Reset & Body Styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    line-height: 1.6;
+}
+
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styling */
+header#main-header {
+    padding: 40px 20px;
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #333;
+    position: relative; /* For VIB34D canvas positioning */
+    min-height: 150px; /* Ensure space for background visual */
+}
+
+header#main-header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    color: #00ffff; /* Cyan */
+}
+
+header#main-header p {
+    font-size: 1.2em;
+    color: #cccccc;
+}
+
+/* Editor Panel Styling */
+.editor-panel {
+    background-color: #252525;
+    padding: 15px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    text-align: center;
+    position: relative; /* For VIB34D canvas positioning */
+}
+
+.editor-panel h3 {
+    margin-top: 0;
+    color: #ff00ff; /* Magenta */
+}
+
+.editor-panel button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+}
+
+.editor-panel button:hover {
+    background-color: #0056b3;
+}
+
+/* Article Sections Styling */
+.featured-article {
+    background-color: #222;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #383838;
+    position: relative; /* For VIB34D canvas positioning */
+    min-height: 100px; /* Ensure space for visual */
+}
+
+.featured-article h2 {
+    color: #ffff00; /* Yellow */
+    margin-top: 0;
+}
+
+.article-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.article-card {
+    background-color: #282828;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #404040;
+    position: relative; /* For VIB34D canvas positioning */
+    min-height: 150px; /* Ensure space for visual */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center content vertically */
+    align-items: center; /* Center content horizontally */
+    text-align: center;
+}
+
+.article-card h3 {
+    color: #00ff00; /* Green */
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.article-card p {
+    font-size: 0.9em;
+    color: #b0b0b0;
+}
+
+/* Ensure content is above the VIB34D canvases */
+.editor-panel > *:not(canvas),
+header#main-header > *:not(canvas),
+.featured-article > *:not(canvas),
+.article-card > *:not(canvas) {
+    position: relative;
+    z-index: 1;
+}
+
+/* Basic styling for visualizer host elements if they have no content */
+[data-vib3-style] {
+    /* outline: 1px dashed rgba(255,0,0,0.3); /* For debugging layout */
+}
