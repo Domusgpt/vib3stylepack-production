@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB3STYLEPACK - 5 INSTANCES PARAMETER MORPHING SYSTEM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: white;
+            font-family: monospace;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        /* 5 VISUALIZER INSTANCES - FIXED POSITIONS */
+        .visualizer-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .visualizer-instance {
+            position: absolute;
+            pointer-events: auto;
+        }
+        
+        /* Instance positioning for UI formation */
+        #instance-0 { /* Background */
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; opacity: 0.6;
+        }
+        
+        #instance-1 { /* Left UI Panel */
+            top: 10%; left: 5%; width: 30%; height: 80%;
+            z-index: 3; opacity: 0.9;
+            border-radius: 20px;
+            mix-blend-mode: screen;
+        }
+        
+        #instance-2 { /* Right UI Panel */
+            top: 10%; right: 5%; width: 30%; height: 80%;
+            z-index: 3; opacity: 0.8;
+            border-radius: 20px;
+            mix-blend-mode: multiply;
+        }
+        
+        #instance-3 { /* Top Accent */
+            top: 5%; left: 50%; transform: translateX(-50%);
+            width: 40%; height: 15%;
+            z-index: 4; opacity: 1.0;
+            border-radius: 50px;
+            mix-blend-mode: overlay;
+        }
+        
+        #instance-4 { /* Bottom Accent */
+            bottom: 5%; left: 50%; transform: translateX(-50%);
+            width: 60%; height: 20%;
+            z-index: 4; opacity: 0.7;
+            border-radius: 30px;
+            mix-blend-mode: color-dodge;
+        }
+        
+        /* Section control UI */
+        .section-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #0ff;
+        }
+        
+        .section-btn {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            margin: 5px 0;
+            background: rgba(0,255,255,0.1);
+            border: 1px solid rgba(0,255,255,0.3);
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: monospace;
+            transition: all 0.3s ease;
+        }
+        
+        .section-btn.active {
+            background: rgba(0,255,255,0.3);
+            border-color: #0ff;
+            box-shadow: 0 0 10px #0ff;
+        }
+        
+        .section-btn:hover {
+            background: rgba(0,255,255,0.2);
+        }
+        
+        /* Debug panel */
+        .debug-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #f0f;
+            font-size: 0.8rem;
+        }
+        
+        .debug-row {
+            margin: 3px 0;
+            color: #f0f;
+        }
+        
+        /* Interaction feedback */
+        .interaction-feedback {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #ff0;
+            max-width: 300px;
+        }
+        
+        .feedback-row {
+            margin: 3px 0;
+            color: #ff0;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 5 VISUALIZER INSTANCES - ALWAYS PRESENT -->
+    <div class="visualizer-container">
+        <canvas id="instance-0" class="visualizer-instance"></canvas>
+        <canvas id="instance-1" class="visualizer-instance"></canvas>
+        <canvas id="instance-2" class="visualizer-instance"></canvas>
+        <canvas id="instance-3" class="visualizer-instance"></canvas>
+        <canvas id="instance-4" class="visualizer-instance"></canvas>
+    </div>
+    
+    <!-- Section Control UI -->
+    <div class="section-controls">
+        <h4>SECTION MORPHING</h4>
+        <button class="section-btn active" data-section="home">🏠 HOME (Hypercube)</button>
+        <button class="section-btn" data-section="articles">📖 ARTICLES (Tetrahedron)</button>
+        <button class="section-btn" data-section="videos">🎥 VIDEOS (Sphere)</button>
+        <button class="section-btn" data-section="podcasts">🎧 PODCASTS (Torus)</button>
+        <button class="section-btn" data-section="ema">⚡ EMA (Wave)</button>
+    </div>
+    
+    <!-- Debug Panel -->
+    <div class="debug-panel">
+        <h4>SYSTEM STATUS</h4>
+        <div class="debug-row">Section: <span id="debug-section">home</span></div>
+        <div class="debug-row">Geometry: <span id="debug-geometry">hypercube</span></div>
+        <div class="debug-row">Transition: <span id="debug-transition">idle</span></div>
+        <div class="debug-row">Mouse: <span id="debug-mouse">0.5, 0.5</span></div>
+        <div class="debug-row">Intensity: <span id="debug-intensity">0.0</span></div>
+        <div class="debug-row">FPS: <span id="debug-fps">0</span></div>
+    </div>
+    
+    <!-- Interaction Feedback -->
+    <div class="interaction-feedback">
+        <h4>INTERACTIONS</h4>
+        <div class="feedback-row" id="interaction-log">Move mouse to interact...</div>
+    </div>
+
+    <script>
+        console.log('🌌 VIB3STYLEPACK - 5 INSTANCE PARAMETER MORPHING SYSTEM');
+        
+        // PARAMETER MORPHING VISUALIZER
+        class ParameterMorphingVisualizer {
+            constructor(canvas, instanceId) {
+                this.canvas = canvas;
+                this.instanceId = instanceId;
+                this.gl = canvas.getContext('webgl');
+                
+                if (!this.gl) {
+                    console.error(`WebGL not supported for instance ${instanceId}`);
+                    return;
+                }
+                
+                // Instance-specific base parameters
+                this.instanceParams = {
+                    0: { densityMult: 1.0, speedMult: 1.0, colorShift: 0.0 },     // Background
+                    1: { densityMult: 1.5, speedMult: 0.8, colorShift: 120.0 },   // Left UI
+                    2: { densityMult: 1.2, speedMult: 1.3, colorShift: 240.0 },   // Right UI
+                    3: { densityMult: 2.0, speedMult: 1.8, colorShift: 60.0 },    // Top Accent
+                    4: { densityMult: 0.8, speedMult: 0.6, colorShift: 300.0 }    // Bottom Accent
+                }[instanceId] || { densityMult: 1.0, speedMult: 1.0, colorShift: 0.0 };
+                
+                // Current section parameters (will morph between these)
+                this.currentSection = 'home';
+                this.targetSection = 'home';
+                this.transitionProgress = 1.0;
+                this.transitionSpeed = 2.0;
+                
+                // Section-specific parameters
+                this.sectionParams = {
+                    home: { geometry: 0.0, density: 12.0, speed: 1.0, color: [1.0, 0.0, 1.0], dimension: 3.5 },
+                    articles: { geometry: 1.0, density: 8.0, speed: 0.7, color: [0.0, 1.0, 1.0], dimension: 3.2 },
+                    videos: { geometry: 2.0, density: 15.0, speed: 1.5, color: [1.0, 1.0, 0.0], dimension: 3.8 },
+                    podcasts: { geometry: 3.0, density: 10.0, speed: 1.1, color: [0.0, 1.0, 0.0], dimension: 3.6 },
+                    ema: { geometry: 4.0, density: 18.0, speed: 0.9, color: [1.0, 0.5, 0.0], dimension: 3.9 }
+                };
+                
+                // Interaction state
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.interactionIntensity = 0.0;
+                this.isClicked = false;
+                
+                this.startTime = Date.now();
+                this.initShaders();
+                this.initBuffers();
+                this.resize();
+                
+                console.log(`✅ Instance ${instanceId} initialized`);
+            }
+            
+            initShaders() {
+                const vertexShaderSource = `
+                    attribute vec2 a_position;
+                    void main() {
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `
+                    precision highp float;
+                    
+                    uniform vec2 u_resolution;
+                    uniform float u_time;
+                    uniform vec2 u_mouse;
+                    uniform float u_geometry;
+                    uniform float u_density;
+                    uniform float u_speed;
+                    uniform vec3 u_color;
+                    uniform float u_dimension;
+                    uniform float u_interaction;
+                    uniform float u_instanceDensity;
+                    uniform float u_instanceSpeed;
+                    uniform float u_colorShift;
+                    
+                    // 4D rotation matrices
+                    mat4 rotateXW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(c, 0, 0, -s, 0, 1, 0, 0, 0, 0, 1, 0, s, 0, 0, c);
+                    }
+                    
+                    mat4 rotateYW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(1, 0, 0, 0, 0, c, 0, -s, 0, 0, 1, 0, 0, s, 0, c);
+                    }
+                    
+                    vec3 project4Dto3D(vec4 p) {
+                        float w = 2.0 / (2.0 + p.w);
+                        return vec3(p.x * w, p.y * w, p.z * w);
+                    }
+                    
+                    // Geometry functions
+                    float hypercubeLattice(vec3 p, float gridSize) {
+                        vec3 grid = fract(p * gridSize);
+                        vec3 edges = 1.0 - smoothstep(0.0, 0.03, abs(grid - 0.5));
+                        return max(max(edges.x, edges.y), edges.z);
+                    }
+                    
+                    float tetrahedronLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float d1 = length(q);
+                        float d2 = length(q - vec3(0.5, 0.0, 0.0));
+                        float d3 = length(q - vec3(0.0, 0.5, 0.0));
+                        float d4 = length(q - vec3(0.0, 0.0, 0.5));
+                        return 1.0 - smoothstep(0.0, 0.1, min(min(d1, d2), min(d3, d4)));
+                    }
+                    
+                    float sphereLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r = length(q);
+                        return 1.0 - smoothstep(0.2, 0.5, r);
+                    }
+                    
+                    float torusLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r1 = sqrt(q.x*q.x + q.y*q.y);
+                        float r2 = sqrt((r1 - 0.3)*(r1 - 0.3) + q.z*q.z);
+                        return 1.0 - smoothstep(0.0, 0.1, r2);
+                    }
+                    
+                    float waveLattice(vec3 p, float gridSize) {
+                        vec3 q = p * gridSize;
+                        float wave = sin(q.x * 2.0) * sin(q.y * 2.0) * sin(q.z * 2.0 + u_time * u_speed);
+                        return smoothstep(-0.5, 0.5, wave);
+                    }
+                    
+                    float getGeometryValue(vec3 p, float gridSize, float geomType) {
+                        if (geomType < 0.5) return hypercubeLattice(p, gridSize);
+                        else if (geomType < 1.5) return tetrahedronLattice(p, gridSize);
+                        else if (geomType < 2.5) return sphereLattice(p, gridSize);
+                        else if (geomType < 3.5) return torusLattice(p, gridSize);
+                        else return waveLattice(p, gridSize);
+                    }
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    void main() {
+                        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                        float aspectRatio = u_resolution.x / u_resolution.y;
+                        uv.x *= aspectRatio;
+                        
+                        vec2 center = vec2(u_mouse.x * aspectRatio, u_mouse.y);
+                        vec3 p = vec3(uv - center, 0.0);
+                        
+                        // Instance-specific modifications
+                        float instanceDensity = u_density * u_instanceDensity;
+                        float instanceSpeed = u_speed * u_instanceSpeed;
+                        
+                        // Interactive rotation
+                        float timeRotation = u_time * 0.001 * instanceSpeed * (1.0 + u_interaction);
+                        mat2 rotation = mat2(cos(timeRotation), -sin(timeRotation), sin(timeRotation), cos(timeRotation));
+                        p.xy = rotation * p.xy;
+                        p.z = sin(u_time * 0.0005) * 0.5;
+                        
+                        // 4D projection if dimension > 3
+                        if (u_dimension > 3.0) {
+                            float w = sin(length(p) * 3.0 + u_time * 0.0003) * (u_dimension - 3.0);
+                            vec4 p4d = vec4(p, w);
+                            p4d = rotateXW(timeRotation * 0.31) * p4d;
+                            p4d = rotateYW(timeRotation * 0.27) * p4d;
+                            p = project4Dto3D(p4d);
+                        }
+                        
+                        // Get geometry value
+                        float lattice = getGeometryValue(p, instanceDensity, u_geometry);
+                        
+                        // Instance-specific color shifting
+                        vec3 baseColor = u_color;
+                        float hue = atan(baseColor.r - baseColor.g, baseColor.b - baseColor.g) + u_colorShift * 0.017453; // degrees to radians
+                        float saturation = 0.8 + u_interaction * 0.2;
+                        float brightness = 0.6 + lattice * 0.4 + u_interaction * 0.2;
+                        
+                        vec3 finalColor = hsv2rgb(vec3(hue, saturation, brightness));
+                        
+                        // Interaction glow
+                        float glow = exp(-length(uv - u_mouse) * 5.0) * u_interaction;
+                        finalColor += vec3(glow) * u_color;
+                        
+                        gl_FragColor = vec4(finalColor, 0.9);
+                    }
+                `;
+                
+                this.program = this.createProgram(vertexShaderSource, fragmentShaderSource);
+                this.uniforms = {
+                    resolution: this.gl.getUniformLocation(this.program, 'u_resolution'),
+                    time: this.gl.getUniformLocation(this.program, 'u_time'),
+                    mouse: this.gl.getUniformLocation(this.program, 'u_mouse'),
+                    geometry: this.gl.getUniformLocation(this.program, 'u_geometry'),
+                    density: this.gl.getUniformLocation(this.program, 'u_density'),
+                    speed: this.gl.getUniformLocation(this.program, 'u_speed'),
+                    color: this.gl.getUniformLocation(this.program, 'u_color'),
+                    dimension: this.gl.getUniformLocation(this.program, 'u_dimension'),
+                    interaction: this.gl.getUniformLocation(this.program, 'u_interaction'),
+                    instanceDensity: this.gl.getUniformLocation(this.program, 'u_instanceDensity'),
+                    instanceSpeed: this.gl.getUniformLocation(this.program, 'u_instanceSpeed'),
+                    colorShift: this.gl.getUniformLocation(this.program, 'u_colorShift')
+                };
+            }
+            
+            createProgram(vertexSource, fragmentSource) {
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = this.gl.createProgram();
+                this.gl.attachShader(program, vertexShader);
+                this.gl.attachShader(program, fragmentShader);
+                this.gl.linkProgram(program);
+                
+                if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+                    console.error('Program linking failed:', this.gl.getProgramInfoLog(program));
+                    return null;
+                }
+                
+                return program;
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    console.error('Shader compilation failed:', this.gl.getShaderInfoLog(shader));
+                    return null;
+                }
+                
+                return shader;
+            }
+            
+            initBuffers() {
+                const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                
+                this.buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+            
+            resize() {
+                this.canvas.width = this.canvas.clientWidth;
+                this.canvas.height = this.canvas.clientHeight;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            morphToSection(sectionKey) {
+                if (sectionKey !== this.targetSection) {
+                    this.targetSection = sectionKey;
+                    this.transitionProgress = 0.0;
+                    console.log(`🔄 Instance ${this.instanceId} morphing to ${sectionKey}`);
+                }
+            }
+            
+            updateInteraction(mouseX, mouseY, intensity, isClicked) {
+                this.mouseX = mouseX;
+                this.mouseY = mouseY;
+                this.interactionIntensity = intensity;
+                this.isClicked = isClicked;
+            }
+            
+            render() {
+                if (!this.program) return;
+                
+                this.resize();
+                this.gl.useProgram(this.program);
+                
+                // Update transition
+                if (this.transitionProgress < 1.0) {
+                    this.transitionProgress = Math.min(1.0, this.transitionProgress + this.transitionSpeed * 0.016); // 60fps
+                }
+                
+                // Interpolate between current and target section parameters
+                const currentParams = this.sectionParams[this.currentSection];
+                const targetParams = this.sectionParams[this.targetSection];
+                const t = this.transitionProgress;
+                
+                const interpolatedParams = {
+                    geometry: currentParams.geometry + (targetParams.geometry - currentParams.geometry) * t,
+                    density: currentParams.density + (targetParams.density - currentParams.density) * t,
+                    speed: currentParams.speed + (targetParams.speed - currentParams.speed) * t,
+                    color: [
+                        currentParams.color[0] + (targetParams.color[0] - currentParams.color[0]) * t,
+                        currentParams.color[1] + (targetParams.color[1] - currentParams.color[1]) * t,
+                        currentParams.color[2] + (targetParams.color[2] - currentParams.color[2]) * t
+                    ],
+                    dimension: currentParams.dimension + (targetParams.dimension - currentParams.dimension) * t
+                };
+                
+                // Update current section when transition complete
+                if (this.transitionProgress >= 1.0 && this.currentSection !== this.targetSection) {
+                    this.currentSection = this.targetSection;
+                }
+                
+                const time = Date.now() - this.startTime;
+                
+                // Set uniforms
+                this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+                this.gl.uniform1f(this.uniforms.time, time);
+                this.gl.uniform2f(this.uniforms.mouse, this.mouseX, this.mouseY);
+                this.gl.uniform1f(this.uniforms.geometry, interpolatedParams.geometry);
+                this.gl.uniform1f(this.uniforms.density, interpolatedParams.density);
+                this.gl.uniform1f(this.uniforms.speed, interpolatedParams.speed);
+                this.gl.uniform3fv(this.uniforms.color, new Float32Array(interpolatedParams.color));
+                this.gl.uniform1f(this.uniforms.dimension, interpolatedParams.dimension);
+                this.gl.uniform1f(this.uniforms.interaction, this.interactionIntensity);
+                this.gl.uniform1f(this.uniforms.instanceDensity, this.instanceParams.densityMult);
+                this.gl.uniform1f(this.uniforms.instanceSpeed, this.instanceParams.speedMult);
+                this.gl.uniform1f(this.uniforms.colorShift, this.instanceParams.colorShift);
+                
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+        }
+        
+        // MAIN SYSTEM
+        class VIB3ParameterMorphingSystem {
+            constructor() {
+                this.instances = [];
+                this.currentSection = 'home';
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.interactionIntensity = 0.0;
+                this.isClicked = false;
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                console.log('🎨 Initializing 5-Instance Parameter Morphing System...');
+                
+                // Create 5 visualizer instances
+                for (let i = 0; i < 5; i++) {
+                    const canvas = document.getElementById(`instance-${i}`);
+                    const instance = new ParameterMorphingVisualizer(canvas, i);
+                    this.instances.push(instance);
+                }
+                
+                this.setupInteractions();
+                this.setupSectionControls();
+                this.startRenderLoop();
+                
+                console.log('✅ 5-Instance Parameter Morphing System ready');
+            }
+            
+            setupInteractions() {
+                // Mouse movement
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX / window.innerWidth;
+                    this.mouseY = 1.0 - (e.clientY / window.innerHeight);
+                    this.interactionIntensity = Math.min(1.0, Math.sqrt(Math.pow(e.movementX, 2) + Math.pow(e.movementY, 2)) / 50);
+                    
+                    this.instances.forEach(instance => {
+                        instance.updateInteraction(this.mouseX, this.mouseY, this.interactionIntensity, this.isClicked);
+                    });
+                    
+                    document.getElementById('debug-mouse').textContent = `${this.mouseX.toFixed(2)}, ${this.mouseY.toFixed(2)}`;
+                    document.getElementById('debug-intensity').textContent = this.interactionIntensity.toFixed(2);
+                    document.getElementById('interaction-log').textContent = `Mouse: (${(this.mouseX*100).toFixed(0)}, ${(this.mouseY*100).toFixed(0)}) Intensity: ${this.interactionIntensity.toFixed(2)}`;
+                });
+                
+                // Mouse clicks
+                document.addEventListener('mousedown', () => {
+                    this.isClicked = true;
+                    this.interactionIntensity = 1.0;
+                    document.getElementById('interaction-log').textContent = 'CLICK DETECTED - High intensity mode';
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    this.isClicked = false;
+                });
+                
+                console.log('🎯 Interaction system configured');
+            }
+            
+            setupSectionControls() {
+                document.querySelectorAll('.section-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const sectionKey = btn.dataset.section;
+                        this.morphToSection(sectionKey);
+                        
+                        // Update UI
+                        document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            }
+            
+            morphToSection(sectionKey) {
+                console.log(`🔄 MORPHING ALL INSTANCES TO: ${sectionKey}`);
+                
+                this.currentSection = sectionKey;
+                
+                // Morph all instances to new section parameters
+                this.instances.forEach(instance => {
+                    instance.morphToSection(sectionKey);
+                });
+                
+                // Update debug display
+                const geometryNames = { home: 'hypercube', articles: 'tetrahedron', videos: 'sphere', podcasts: 'torus', ema: 'wave' };
+                document.getElementById('debug-section').textContent = sectionKey;
+                document.getElementById('debug-geometry').textContent = geometryNames[sectionKey];
+                document.getElementById('debug-transition').textContent = 'morphing';
+                
+                setTimeout(() => {
+                    document.getElementById('debug-transition').textContent = 'complete';
+                }, 1000);
+                
+                document.getElementById('interaction-log').textContent = `SECTION CHANGED: ${sectionKey.toUpperCase()} - All instances morphing parameters`;
+            }
+            
+            startRenderLoop() {
+                let lastTime = 0;
+                let frameCount = 0;
+                let fpsCounter = 0;
+                
+                const render = (currentTime) => {
+                    // FPS calculation
+                    frameCount++;
+                    if (currentTime - lastTime >= 1000) {
+                        fpsCounter = frameCount;
+                        frameCount = 0;
+                        lastTime = currentTime;
+                        document.getElementById('debug-fps').textContent = fpsCounter;
+                    }
+                    
+                    // Render all 5 instances
+                    this.instances.forEach(instance => {
+                        instance.render();
+                    });
+                    
+                    requestAnimationFrame(render);
+                };
+                
+                render(0);
+                console.log('🎬 Render loop started - 5 instances continuously rendering');
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            console.log('🚀 Initializing VIB3 Parameter Morphing System...');
+            const system = new VIB3ParameterMorphingSystem();
+            window.vib3System = system;
+        });
+        
+    </script>
+</body>
+</html>
