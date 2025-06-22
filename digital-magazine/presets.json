@@ -1,0 +1,163 @@
+{
+  "visualStyles": {
+    "holo-dark-background": {
+      "description": "Global holographic dark background for the magazine.",
+      "parameters": {
+        "color": [0.05, 0.05, 0.1, 1.0],
+        "shape": "hypercube", /* Or another complex VIB3 geometry */
+        "speed": 0.05,
+        "intensity": 0.2,
+        "noiseAmount": 0.05,
+        "glitchFrequency": 0.01,
+        "renderAsBackground": true /* Custom flag VIB34D might use */
+      }
+    },
+    "glass-panel-primary": {
+      "description": "Primary glassmorphic panel style for content cards/sections.",
+      "parameters": {
+        "color": [0.1, 0.15, 0.2, 0.65], /* Matches --glass-panel-background concept */
+        "shape": "quad", /* Simple quad, CSS handles blur/border */
+        "intensity": 0.1, /* Subtle internal shimmer or effect */
+        "edgeHighlight": [0.2, 0.5, 0.8, 0.5], /* Conceptual: for slight edge glow */
+        "isGlassPanel": true /* Custom flag */
+      }
+    },
+    "glass-panel-accent": {
+      "description": "Accent glassmorphic panel, perhaps for featured items.",
+      "parameters": {
+        "color": [0.2, 0.1, 0.25, 0.7], /* Slightly different tint */
+        "shape": "quad",
+        "intensity": 0.15,
+        "edgeHighlight": [0.5, 0.2, 0.5, 0.6],
+        "isGlassPanel": true
+      }
+    },
+    "category-ema-visual": {
+      "description": "Visual theme for EMA Reports category.",
+      "parameters": {
+        "shape": "tetrahedron", /* As per --vib3-geometry-category-ema */
+        "color": [0.3, 0.7, 0.9, 0.1], /* Light, transparent overlay */
+        "speed": 0.1,
+        "intensity": 0.4
+      }
+    },
+    "category-ai-visual": {
+      "description": "Visual theme for AI Vibes category.",
+      "parameters": {
+        "shape": "sphere", /* As per --vib3-geometry-category-ai */
+        "color": [0.7, 0.3, 0.9, 0.1],
+        "speed": 0.15,
+        "intensity": 0.5
+      }
+    },
+    "category-code-visual": {
+      "description": "Visual theme for Code Liberation category.",
+      "parameters": {
+        "shape": "torus", /* As per --vib3-geometry-category-code */
+        "color": [0.3, 0.9, 0.7, 0.1],
+        "speed": 0.12,
+        "intensity": 0.45
+      }
+    },
+    "category-future-visual": {
+      "description": "Visual theme for Future Forge category.",
+      "parameters": {
+        "shape": "klein", /* Example: new geometry */
+        "color": [0.9, 0.7, 0.3, 0.1],
+        "speed": 0.13,
+        "intensity": 0.42
+      }
+    },
+    "category-vault-visual": {
+      "description": "Visual theme for Visualizer Vault category.",
+      "parameters": {
+        "shape": "crystal", /* Example: new geometry */
+        "color": [0.7, 0.7, 0.9, 0.15],
+        "speed": 0.08,
+        "intensity": 0.55
+      }
+    },
+    "category-audio-visual": {
+      "description": "Visual theme for Audio Waves category.",
+      "parameters": {
+        "shape": "wave", /* Reusing wave for audio */
+        "color": [0.5, 0.9, 0.5, 0.1],
+        "speed": 0.2,
+        "intensity": 0.35
+      }
+    },
+    "category-news-visual": {
+      "description": "Visual theme for Communiques (News) category.",
+      "parameters": {
+        "shape": "hypercube", /* Default, but distinct color */
+        "color": [0.9, 0.9, 0.9, 0.08],
+        "speed": 0.1,
+        "intensity": 0.3
+      }
+    },
+    "article-header-visual": {
+        "description": "Subtle visual for article headers.",
+        "parameters": {
+            "shape": "wave",
+            "color": [0.4, 0.4, 0.5, 0.05],
+            "speed": 0.02,
+            "intensity": 0.1,
+            "heightPercentage": 0.2 /* Conceptual: only fill 20% of container height */
+        }
+    }
+  },
+  "interactionPresets": {
+    "glass-panel-hover": {
+      "description": "Hover effect for glassmorphic panels.",
+      "events": ["mouseover", "mouseout"],
+      "targetActions": {
+        "mouseover": {
+          "duration": 200,
+          "params": { "intensity": 0.3, "edgeHighlight": [0.5, 0.8, 1.0, 0.7] }
+        },
+        "mouseout": {
+          "duration": 400,
+          "resetToBase": true
+        }
+      },
+      "ecosystemReactions": []
+    },
+    "category-link-pulse": {
+        "description": "Pulse effect for category navigation links on hover.",
+        "events": ["mouseover", "mouseout"],
+        "targetActions": {
+            "mouseover": {
+                "duration": 150,
+                "params": {"intensity": 0.8, "scale": 1.1} /* Assuming VIB34D instance on link */
+            },
+            "mouseout": {
+                "duration": 300,
+                "resetToBase": true
+            }
+        },
+        "ecosystemReactions": []
+    },
+    "featured-article-focus": {
+        "description": "Interaction for focusing on a featured article.",
+        "events": ["click"], /* Could be scroll-based later */
+        "targetActions": {
+            "click": {
+                "duration": 500,
+                "params": {"intensity": 1.0, "speed": 0.01, "zoomFactor": 1.2} /* Conceptual zoom */
+            }
+        },
+        "ecosystemReactions": [
+            {
+                "selector": ".article-card:not(.featured)", /* Example for other cards */
+                "excludeTarget": true,
+                "actions": {
+                    "click": {
+                        "duration": 500,
+                        "params": { "intensity": 0.1, "speed": 0.3, "blurFactor": 0.5 } /* Conceptual blur */
+                    }
+                }
+            }
+        ]
+    }
+  }
+}
