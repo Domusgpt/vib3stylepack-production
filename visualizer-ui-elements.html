@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB3STYLEPACK - VISUALIZERS AS UI ELEMENTS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        /* VISUALIZER UI ELEMENTS - Positioned as actual interface components */
+        .ui-element {
+            position: absolute;
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .ui-element:hover {
+            transform: scale(1.02);
+            border-color: rgba(0,255,255,0.6);
+            box-shadow: 0 0 30px rgba(0,255,255,0.3);
+        }
+        
+        /* HEADER CARD - Instance 0 */
+        #header-card {
+            top: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 15%;
+            z-index: 10;
+        }
+        
+        /* LEFT NAVIGATION PANEL - Instance 1 */
+        #nav-panel {
+            top: 25%;
+            left: 5%;
+            width: 25%;
+            height: 65%;
+            z-index: 10;
+        }
+        
+        /* RIGHT ACTION PANEL - Instance 2 */
+        #action-panel {
+            top: 25%;
+            right: 5%;
+            width: 25%;
+            height: 65%;
+            z-index: 10;
+        }
+        
+        /* CENTER CONTENT CARD - Instance 3 */
+        #content-card {
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 35%;
+            height: 45%;
+            z-index: 10;
+        }
+        
+        /* FLOATING ACTION BUTTON - Instance 4 */
+        #floating-btn {
+            bottom: 8%;
+            right: 8%;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            z-index: 15;
+        }
+        
+        /* Content overlays for each UI element */
+        .ui-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            z-index: 5;
+            pointer-events: none;
+            background: rgba(0,0,0,0.1);
+        }
+        
+        .ui-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: rgba(255,255,255,0.9);
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        
+        .ui-subtitle {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 15px;
+        }
+        
+        .ui-menu {
+            width: 100%;
+        }
+        
+        .ui-menu-item {
+            padding: 8px 15px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            pointer-events: auto;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .ui-menu-item:hover {
+            background: rgba(0,255,255,0.2);
+            transform: translateX(5px);
+        }
+        
+        .ui-button {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .ui-button:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,255,255,0.2);
+        }
+        
+        /* Section control */
+        .section-switcher {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .section-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .section-dot.active {
+            background: #0ff;
+            box-shadow: 0 0 20px #0ff;
+        }
+        
+        /* Debug panel */
+        .debug-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #0ff;
+            font-family: monospace;
+            font-size: 0.8rem;
+            z-index: 2000;
+        }
+        
+        .debug-row {
+            margin: 3px 0;
+            color: #0ff;
+        }
+    </style>
+</head>
+<body>
+    <!-- DEBUG PANEL -->
+    <div class="debug-panel">
+        <div class="debug-row">Section: <span id="debug-section">home</span></div>
+        <div class="debug-row">Geometry: <span id="debug-geometry">hypercube</span></div>
+        <div class="debug-row">Mouse: <span id="debug-mouse">0.5, 0.5</span></div>
+        <div class="debug-row">Instances: <span id="debug-instances">5</span></div>
+    </div>
+
+    <!-- UI ELEMENTS MADE OF VISUALIZERS -->
+    
+    <!-- HEADER CARD - Visualizer Instance 0 -->
+    <div class="ui-element" id="header-card">
+        <canvas id="visualizer-0"></canvas>
+        <div class="ui-content">
+            <div class="ui-title" id="header-title">Multi-Dimensional Interface</div>
+            <div class="ui-subtitle" id="header-subtitle">5 Visualizer Instances as UI Elements</div>
+        </div>
+    </div>
+    
+    <!-- LEFT NAVIGATION PANEL - Visualizer Instance 1 -->
+    <div class="ui-element" id="nav-panel">
+        <canvas id="visualizer-1"></canvas>
+        <div class="ui-content">
+            <div class="ui-title">Navigation</div>
+            <div class="ui-menu" id="nav-menu">
+                <div class="ui-menu-item">Dashboard</div>
+                <div class="ui-menu-item">Projects</div>
+                <div class="ui-menu-item">Settings</div>
+                <div class="ui-menu-item">Profile</div>
+                <div class="ui-menu-item">Help</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- RIGHT ACTION PANEL - Visualizer Instance 2 -->
+    <div class="ui-element" id="action-panel">
+        <canvas id="visualizer-2"></canvas>
+        <div class="ui-content">
+            <div class="ui-title">Actions</div>
+            <div class="ui-button" onclick="actionClick('create')">Create New</div>
+            <div class="ui-button" onclick="actionClick('edit')">Edit Current</div>
+            <div class="ui-button" onclick="actionClick('share')">Share</div>
+            <div class="ui-button" onclick="actionClick('export')">Export</div>
+        </div>
+    </div>
+    
+    <!-- CENTER CONTENT CARD - Visualizer Instance 3 -->
+    <div class="ui-element" id="content-card">
+        <canvas id="visualizer-3"></canvas>
+        <div class="ui-content">
+            <div class="ui-title" id="content-title">Welcome to VIB3</div>
+            <div class="ui-subtitle" id="content-text">
+                Experience the future of interface design where visualizers become the UI elements themselves.
+                Click section dots below to see parameter morphing.
+            </div>
+        </div>
+    </div>
+    
+    <!-- FLOATING ACTION BUTTON - Visualizer Instance 4 -->
+    <div class="ui-element" id="floating-btn">
+        <canvas id="visualizer-4"></canvas>
+        <div class="ui-content">
+            <div style="font-size: 2rem;" id="fab-icon">⚡</div>
+        </div>
+    </div>
+    
+    <!-- SECTION SWITCHER -->
+    <div class="section-switcher">
+        <div class="section-dot active" data-section="home" title="Home - Hypercube"></div>
+        <div class="section-dot" data-section="articles" title="Articles - Tetrahedron"></div>
+        <div class="section-dot" data-section="videos" title="Videos - Sphere"></div>
+        <div class="section-dot" data-section="podcasts" title="Podcasts - Torus"></div>
+        <div class="section-dot" data-section="ema" title="EMA - Wave"></div>
+    </div>
+
+    <script>
+        console.log('🌌 VIB3STYLEPACK - Visualizers as UI Elements');
+        
+        // VISUALIZER UI ELEMENT CLASS
+        class VisualizerUIElement {
+            constructor(canvasId, elementType) {
+                this.canvas = document.getElementById(canvasId);
+                this.elementType = elementType;
+                this.gl = this.canvas.getContext('webgl');
+                
+                if (!this.gl) {
+                    console.error(`WebGL not supported for ${canvasId}`);
+                    return;
+                }
+                
+                // Element-specific parameters
+                this.elementParams = {
+                    'header': { densityMult: 0.8, speedMult: 1.2, colorShift: 0, intensity: 0.6 },
+                    'navigation': { densityMult: 1.5, speedMult: 0.8, colorShift: 120, intensity: 0.8 },
+                    'action': { densityMult: 1.3, speedMult: 1.4, colorShift: 240, intensity: 0.9 },
+                    'content': { densityMult: 1.0, speedMult: 1.0, colorShift: 60, intensity: 0.7 },
+                    'floating': { densityMult: 2.5, speedMult: 2.0, colorShift: 300, intensity: 1.0 }
+                }[elementType] || { densityMult: 1.0, speedMult: 1.0, colorShift: 0, intensity: 0.5 };
+                
+                // Current section
+                this.currentSection = 'home';
+                this.targetSection = 'home';
+                this.transitionProgress = 1.0;
+                
+                // Section parameters
+                this.sectionParams = {
+                    home: { geometry: 0.0, density: 12.0, speed: 1.0, color: [1.0, 0.0, 1.0] },
+                    articles: { geometry: 1.0, density: 8.0, speed: 0.7, color: [0.0, 1.0, 1.0] },
+                    videos: { geometry: 2.0, density: 15.0, speed: 1.5, color: [1.0, 1.0, 0.0] },
+                    podcasts: { geometry: 3.0, density: 10.0, speed: 1.1, color: [0.0, 1.0, 0.0] },
+                    ema: { geometry: 4.0, density: 18.0, speed: 0.9, color: [1.0, 0.5, 0.0] }
+                };
+                
+                // Interaction state
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.interactionIntensity = 0.0;
+                
+                this.startTime = Date.now();
+                this.initShaders();
+                this.initBuffers();
+                this.resize();
+                
+                console.log(`✅ Visualizer UI Element: ${elementType}`);
+            }
+            
+            initShaders() {
+                const vertexShaderSource = `
+                    attribute vec2 a_position;
+                    void main() {
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `
+                    precision highp float;
+                    
+                    uniform vec2 u_resolution;
+                    uniform float u_time;
+                    uniform vec2 u_mouse;
+                    uniform float u_geometry;
+                    uniform float u_density;
+                    uniform float u_speed;
+                    uniform vec3 u_color;
+                    uniform float u_intensity;
+                    uniform float u_elementDensity;
+                    uniform float u_elementSpeed;
+                    uniform float u_colorShift;
+                    
+                    // Geometry functions
+                    float hypercubeLattice(vec3 p, float gridSize) {
+                        vec3 grid = fract(p * gridSize);
+                        vec3 edges = 1.0 - smoothstep(0.0, 0.05, abs(grid - 0.5));
+                        return max(max(edges.x, edges.y), edges.z);
+                    }
+                    
+                    float tetrahedronLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float d1 = length(q);
+                        float d2 = length(q - vec3(0.5, 0.0, 0.0));
+                        float d3 = length(q - vec3(0.0, 0.5, 0.0));
+                        float d4 = length(q - vec3(0.0, 0.0, 0.5));
+                        return 1.0 - smoothstep(0.0, 0.15, min(min(d1, d2), min(d3, d4)));
+                    }
+                    
+                    float sphereLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r = length(q);
+                        return 1.0 - smoothstep(0.15, 0.4, r);
+                    }
+                    
+                    float torusLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r1 = sqrt(q.x*q.x + q.y*q.y);
+                        float r2 = sqrt((r1 - 0.25)*(r1 - 0.25) + q.z*q.z);
+                        return 1.0 - smoothstep(0.0, 0.12, r2);
+                    }
+                    
+                    float waveLattice(vec3 p, float gridSize) {
+                        vec3 q = p * gridSize;
+                        float wave = sin(q.x * 3.0) * sin(q.y * 3.0) * cos(q.z * 3.0 + u_time * u_speed * 0.001);
+                        return smoothstep(-0.3, 0.3, wave);
+                    }
+                    
+                    float getGeometryValue(vec3 p, float gridSize, float geomType) {
+                        if (geomType < 0.5) return hypercubeLattice(p, gridSize);
+                        else if (geomType < 1.5) return tetrahedronLattice(p, gridSize);
+                        else if (geomType < 2.5) return sphereLattice(p, gridSize);
+                        else if (geomType < 3.5) return torusLattice(p, gridSize);
+                        else return waveLattice(p, gridSize);
+                    }
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    void main() {
+                        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                        uv -= 0.5;
+                        uv.x *= u_resolution.x / u_resolution.y;
+                        
+                        // Animated positioning
+                        float time = u_time * 0.001 * u_speed * u_elementSpeed;
+                        mat2 rotation = mat2(cos(time), -sin(time), sin(time), cos(time));
+                        uv = rotation * uv;
+                        
+                        vec3 p = vec3(uv, sin(time * 0.5) * 0.3);
+                        
+                        // Element-specific density
+                        float elementDensity = u_density * u_elementDensity;
+                        
+                        // Get geometry value
+                        float lattice = getGeometryValue(p, elementDensity, u_geometry);
+                        
+                        // Color with element-specific shift
+                        float hue = atan(u_color.r, u_color.g) + u_colorShift * 0.017453;
+                        float saturation = 0.7 + lattice * 0.3;
+                        float brightness = 0.3 + lattice * 0.6 + u_intensity * 0.3;
+                        
+                        vec3 color = hsv2rgb(vec3(hue, saturation, brightness));
+                        
+                        // Interactive glow from mouse
+                        vec2 mousePos = (u_mouse - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
+                        float mouseDist = length(uv - mousePos);
+                        float mouseGlow = exp(-mouseDist * 8.0) * 0.5;
+                        color += vec3(mouseGlow) * u_color;
+                        
+                        // Glassmorphic effect
+                        float alpha = 0.8 + lattice * 0.2;
+                        
+                        gl_FragColor = vec4(color, alpha);
+                    }
+                `;
+                
+                this.program = this.createProgram(vertexShaderSource, fragmentShaderSource);
+                this.uniforms = {
+                    resolution: this.gl.getUniformLocation(this.program, 'u_resolution'),
+                    time: this.gl.getUniformLocation(this.program, 'u_time'),
+                    mouse: this.gl.getUniformLocation(this.program, 'u_mouse'),
+                    geometry: this.gl.getUniformLocation(this.program, 'u_geometry'),
+                    density: this.gl.getUniformLocation(this.program, 'u_density'),
+                    speed: this.gl.getUniformLocation(this.program, 'u_speed'),
+                    color: this.gl.getUniformLocation(this.program, 'u_color'),
+                    intensity: this.gl.getUniformLocation(this.program, 'u_intensity'),
+                    elementDensity: this.gl.getUniformLocation(this.program, 'u_elementDensity'),
+                    elementSpeed: this.gl.getUniformLocation(this.program, 'u_elementSpeed'),
+                    colorShift: this.gl.getUniformLocation(this.program, 'u_colorShift')
+                };
+            }
+            
+            createProgram(vertexSource, fragmentSource) {
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = this.gl.createProgram();
+                this.gl.attachShader(program, vertexShader);
+                this.gl.attachShader(program, fragmentShader);
+                this.gl.linkProgram(program);
+                
+                if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+                    console.error('Program linking failed:', this.gl.getProgramInfoLog(program));
+                    return null;
+                }
+                
+                return program;
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    console.error('Shader compilation failed:', this.gl.getShaderInfoLog(shader));
+                    return null;
+                }
+                
+                return shader;
+            }
+            
+            initBuffers() {
+                const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                
+                this.buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+            
+            resize() {
+                this.canvas.width = this.canvas.clientWidth;
+                this.canvas.height = this.canvas.clientHeight;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            morphToSection(sectionKey) {
+                if (sectionKey !== this.targetSection) {
+                    this.targetSection = sectionKey;
+                    this.transitionProgress = 0.0;
+                }
+            }
+            
+            updateInteraction(mouseX, mouseY, intensity) {
+                this.mouseX = mouseX;
+                this.mouseY = mouseY;
+                this.interactionIntensity = intensity;
+            }
+            
+            render() {
+                if (!this.program) return;
+                
+                this.resize();
+                this.gl.useProgram(this.program);
+                
+                // Update transition
+                if (this.transitionProgress < 1.0) {
+                    this.transitionProgress = Math.min(1.0, this.transitionProgress + 0.02);
+                }
+                
+                // Interpolate parameters
+                const currentParams = this.sectionParams[this.currentSection];
+                const targetParams = this.sectionParams[this.targetSection];
+                const t = this.transitionProgress;
+                
+                const interpolated = {
+                    geometry: currentParams.geometry + (targetParams.geometry - currentParams.geometry) * t,
+                    density: currentParams.density + (targetParams.density - currentParams.density) * t,
+                    speed: currentParams.speed + (targetParams.speed - currentParams.speed) * t,
+                    color: [
+                        currentParams.color[0] + (targetParams.color[0] - currentParams.color[0]) * t,
+                        currentParams.color[1] + (targetParams.color[1] - currentParams.color[1]) * t,
+                        currentParams.color[2] + (targetParams.color[2] - currentParams.color[2]) * t
+                    ]
+                };
+                
+                if (this.transitionProgress >= 1.0 && this.currentSection !== this.targetSection) {
+                    this.currentSection = this.targetSection;
+                }
+                
+                const time = Date.now() - this.startTime;
+                
+                // Set uniforms
+                this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+                this.gl.uniform1f(this.uniforms.time, time);
+                this.gl.uniform2f(this.uniforms.mouse, this.mouseX, this.mouseY);
+                this.gl.uniform1f(this.uniforms.geometry, interpolated.geometry);
+                this.gl.uniform1f(this.uniforms.density, interpolated.density);
+                this.gl.uniform1f(this.uniforms.speed, interpolated.speed);
+                this.gl.uniform3fv(this.uniforms.color, new Float32Array(interpolated.color));
+                this.gl.uniform1f(this.uniforms.intensity, this.elementParams.intensity + this.interactionIntensity * 0.5);
+                this.gl.uniform1f(this.uniforms.elementDensity, this.elementParams.densityMult);
+                this.gl.uniform1f(this.uniforms.elementSpeed, this.elementParams.speedMult);
+                this.gl.uniform1f(this.uniforms.colorShift, this.elementParams.colorShift);
+                
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+        }
+        
+        // MAIN SYSTEM
+        class VIB3UIElementSystem {
+            constructor() {
+                this.elements = [];
+                this.currentSection = 'home';
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.interactionIntensity = 0.0;
+                
+                this.sectionContent = {
+                    home: {
+                        title: 'Multi-Dimensional Interface',
+                        subtitle: '5 Visualizer Instances as UI Elements',
+                        content: 'Welcome to VIB3 - Experience the future of interface design',
+                        nav: ['Dashboard', 'Overview', 'Quick Start', 'Settings', 'Help'],
+                        icon: '🏠'
+                    },
+                    articles: {
+                        title: 'Technical Documentation',
+                        subtitle: 'Structured Knowledge Base',
+                        content: 'Browse technical articles and implementation guides',
+                        nav: ['Latest', 'Categories', 'Archive', 'Search', 'Tags'],
+                        icon: '📖'
+                    },
+                    videos: {
+                        title: 'Dynamic Media Hub',
+                        subtitle: 'Interactive Video Content',
+                        content: 'Watch tutorials and demonstrations',
+                        nav: ['Tutorials', 'Demos', 'Webinars', 'Live', 'Saved'],
+                        icon: '🎥'
+                    },
+                    podcasts: {
+                        title: 'Audio Experiences',
+                        subtitle: 'Continuous Content Flow',
+                        content: 'Listen to discussions and interviews',
+                        nav: ['Episodes', 'Series', 'Hosts', 'Playlist', 'History'],
+                        icon: '🎧'
+                    },
+                    ema: {
+                        title: 'Quantum Philosophy',
+                        subtitle: 'Exoditical Moral Architecture',
+                        content: 'Explore the principles of digital sovereignty',
+                        nav: ['Principles', 'Case Studies', 'Community', 'Research', 'Practice'],
+                        icon: '⚡'
+                    }
+                };
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                console.log('🎨 Initializing VIB3 UI Element System...');
+                
+                // Create 5 visualizer UI elements
+                const elementTypes = ['header', 'navigation', 'action', 'content', 'floating'];
+                for (let i = 0; i < 5; i++) {
+                    const element = new VisualizerUIElement(`visualizer-${i}`, elementTypes[i]);
+                    this.elements.push(element);
+                }
+                
+                this.setupInteractions();
+                this.setupSectionSwitcher();
+                this.startRenderLoop();
+                this.updateContent();
+                
+                console.log('✅ VIB3 UI Element System ready - 5 visualizers as UI components');
+            }
+            
+            setupInteractions() {
+                // Mouse movement
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX / window.innerWidth;
+                    this.mouseY = 1.0 - (e.clientY / window.innerHeight);
+                    this.interactionIntensity = Math.min(1.0, Math.sqrt(e.movementX*e.movementX + e.movementY*e.movementY) / 30);
+                    
+                    this.elements.forEach(element => {
+                        element.updateInteraction(this.mouseX, this.mouseY, this.interactionIntensity);
+                    });
+                    
+                    document.getElementById('debug-mouse').textContent = `${this.mouseX.toFixed(2)}, ${this.mouseY.toFixed(2)}`;
+                });
+                
+                // UI element clicks
+                document.querySelectorAll('.ui-element').forEach(element => {
+                    element.addEventListener('click', () => {
+                        element.style.animation = 'none';
+                        element.offsetHeight; // Trigger reflow
+                        element.style.animation = 'pulse 0.3s ease';
+                        setTimeout(() => element.style.animation = '', 300);
+                    });
+                });
+            }
+            
+            setupSectionSwitcher() {
+                document.querySelectorAll('.section-dot').forEach(dot => {
+                    dot.addEventListener('click', () => {
+                        const sectionKey = dot.dataset.section;
+                        this.morphToSection(sectionKey);
+                        
+                        document.querySelectorAll('.section-dot').forEach(d => d.classList.remove('active'));
+                        dot.classList.add('active');
+                    });
+                });
+            }
+            
+            morphToSection(sectionKey) {
+                console.log(`🔄 MORPHING ALL UI ELEMENTS TO: ${sectionKey}`);
+                
+                this.currentSection = sectionKey;
+                
+                // Morph all visualizer elements
+                this.elements.forEach(element => {
+                    element.morphToSection(sectionKey);
+                });
+                
+                // Update content
+                this.updateContent();
+                
+                // Update debug
+                const geometryNames = { home: 'hypercube', articles: 'tetrahedron', videos: 'sphere', podcasts: 'torus', ema: 'wave' };
+                document.getElementById('debug-section').textContent = sectionKey;
+                document.getElementById('debug-geometry').textContent = geometryNames[sectionKey];
+            }
+            
+            updateContent() {
+                const content = this.sectionContent[this.currentSection];
+                
+                // Update header
+                document.getElementById('header-title').textContent = content.title;
+                document.getElementById('header-subtitle').textContent = content.subtitle;
+                
+                // Update content card
+                document.getElementById('content-title').textContent = content.title;
+                document.getElementById('content-text').textContent = content.content;
+                
+                // Update navigation
+                const navMenu = document.getElementById('nav-menu');
+                navMenu.innerHTML = content.nav.map(item => 
+                    `<div class="ui-menu-item">${item}</div>`
+                ).join('');
+                
+                // Update floating button icon
+                document.getElementById('fab-icon').textContent = content.icon;
+            }
+            
+            startRenderLoop() {
+                const render = () => {
+                    this.elements.forEach(element => {
+                        element.render();
+                    });
+                    requestAnimationFrame(render);
+                };
+                
+                render();
+                console.log('🎬 Render loop started - 5 UI elements continuously rendering');
+            }
+        }
+        
+        // Action functions
+        function actionClick(action) {
+            console.log(`Action clicked: ${action}`);
+            document.getElementById('content-text').textContent = `Action: ${action.toUpperCase()} activated!`;
+        }
+        
+        // Add pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            console.log('🚀 Initializing VIB3 UI Element System...');
+            const system = new VIB3UIElementSystem();
+            window.vib3UISystem = system;
+        });
+        
+    </script>
+</body>
+</html>
