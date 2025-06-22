@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VIB3 Debug Check</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+        .debug { border: 1px solid #0f0; margin: 10px 0; padding: 10px; }
+        .error { color: #f00; }
+        .success { color: #0f0; }
+        .warning { color: #ff0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 VIB3STYLEPACK DEBUG CHECK</h1>
+    
+    <div class="debug">
+        <h3>SCRIPT LOADING TEST</h3>
+        <div id="script-status">Loading...</div>
+    </div>
+    
+    <div class="debug">
+        <h3>SYSTEM INITIALIZATION</h3>
+        <div id="system-status">Waiting...</div>
+    </div>
+    
+    <div class="debug">
+        <h3>CANVAS CREATION</h3>
+        <div id="canvas-status">Checking...</div>
+    </div>
+    
+    <div class="debug">
+        <h3>INSTANCE CREATION</h3>
+        <div id="instance-status">Checking...</div>
+    </div>
+    
+    <div class="debug">
+        <h3>ERROR LOG</h3>
+        <div id="error-log">No errors yet...</div>
+    </div>
+
+    <!-- Test sections -->
+    <section data-vib3-section="home" data-vib3-geometry="hypercube" style="height: 100px; border: 1px solid #333; margin: 10px 0;">
+        HOME SECTION
+    </section>
+    
+    <section data-vib3-section="articles" data-vib3-geometry="tetrahedron" style="height: 100px; border: 1px solid #333; margin: 10px 0;">
+        ARTICLES SECTION  
+    </section>
+
+    <!-- Load scripts with error checking -->
+    <script>
+        let loadStatus = {};
+        let errorLog = [];
+        
+        // Override console to capture errors
+        const originalError = console.error;
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            errorLog.push(args.join(' '));
+            document.getElementById('error-log').innerHTML = errorLog.map(e => `<div class="error">${e}</div>`).join('');
+        };
+        
+        function updateStatus(id, message, type = 'success') {
+            const element = document.getElementById(id);
+            if (element) {
+                element.innerHTML = `<span class="${type}">${message}</span>`;
+            }
+        }
+        
+        function checkScript(name, globalVar) {
+            try {
+                if (typeof window[globalVar] !== 'undefined') {
+                    loadStatus[name] = true;
+                    return `✅ ${name} - ${globalVar} loaded`;
+                } else {
+                    loadStatus[name] = false;
+                    return `❌ ${name} - ${globalVar} not found`;
+                }
+            } catch(e) {
+                loadStatus[name] = false;
+                return `🚨 ${name} - Error: ${e.message}`;
+            }
+        }
+        
+        // Check after scripts load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                let scriptResults = [
+                    checkScript('VIB34D Core', 'VIB34DCore'),
+                    checkScript('Multi-Visualizer', 'VIB3MultiVisualizerSystem'),
+                    checkScript('Home Master', 'VIB3HomeMaster'),
+                    checkScript('Portal Scroll', 'VIB3PortalScroll'),
+                    checkScript('Element Mapper', 'VIB3ElementMapper'),
+                    checkScript('Content Reactor', 'VIB3ContentReactor'),
+                    checkScript('StylePack', 'VIB3StylePack')
+                ];
+                
+                updateStatus('script-status', scriptResults.join('<br>'), 'info');
+                
+                // Check if system initialized
+                setTimeout(() => {
+                    const globalStylePack = window.getVIB3StylePack ? window.getVIB3StylePack() : null;
+                    if (globalStylePack) {
+                        updateStatus('system-status', `✅ VIB3StylePack initialized - ${globalStylePack.sections.size} sections detected`);
+                        
+                        // Check canvases
+                        const canvases = document.querySelectorAll('canvas');
+                        updateStatus('canvas-status', `📊 Found ${canvases.length} canvas elements`);
+                        
+                        // Check instances
+                        if (globalStylePack.multiVisualizerSystem) {
+                            let totalInstances = 0;
+                            globalStylePack.multiVisualizerSystem.sectionInstances.forEach(instances => {
+                                totalInstances += instances.length;
+                            });
+                            updateStatus('instance-status', `🎨 Created ${totalInstances} visualizer instances`);
+                        } else {
+                            updateStatus('instance-status', '❌ Multi-visualizer system not created', 'error');
+                        }
+                    } else {
+                        updateStatus('system-status', '❌ VIB3StylePack not initialized', 'error');
+                    }
+                }, 2000);
+            }, 1000);
+        });
+    </script>
+
+    <!-- VIB3STYLEPACK Scripts -->
+    <script src="js/vib34d-core.js" onerror="console.error('Failed to load vib34d-core.js')"></script>
+    <script src="js/vib3-multi-visualizer-system.js" onerror="console.error('Failed to load vib3-multi-visualizer-system.js')"></script>
+    <script src="js/vib3-home-master.js" onerror="console.error('Failed to load vib3-home-master.js')"></script>
+    <script src="js/vib3-portal-scroll.js" onerror="console.error('Failed to load vib3-portal-scroll.js')"></script>
+    <script src="js/vib3-element-mapper.js" onerror="console.error('Failed to load vib3-element-mapper.js')"></script>
+    <script src="js/vib3-content-reactor.js" onerror="console.error('Failed to load vib3-content-reactor.js')"></script>
+    <script src="js/vib3-stylepack.js" onerror="console.error('Failed to load vib3-stylepack.js')"></script>
+</body>
+</html>
