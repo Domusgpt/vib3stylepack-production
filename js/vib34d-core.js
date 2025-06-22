@@ -23,6 +23,8 @@ class VIB34DCore {
         this.instanceId = options.instanceId || `vib34d-${Date.now()}`;
         this.instanceRole = options.role || 'background'; // 'header', 'content', 'background', etc.
         this.parameterModifier = options.modifier || 1.0; // Instance variation (1.0, 1.3, 0.7, etc.)
+        this.colorInversion = options.colorInversion || { hue: 0, saturation: 1.0, brightness: 1.0 };
+        this.parameterEnhancements = options.parameterEnhancements || {};
         
         // Core state (EXACT from working demo)
         this.startTime = Date.now();
@@ -128,17 +130,80 @@ class VIB34DCore {
     }
     
     applyInstanceModifier(baseParams) {
-        // Apply instance variation to base parameters
+        // Apply instance variation to base parameters with enhanced differentiation
+        const modifiedColor = this.applyColorInversion(baseParams.baseColor);
+        const enhancements = this.parameterEnhancements;
+        
         return {
             ...baseParams,
-            gridDensity: baseParams.gridDensity * this.parameterModifier,
-            morphFactor: baseParams.morphFactor * this.parameterModifier,
-            rotationSpeed: baseParams.rotationSpeed * this.parameterModifier,
-            // Keep dimension and colors stable across instances
-            dimension: baseParams.dimension,
-            baseColor: baseParams.baseColor,
-            glitchIntensity: baseParams.glitchIntensity
+            gridDensity: baseParams.gridDensity * this.parameterModifier * (enhancements.gridScale || 1.0),
+            morphFactor: baseParams.morphFactor * this.parameterModifier * (enhancements.morphScale || 1.0),
+            rotationSpeed: baseParams.rotationSpeed * this.parameterModifier * (enhancements.rotationScale || 1.0),
+            glitchIntensity: baseParams.glitchIntensity * (0.5 + this.parameterModifier * 0.5),
+            // Enhanced dimension with role-specific boost
+            dimension: baseParams.dimension + (enhancements.dimensionBoost || 0.0),
+            baseColor: modifiedColor,
+            interactionSensitivity: enhancements.interactionSensitivity || 1.0,
+            morphingStyle: enhancements.morphingStyle || 'smooth'
         };
+    }
+    
+    applyColorInversion(baseColor) {
+        // Convert RGB to HSL, apply inversion, convert back
+        const [r, g, b] = baseColor;
+        const [h, s, l] = this.rgbToHsl(r, g, b);
+        
+        // Apply color inversion parameters
+        const newH = (h + this.colorInversion.hue) % 360;
+        const newS = Math.min(1.0, s * this.colorInversion.saturation);
+        const newL = Math.min(1.0, l * this.colorInversion.brightness);
+        
+        return this.hslToRgb(newH, newS, newL);
+    }
+    
+    rgbToHsl(r, g, b) {
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        
+        if (max === min) {
+            h = s = 0;
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        
+        return [h * 360, s, l];
+    }
+    
+    hslToRgb(h, s, l) {
+        h = h / 360;
+        const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1/6) return p + (q - p) * 6 * t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        };
+        
+        if (s === 0) {
+            return [l, l, l];
+        } else {
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            return [
+                hue2rgb(p, q, h + 1/3),
+                hue2rgb(p, q, h),
+                hue2rgb(p, q, h - 1/3)
+            ];
+        }
     }
     
     initShaders() {
@@ -414,20 +479,30 @@ class VIB34DCore {
     updateInteractionState(state) {
         Object.assign(this.interactionState, state);
         
-        // Enhanced interaction parameter modification
+        // Enhanced interaction parameter modification with sensitivity scaling
+        const sensitivity = this.params.interactionSensitivity || 1.0;
+        
         switch(state.type) {
             case 'scroll':
-                const scrollModifier = Math.min(state.scrollVelocity / 20, 1.0);
+                const scrollModifier = Math.min(state.scrollVelocity / 20, 1.0) * sensitivity;
                 this.params.gridDensity = (this.params.gridDensity / this.parameterModifier) * this.parameterModifier * (1.0 + scrollModifier * 0.5);
                 this.params.dimension = (this.params.dimension / this.parameterModifier) * this.parameterModifier + scrollModifier * 0.3;
+                this.params.rotationSpeed = (this.params.rotationSpeed / this.parameterModifier) * this.parameterModifier * (1.0 + scrollModifier * 0.2);
                 break;
                 
             case 'hold':
                 if (state.isHolding) {
                     const holdDuration = (Date.now() - state.holdStart) / 1000;
-                    this.params.morphFactor = Math.min((this.params.morphFactor / this.parameterModifier) * this.parameterModifier + holdDuration * 0.2, 1.0);
-                    this.params.dimension = Math.min((this.params.dimension / this.parameterModifier) * this.parameterModifier + holdDuration * 0.1, 4.0);
+                    const holdEffect = holdDuration * sensitivity;
+                    this.params.morphFactor = Math.min((this.params.morphFactor / this.parameterModifier) * this.parameterModifier + holdEffect * 0.2, 1.0);
+                    this.params.dimension = Math.min((this.params.dimension / this.parameterModifier) * this.parameterModifier + holdEffect * 0.1, 4.0);
                 }
+                break;
+                
+            case 'mouse':
+                // Enhanced mouse reactivity based on sensitivity
+                this.interactionState.intensity = Math.min(state.intensity * sensitivity, 2.0);
+                this.params.glitchIntensity = (this.params.glitchIntensity / this.parameterModifier) * this.parameterModifier * (1.0 + state.intensity * sensitivity * 0.1);
                 break;
         }
     }
@@ -455,26 +530,19 @@ class VIB34DCore {
     }
     
     updateVariationUniforms() {
-        if (!this.uniforms.variations || !this.geometryVariations.length) return;
-        
-        // Pack variation data into flat array (max 3 variations)
-        const variationData = new Float32Array(12); // 3 variations × 4 params
-        
-        for (let i = 0; i < Math.min(3, this.geometryVariations.length); i++) {
-            const variation = this.geometryVariations[i];
-            if (variation.active) {
-                variationData[i * 4 + 0] = variation.modifier || 1.0;
-                variationData[i * 4 + 1] = variation.opacity || 0.5;
-                variationData[i * 4 + 2] = variation.modifier || 1.0; // Grid modifier
-                variationData[i * 4 + 3] = 1.0; // Blend mode placeholder
-            }
-        }
-        
-        this.gl.uniform1fv(this.uniforms.variations, variationData);
+        // VIB34D Core doesn't use variations uniform - this is handled by instance modifiers
+        // Variations are applied through the parameterModifier system instead
+        console.log(`🎨 VIB34D [${this.instanceId}] variations applied through modifier: ${this.parameterModifier}`);
     }
     
     render() {
         if (!this.program || !this.isActive) return;
+        
+        // Check for WebGL context loss
+        if (this.gl.isContextLost()) {
+            console.warn(`⚠️ WebGL context lost for [${this.instanceId}]`);
+            return;
+        }
         
         this.resize();
         this.gl.useProgram(this.program);

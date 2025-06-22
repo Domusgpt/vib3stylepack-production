@@ -26,12 +26,28 @@ class VIB3MultiVisualizerSystem {
             progress: 0
         };
         
-        // UI element positioning for each instance role
+        // Enhanced UI element positioning with dynamic parameters
         this.instanceRoles = {
-            'background': { x: 0.5, y: 0.5, size: 1.0, zIndex: 1 },
-            'ui-left': { x: 0.25, y: 0.4, size: 0.6, zIndex: 3 },
-            'ui-right': { x: 0.75, y: 0.6, size: 0.4, zIndex: 3 },
-            'accent': { x: 0.6, y: 0.3, size: 0.3, zIndex: 2 }
+            'background': { 
+                x: 0.5, y: 0.5, size: 1.0, zIndex: 1,
+                gridScale: 0.8, morphScale: 0.6, rotationScale: 0.4,
+                dimensionBoost: 0.0, interactionSensitivity: 0.3
+            },
+            'ui-left': { 
+                x: 0.2, y: 0.3, size: 0.7, zIndex: 3,
+                gridScale: 1.5, morphScale: 1.2, rotationScale: 1.0,
+                dimensionBoost: 0.3, interactionSensitivity: 1.2
+            },
+            'ui-right': { 
+                x: 0.8, y: 0.7, size: 0.5, zIndex: 3,
+                gridScale: 1.8, morphScale: 0.9, rotationScale: 1.4,
+                dimensionBoost: 0.2, interactionSensitivity: 0.9
+            },
+            'accent': { 
+                x: 0.6, y: 0.15, size: 0.35, zIndex: 4,
+                gridScale: 2.2, morphScale: 1.8, rotationScale: 0.6,
+                dimensionBoost: 0.6, interactionSensitivity: 2.0
+            }
         };
         
         this.initialize();
@@ -97,6 +113,9 @@ class VIB3MultiVisualizerSystem {
             z-index: ${roleConfig.zIndex};
             transform: scale(${roleConfig.size});
             transform-origin: ${roleConfig.x * 100}% ${roleConfig.y * 100}%;
+            border-radius: ${this.getBorderRadiusForRole(role)};
+            backdrop-filter: ${this.getBackdropFilterForRole(role)};
+            box-shadow: ${this.getBoxShadowForRole(role)};
         `;
         
         // Size canvas
@@ -106,13 +125,18 @@ class VIB3MultiVisualizerSystem {
         // Add to section
         sectionData.element.appendChild(canvas);
         
-        // Create VIB34D instance with role-specific parameters
+        // Create VIB34D instance with enhanced role-specific parameters
         const instanceModifier = this.getInstanceModifier(instanceIndex, role);
+        const colorInversion = this.getColorInversionForRole(role, instanceIndex);
+        const parameterEnhancements = this.getParameterEnhancementsForRole(role, sectionData);
+        
         const renderer = new VIB34DCore(canvas, {
             instanceId: `${sectionKey}-${role}-${instanceIndex}`,
             role: role,
             modifier: sectionData.modifier * instanceModifier,
-            geometry: sectionData.geometry
+            geometry: sectionData.geometry,
+            colorInversion: colorInversion,
+            parameterEnhancements: parameterEnhancements
         });
         
         // Position canvas for UI juxtaposition
@@ -128,12 +152,12 @@ class VIB3MultiVisualizerSystem {
     }
     
     getInstanceModifier(instanceIndex, role) {
-        // Different parameter variations for UI juxtaposition
+        // Enhanced parameter variations for glassmorphic UI juxtaposition
         const modifiers = {
-            'background': [1.0, 0.8, 1.2], // Subtle background variations
-            'ui-left': [1.3, 1.5, 0.9],    // More dynamic UI elements
-            'ui-right': [0.7, 1.1, 1.4],   // Contrasting right side
-            'accent': [1.8, 0.6, 2.0]      // High contrast accents
+            'background': [0.8, 1.0, 0.6], // Subtle background variations
+            'ui-left': [1.4, 1.8, 1.1],    // Strong UI presence
+            'ui-right': [0.9, 1.3, 1.6],   // Contrasting dynamics
+            'accent': [2.2, 0.4, 2.8]      // Dramatic accent variations
         };
         
         return modifiers[role] ? modifiers[role][instanceIndex] || 1.0 : 1.0;
@@ -146,16 +170,19 @@ class VIB3MultiVisualizerSystem {
             canvas.style.clipPath = clipPath;
         }
         
-        // Blend modes for interesting interactions
+        // Enhanced glassmorphic blend modes and effects
         const blendModes = {
             'background': 'normal',
             'ui-left': 'multiply',
             'ui-right': 'screen',
-            'accent': 'overlay'
+            'accent': 'color-dodge'
         };
         
         canvas.style.mixBlendMode = blendModes[role] || 'normal';
         canvas.style.opacity = this.getOpacityForRole(role);
+        
+        // Apply glassmorphic styling
+        this.applyGlassmorphicStyling(canvas, role);
     }
     
     getClipPathForRole(role) {
@@ -171,13 +198,170 @@ class VIB3MultiVisualizerSystem {
     
     getOpacityForRole(role) {
         const opacities = {
-            'background': 0.4,
-            'ui-left': 0.8,
-            'ui-right': 0.7,
-            'accent': 0.6
+            'background': 0.3,
+            'ui-left': 0.85,
+            'ui-right': 0.75,
+            'accent': 0.9
         };
         
         return opacities[role] || 0.5;
+    }
+    
+    getBorderRadiusForRole(role) {
+        const borderRadius = {
+            'background': '0px',
+            'ui-left': '20px 0px 0px 20px',
+            'ui-right': '0px 20px 20px 0px',
+            'accent': '50%'
+        };
+        
+        return borderRadius[role] || '10px';
+    }
+    
+    getBackdropFilterForRole(role) {
+        const filters = {
+            'background': 'blur(0px)',
+            'ui-left': 'blur(12px) saturate(1.8)',
+            'ui-right': 'blur(8px) saturate(1.4)',
+            'accent': 'blur(20px) saturate(2.2) brightness(1.2)'
+        };
+        
+        return filters[role] || 'blur(4px)';
+    }
+    
+    getBoxShadowForRole(role) {
+        const shadows = {
+            'background': 'none',
+            'ui-left': 'inset 0 0 40px rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.3)',
+            'ui-right': 'inset 0 0 30px rgba(255,255,255,0.08), 0 4px 24px rgba(0,0,0,0.2)',
+            'accent': 'inset 0 0 60px rgba(255,255,255,0.15), 0 12px 40px rgba(0,0,0,0.4)'
+        };
+        
+        return shadows[role] || '0 4px 16px rgba(0,0,0,0.1)';
+    }
+    
+    getColorInversionForRole(role, instanceIndex) {
+        // Create color inversions for dramatic UI juxtaposition
+        const inversions = {
+            'background': [
+                { hue: 0, saturation: 1.0, brightness: 1.0 },      // Base colors
+                { hue: 30, saturation: 0.8, brightness: 0.9 },     // Slight warm shift
+                { hue: -20, saturation: 1.2, brightness: 1.1 }     // Cool bright shift
+            ],
+            'ui-left': [
+                { hue: 120, saturation: 1.5, brightness: 1.2 },    // Green-cyan shift
+                { hue: 180, saturation: 2.0, brightness: 0.8 },    // Full cyan inversion
+                { hue: 60, saturation: 1.3, brightness: 1.4 }      // Yellow-green shift
+            ],
+            'ui-right': [
+                { hue: -60, saturation: 1.2, brightness: 0.9 },    // Purple shift
+                { hue: -120, saturation: 1.8, brightness: 1.1 },   // Deep blue inversion
+                { hue: -30, saturation: 1.4, brightness: 1.3 }     // Magenta shift
+            ],
+            'accent': [
+                { hue: 180, saturation: 2.5, brightness: 1.5 },    // Full complement inversion
+                { hue: -90, saturation: 0.5, brightness: 0.7 },    // Dramatic desaturation
+                { hue: 90, saturation: 3.0, brightness: 1.8 }      // Extreme saturation boost
+            ]
+        };
+        
+        const roleInversions = inversions[role] || inversions.background;
+        return roleInversions[instanceIndex] || roleInversions[0];
+    }
+    
+    applyGlassmorphicStyling(canvas, role) {
+        // Additional glassmorphic effects beyond CSS
+        const parent = canvas.parentElement;
+        if (!parent) return;
+        
+        // Create glassmorphic container overlay
+        if (!parent.querySelector(`.glassmorphic-overlay-${role}`)) {
+            const overlay = document.createElement('div');
+            overlay.className = `glassmorphic-overlay-${role}`;
+            overlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: ${canvas.style.zIndex + 1};
+                background: ${this.getGlassmorphicGradient(role)};
+                border: ${this.getGlassmorphicBorder(role)};
+                border-radius: ${this.getBorderRadiusForRole(role)};
+                opacity: 0.15;
+            `;
+            parent.appendChild(overlay);
+        }
+    }
+    
+    getGlassmorphicGradient(role) {
+        const gradients = {
+            'background': 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+            'ui-left': 'linear-gradient(135deg, rgba(0,255,255,0.2) 0%, rgba(255,0,255,0.1) 100%)',
+            'ui-right': 'linear-gradient(45deg, rgba(255,255,0,0.15) 0%, rgba(255,0,0,0.08) 100%)',
+            'accent': 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.05) 70%)'
+        };
+        
+        return gradients[role] || gradients.background;
+    }
+    
+    getGlassmorphicBorder(role) {
+        const borders = {
+            'background': 'none',
+            'ui-left': '1px solid rgba(0,255,255,0.3)',
+            'ui-right': '1px solid rgba(255,255,0,0.25)',
+            'accent': '2px solid rgba(255,255,255,0.4)'
+        };
+        
+        return borders[role] || '1px solid rgba(255,255,255,0.1)';
+    }
+    
+    getParameterEnhancementsForRole(role, sectionData) {
+        // Enhanced parameter differentiation based on role and section
+        const roleConfig = this.instanceRoles[role];
+        const baseGeometry = sectionData.geometry;
+        
+        // Geometry-specific enhancements
+        const geometryEnhancements = {
+            'hypercube': {
+                dimensionBoostMultiplier: 1.0,
+                gridComplexity: 1.0,
+                morphingStyle: 'smooth'
+            },
+            'tetrahedron': {
+                dimensionBoostMultiplier: 0.8,
+                gridComplexity: 1.2,
+                morphingStyle: 'sharp'
+            },
+            'sphere': {
+                dimensionBoostMultiplier: 1.3,
+                gridComplexity: 0.9,
+                morphingStyle: 'flowing'
+            },
+            'torus': {
+                dimensionBoostMultiplier: 1.1,
+                gridComplexity: 1.1,
+                morphingStyle: 'continuous'
+            },
+            'wave': {
+                dimensionBoostMultiplier: 1.4,
+                gridComplexity: 0.7,
+                morphingStyle: 'oscillating'
+            }
+        };
+        
+        const geomEnhancement = geometryEnhancements[baseGeometry] || geometryEnhancements.hypercube;
+        
+        return {
+            gridScale: roleConfig.gridScale * geomEnhancement.gridComplexity,
+            morphScale: roleConfig.morphScale,
+            rotationScale: roleConfig.rotationScale,
+            dimensionBoost: roleConfig.dimensionBoost * geomEnhancement.dimensionBoostMultiplier,
+            interactionSensitivity: roleConfig.interactionSensitivity,
+            morphingStyle: geomEnhancement.morphingStyle,
+            geometryComplexity: geomEnhancement.gridComplexity
+        };
     }
     
     setupInfiniteScrollPortal() {
