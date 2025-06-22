@@ -1,0 +1,6 @@
+127.0.0.1 - - [22/Jun/2025 10:36:44] "GET /WORKING_FINAL_VERSION.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2025 10:37:14] "GET /WORKING_FINAL_VERSION.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2025 10:37:14] code 404, message File not found
+127.0.0.1 - - [22/Jun/2025 10:37:14] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [22/Jun/2025 10:37:14] code 404, message File not found
+127.0.0.1 - - [22/Jun/2025 10:37:14] "GET /favicon.ico HTTP/1.1" 404 -

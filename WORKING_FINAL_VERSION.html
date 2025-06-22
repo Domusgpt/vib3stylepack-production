@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB3STYLEPACK - STATE CYCLING SYSTEM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: white;
+            font-family: 'Orbitron', 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            cursor: crosshair;
+        }
+        
+        /* SINGLE VIEWPORT - NO SCROLLING, NO PAGES */
+        .main-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 5 VISUALIZER INSTANCES - FIXED POSITIONS */
+        .visualizer-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .visualizer-instance {
+            position: absolute;
+            pointer-events: auto;
+        }
+        
+        /* LARGE UI SECTIONS FILLING PAGE */
+        #instance-0 { /* Background */
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; opacity: 0.7;
+        }
+        
+        #instance-1 { /* Left UI Panel */
+            top: 10%; left: 5%; width: 35%; height: 80%;
+            z-index: 3; opacity: 0.9;
+            border-radius: 20px;
+        }
+        
+        #instance-2 { /* Right UI Panel */
+            top: 10%; right: 5%; width: 35%; height: 80%;
+            z-index: 3; opacity: 0.8;
+            border-radius: 20px;
+        }
+        
+        #instance-3 { /* Top Header */
+            top: 5%; left: 50%; transform: translateX(-50%);
+            width: 60%; height: 20%;
+            z-index: 4; opacity: 1.0;
+            border-radius: 30px;
+        }
+        
+        #instance-4 { /* Bottom Footer */
+            bottom: 5%; left: 50%; transform: translateX(-50%);
+            width: 80%; height: 15%;
+            z-index: 4; opacity: 0.8;
+            border-radius: 25px;
+        }
+        
+        /* CONTENT OVERLAYS - CHANGE WITH STATE */
+        .content-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            z-index: 5;
+            pointer-events: none;
+            background: rgba(0,0,0,0.1);
+            backdrop-filter: blur(2px);
+            transition: all 0.5s ease;
+        }
+        
+        .content-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: rgba(255,255,255,0.95);
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+            transition: all 0.5s ease;
+        }
+        
+        .content-subtitle {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 15px;
+            transition: all 0.5s ease;
+        }
+        
+        .content-description {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.4;
+            max-width: 90%;
+            transition: all 0.5s ease;
+        }
+        
+        /* STATE CONTROLS */
+        .state-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .state-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .state-dot.active {
+            background: #0ff;
+            box-shadow: 0 0 30px #0ff;
+            transform: scale(1.3);
+        }
+        
+        .state-dot:hover {
+            background: rgba(255,255,255,0.6);
+            transform: scale(1.1);
+        }
+        
+        /* STATE INDICATOR */
+        .state-indicator {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #0ff;
+            font-family: monospace;
+            font-size: 0.8rem;
+            z-index: 2000;
+            min-width: 200px;
+        }
+        
+        .state-row {
+            margin: 3px 0;
+            color: #0ff;
+        }
+        
+        .state-value {
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        /* SCROLL HINT */
+        .scroll-hint {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            writing-mode: vertical-rl;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            z-index: 1000;
+        }
+        
+        /* UI BUTTONS */
+        .ui-button {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+            margin: 4px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 0.7rem;
+        }
+        
+        .ui-button:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- STATE INDICATOR -->
+    <div class="state-indicator">
+        <div class="state-row">Current State: <span class="state-value" id="current-state">HOME</span></div>
+        <div class="state-row">Geometry: <span class="state-value" id="current-geometry">Hypercube</span></div>
+        <div class="state-row">Transition: <span class="state-value" id="transition-status">Complete</span></div>
+        <div class="state-row">Mouse: <span class="state-value" id="mouse-pos">0.5, 0.5</span></div>
+        <div class="state-row">Instances: <span class="state-value">5 Active</span></div>
+    </div>
+    
+    <!-- SCROLL HINT -->
+    <div class="scroll-hint">SCROLL OR CLICK TO CYCLE STATES</div>
+
+    <!-- MAIN CONTAINER - SINGLE VIEWPORT -->
+    <div class="main-container">
+        
+        <!-- VISUALIZER LAYER WITH 5 INSTANCES -->
+        <div class="visualizer-layer">
+            <canvas id="instance-0" class="visualizer-instance"></canvas>
+            <canvas id="instance-1" class="visualizer-instance"></canvas>
+            <canvas id="instance-2" class="visualizer-instance"></canvas>
+            <canvas id="instance-3" class="visualizer-instance"></canvas>
+            <canvas id="instance-4" class="visualizer-instance"></canvas>
+        </div>
+        
+        <!-- CONTENT OVERLAYS - CHANGE WITH STATE -->
+        
+        <!-- Left Panel Content -->
+        <div class="content-overlay" style="top: 10%; left: 5%; width: 35%; height: 80%; z-index: 6;">
+            <div class="content-title" id="left-title">Navigation</div>
+            <div class="content-description" id="left-content">
+                Interactive navigation through state space
+            </div>
+            <button class="ui-button" onclick="cycleState(1)">Next State</button>
+            <button class="ui-button" onclick="cycleState(-1)">Prev State</button>
+        </div>
+        
+        <!-- Right Panel Content -->
+        <div class="content-overlay" style="top: 10%; right: 5%; width: 35%; height: 80%; z-index: 6;">
+            <div class="content-title" id="right-title">Actions</div>
+            <div class="content-description" id="right-content">
+                State-specific actions and controls
+            </div>
+            <button class="ui-button" onclick="actionClick('create')" id="action-1">Create</button>
+            <button class="ui-button" onclick="actionClick('modify')" id="action-2">Modify</button>
+        </div>
+        
+        <!-- Top Header Content -->
+        <div class="content-overlay" style="top: 5%; left: 50%; transform: translateX(-50%); width: 60%; height: 20%; z-index: 7;">
+            <div class="content-title" id="header-title">VIB3STYLEPACK</div>
+            <div class="content-subtitle" id="header-subtitle">State Cycling Multi-Visualizer System</div>
+        </div>
+        
+        <!-- Bottom Footer Content -->
+        <div class="content-overlay" style="bottom: 5%; left: 50%; transform: translateX(-50%); width: 80%; height: 15%; z-index: 7;">
+            <div class="content-description" id="footer-content">
+                Mathematical state transitions with 5 synchronized visualizer instances
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- STATE CONTROLS -->
+    <div class="state-controls">
+        <div class="state-dot active" data-state="0" title="HOME - Hypercube"></div>
+        <div class="state-dot" data-state="1" title="TECH - Tetrahedron"></div>
+        <div class="state-dot" data-state="2" title="MEDIA - Sphere"></div>
+        <div class="state-dot" data-state="3" title="AUDIO - Torus"></div>
+        <div class="state-dot" data-state="4" title="QUANTUM - Wave"></div>
+    </div>
+
+    <script>
+        console.log('🌌 VIB3STYLEPACK - STATE CYCLING SYSTEM');
+        
+        // STATE CYCLING VISUALIZER
+        class StateCyclingVisualizer {
+            constructor(canvasId, instanceId) {
+                this.canvas = document.getElementById(canvasId);
+                this.instanceId = instanceId;
+                this.gl = this.canvas.getContext('webgl');
+                
+                if (!this.gl) {
+                    console.error(`WebGL not supported for ${canvasId}`);
+                    return;
+                }
+                
+                // Instance-specific parameters
+                this.instanceParams = {
+                    0: { densityMult: 1.0, speedMult: 1.0, colorShift: 0.0, intensity: 0.6 },    // Background
+                    1: { densityMult: 1.8, speedMult: 1.2, colorShift: 72.0, intensity: 0.8 },   // Left
+                    2: { densityMult: 1.5, speedMult: 1.4, colorShift: 144.0, intensity: 0.9 },  // Right
+                    3: { densityMult: 2.2, speedMult: 0.8, colorShift: 216.0, intensity: 1.0 },  // Header
+                    4: { densityMult: 1.3, speedMult: 0.6, colorShift: 288.0, intensity: 0.7 }   // Footer
+                }[instanceId] || { densityMult: 1.0, speedMult: 1.0, colorShift: 0.0, intensity: 0.5 };
+                
+                // Current state and transition
+                this.currentState = 0;
+                this.targetState = 0;
+                this.transitionProgress = 1.0;
+                this.transitionSpeed = 3.0; // Fast snapping
+                
+                // State definitions - SNAP between these instantly
+                this.states = [
+                    { // HOME - Hypercube
+                        geometry: 0.0,
+                        density: 12.0,
+                        speed: 1.0,
+                        color: [1.0, 0.0, 1.0],
+                        dimension: 3.5,
+                        name: 'HOME',
+                        geometryName: 'Hypercube'
+                    },
+                    { // TECH - Tetrahedron
+                        geometry: 1.0,
+                        density: 8.0,
+                        speed: 0.7,
+                        color: [0.0, 1.0, 1.0],
+                        dimension: 3.2,
+                        name: 'TECH',
+                        geometryName: 'Tetrahedron'
+                    },
+                    { // MEDIA - Sphere
+                        geometry: 2.0,
+                        density: 15.0,
+                        speed: 1.5,
+                        color: [1.0, 1.0, 0.0],
+                        dimension: 3.8,
+                        name: 'MEDIA',
+                        geometryName: 'Sphere'
+                    },
+                    { // AUDIO - Torus
+                        geometry: 3.0,
+                        density: 10.0,
+                        speed: 1.1,
+                        color: [0.0, 1.0, 0.0],
+                        dimension: 3.6,
+                        name: 'AUDIO',
+                        geometryName: 'Torus'
+                    },
+                    { // QUANTUM - Wave
+                        geometry: 6.0,
+                        density: 18.0,
+                        speed: 0.9,
+                        color: [1.0, 0.0, 0.5],
+                        dimension: 3.9,
+                        name: 'QUANTUM',
+                        geometryName: 'Wave'
+                    }
+                ];
+                
+                // Interaction
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.interactionIntensity = 0.0;
+                
+                this.startTime = Date.now();
+                this.initShaders();
+                this.initBuffers();
+                this.resize();
+                
+                console.log(`✅ State Cycling Visualizer ${instanceId} initialized`);
+            }
+            
+            initShaders() {
+                const vertexShaderSource = `
+                    attribute vec2 a_position;
+                    void main() {
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `
+                    precision highp float;
+                    
+                    uniform vec2 u_resolution;
+                    uniform float u_time;
+                    uniform vec2 u_mouse;
+                    uniform float u_geometry;
+                    uniform float u_density;
+                    uniform float u_speed;
+                    uniform vec3 u_color;
+                    uniform float u_dimension;
+                    uniform float u_intensity;
+                    uniform float u_instanceDensity;
+                    uniform float u_instanceSpeed;
+                    uniform float u_colorShift;
+                    
+                    // 4D rotation matrices
+                    mat4 rotateXW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(c, 0, 0, -s, 0, 1, 0, 0, 0, 0, 1, 0, s, 0, 0, c);
+                    }
+                    
+                    mat4 rotateYW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(1, 0, 0, 0, 0, c, 0, -s, 0, 0, 1, 0, 0, s, 0, c);
+                    }
+                    
+                    vec3 project4Dto3D(vec4 p) {
+                        float w = 2.0 / (2.0 + p.w);
+                        return vec3(p.x * w, p.y * w, p.z * w);
+                    }
+                    
+                    // Geometry functions
+                    float hypercubeLattice(vec3 p, float gridSize) {
+                        vec3 grid = fract(p * gridSize);
+                        vec3 edges = 1.0 - smoothstep(0.0, 0.02, abs(grid - 0.5));
+                        return max(max(edges.x, edges.y), edges.z);
+                    }
+                    
+                    float tetrahedronLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float d1 = length(q);
+                        float d2 = length(q - vec3(0.5, 0.0, 0.0));
+                        float d3 = length(q - vec3(0.0, 0.5, 0.0));
+                        float d4 = length(q - vec3(0.0, 0.0, 0.5));
+                        return 1.0 - smoothstep(0.0, 0.1, min(min(d1, d2), min(d3, d4)));
+                    }
+                    
+                    float sphereLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r = length(q);
+                        return 1.0 - smoothstep(0.15, 0.4, r);
+                    }
+                    
+                    float torusLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r1 = sqrt(q.x*q.x + q.y*q.y);
+                        float r2 = sqrt((r1 - 0.25)*(r1 - 0.25) + q.z*q.z);
+                        return 1.0 - smoothstep(0.0, 0.1, r2);
+                    }
+                    
+                    float waveLattice(vec3 p, float gridSize) {
+                        vec3 q = p * gridSize;
+                        float wave1 = sin(q.x * 2.0 + u_time * u_speed * 0.001);
+                        float wave2 = sin(q.y * 2.0 + u_time * u_speed * 0.0013);
+                        float wave3 = sin(q.z * 2.0 + u_time * u_speed * 0.0007);
+                        float interference = wave1 * wave2 * wave3;
+                        return smoothstep(-0.3, 0.3, interference);
+                    }
+                    
+                    float getGeometryValue(vec3 p, float gridSize, float geomType) {
+                        if (geomType < 0.5) return hypercubeLattice(p, gridSize);
+                        else if (geomType < 1.5) return tetrahedronLattice(p, gridSize);
+                        else if (geomType < 2.5) return sphereLattice(p, gridSize);
+                        else if (geomType < 3.5) return torusLattice(p, gridSize);
+                        else return waveLattice(p, gridSize);
+                    }
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    void main() {
+                        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                        float aspectRatio = u_resolution.x / u_resolution.y;
+                        uv.x *= aspectRatio;
+                        uv -= 0.5;
+                        
+                        // 4D space with instance-specific rotation
+                        float time = u_time * 0.001 * u_speed * u_instanceSpeed;
+                        vec4 p4d = vec4(uv, sin(time * 0.3) * 0.5, cos(time * 0.4) * 0.3);
+                        
+                        // Apply 4D rotations
+                        p4d = rotateXW(time * 0.5) * p4d;
+                        p4d = rotateYW(time * 0.3) * p4d;
+                        
+                        // Project to 3D
+                        vec3 p = project4Dto3D(p4d);
+                        
+                        // Instance-specific density
+                        float instanceDensity = u_density * u_instanceDensity;
+                        
+                        // Get geometry value
+                        float lattice = getGeometryValue(p, instanceDensity, u_geometry);
+                        
+                        // Color with instance shift
+                        float hue = atan(u_color.r, u_color.g) + u_colorShift * 0.017453;
+                        float saturation = 0.8 + lattice * 0.2;
+                        float brightness = 0.4 + lattice * 0.6 + u_intensity * 0.3;
+                        
+                        vec3 color = hsv2rgb(vec3(hue, saturation, brightness));
+                        
+                        // Mouse interaction
+                        float mouseDist = length(uv - (u_mouse - 0.5) * vec2(aspectRatio, 1.0));
+                        float mouseGlow = exp(-mouseDist * 3.0) * 0.3;
+                        color += vec3(mouseGlow) * u_color;
+                        
+                        gl_FragColor = vec4(color, 0.95);
+                    }
+                `;
+                
+                this.program = this.createProgram(vertexShaderSource, fragmentShaderSource);
+                this.uniforms = {
+                    resolution: this.gl.getUniformLocation(this.program, 'u_resolution'),
+                    time: this.gl.getUniformLocation(this.program, 'u_time'),
+                    mouse: this.gl.getUniformLocation(this.program, 'u_mouse'),
+                    geometry: this.gl.getUniformLocation(this.program, 'u_geometry'),
+                    density: this.gl.getUniformLocation(this.program, 'u_density'),
+                    speed: this.gl.getUniformLocation(this.program, 'u_speed'),
+                    color: this.gl.getUniformLocation(this.program, 'u_color'),
+                    dimension: this.gl.getUniformLocation(this.program, 'u_dimension'),
+                    intensity: this.gl.getUniformLocation(this.program, 'u_intensity'),
+                    instanceDensity: this.gl.getUniformLocation(this.program, 'u_instanceDensity'),
+                    instanceSpeed: this.gl.getUniformLocation(this.program, 'u_instanceSpeed'),
+                    colorShift: this.gl.getUniformLocation(this.program, 'u_colorShift')
+                };
+            }
+            
+            createProgram(vertexSource, fragmentSource) {
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = this.gl.createProgram();
+                this.gl.attachShader(program, vertexShader);
+                this.gl.attachShader(program, fragmentShader);
+                this.gl.linkProgram(program);
+                
+                if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+                    console.error('Program linking failed:', this.gl.getProgramInfoLog(program));
+                    return null;
+                }
+                
+                return program;
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    console.error('Shader compilation failed:', this.gl.getShaderInfoLog(shader));
+                    return null;
+                }
+                
+                return shader;
+            }
+            
+            initBuffers() {
+                const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                
+                this.buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+            
+            resize() {
+                this.canvas.width = this.canvas.clientWidth;
+                this.canvas.height = this.canvas.clientHeight;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            snapToState(stateIndex) {
+                if (stateIndex !== this.targetState) {
+                    this.targetState = stateIndex;
+                    this.transitionProgress = 0.0;
+                    console.log(`📍 Instance ${this.instanceId} snapping to state ${stateIndex}`);
+                }
+            }
+            
+            updateInteraction(mouseX, mouseY, intensity) {
+                this.mouseX = mouseX;
+                this.mouseY = mouseY;
+                this.interactionIntensity = intensity;
+            }
+            
+            render() {
+                if (!this.program) return;
+                
+                this.resize();
+                this.gl.useProgram(this.program);
+                
+                // FAST transition - snap quickly
+                if (this.transitionProgress < 1.0) {
+                    this.transitionProgress = Math.min(1.0, this.transitionProgress + this.transitionSpeed * 0.016); // 60fps
+                }
+                
+                // Interpolate between states
+                const currentState = this.states[this.currentState];
+                const targetState = this.states[this.targetState];
+                const t = this.transitionProgress;
+                
+                const interpolated = {
+                    geometry: currentState.geometry + (targetState.geometry - currentState.geometry) * t,
+                    density: currentState.density + (targetState.density - currentState.density) * t,
+                    speed: currentState.speed + (targetState.speed - currentState.speed) * t,
+                    color: [
+                        currentState.color[0] + (targetState.color[0] - currentState.color[0]) * t,
+                        currentState.color[1] + (targetState.color[1] - currentState.color[1]) * t,
+                        currentState.color[2] + (targetState.color[2] - currentState.color[2]) * t
+                    ],
+                    dimension: currentState.dimension + (targetState.dimension - currentState.dimension) * t
+                };
+                
+                // Update current state when transition complete
+                if (this.transitionProgress >= 1.0 && this.currentState !== this.targetState) {
+                    this.currentState = this.targetState;
+                }
+                
+                const time = Date.now() - this.startTime;
+                
+                // Set uniforms
+                this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+                this.gl.uniform1f(this.uniforms.time, time);
+                this.gl.uniform2f(this.uniforms.mouse, this.mouseX, this.mouseY);
+                this.gl.uniform1f(this.uniforms.geometry, interpolated.geometry);
+                this.gl.uniform1f(this.uniforms.density, interpolated.density);
+                this.gl.uniform1f(this.uniforms.speed, interpolated.speed);
+                this.gl.uniform3fv(this.uniforms.color, new Float32Array(interpolated.color));
+                this.gl.uniform1f(this.uniforms.dimension, interpolated.dimension);
+                this.gl.uniform1f(this.uniforms.intensity, this.instanceParams.intensity + this.interactionIntensity * 0.5);
+                this.gl.uniform1f(this.uniforms.instanceDensity, this.instanceParams.densityMult);
+                this.gl.uniform1f(this.uniforms.instanceSpeed, this.instanceParams.speedMult);
+                this.gl.uniform1f(this.uniforms.colorShift, this.instanceParams.colorShift);
+                
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+        }
+        
+        // STATE CYCLING SYSTEM
+        class StateCyclingSystem {
+            constructor() {
+                this.instances = [];
+                this.currentState = 0;
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.interactionIntensity = 0.0;
+                this.isTransitioning = false;
+                
+                // Content for each state
+                this.stateContent = {
+                    0: { // HOME
+                        leftTitle: 'Navigation',
+                        leftContent: 'Hypercube lattice navigation system',
+                        rightTitle: 'Actions',
+                        rightContent: 'Primary control interface',
+                        headerTitle: 'VIB3STYLEPACK',
+                        headerSubtitle: 'Multi-Dimensional Interface System',
+                        footerContent: 'Hypercube state - 4D lattice projections',
+                        action1: 'Explore',
+                        action2: 'Configure'
+                    },
+                    1: { // TECH
+                        leftTitle: 'Documentation',
+                        leftContent: 'Technical specifications and geometry details',
+                        rightTitle: 'Development',
+                        rightContent: 'Tetrahedron-based structural analysis',
+                        headerTitle: 'TECHNICAL SYSTEMS',
+                        headerSubtitle: 'Geometric Precision Interface',
+                        footerContent: 'Tetrahedron state - Structural stability patterns',
+                        action1: 'Analyze',
+                        action2: 'Optimize'
+                    },
+                    2: { // MEDIA
+                        leftTitle: 'Gallery',
+                        leftContent: 'Spherical content organization system',
+                        rightTitle: 'Playback',
+                        rightContent: 'Dynamic media visualization controls',
+                        headerTitle: 'MEDIA HUB',
+                        headerSubtitle: 'Infinite Potential Space',
+                        footerContent: 'Sphere state - Boundless content exploration',
+                        action1: 'Play',
+                        action2: 'Browse'
+                    },
+                    3: { // AUDIO
+                        leftTitle: 'Channels',
+                        leftContent: 'Toroidal flow-based audio routing',
+                        rightTitle: 'Processing',
+                        rightContent: 'Continuous audio manipulation tools',
+                        headerTitle: 'AUDIO FLOW',
+                        headerSubtitle: 'Dimensional Sound Processing',
+                        footerContent: 'Torus state - Continuous audio flow patterns',
+                        action1: 'Record',
+                        action2: 'Process'
+                    },
+                    4: { // QUANTUM
+                        leftTitle: 'Research',
+                        leftContent: 'Wave function probability calculations',
+                        rightTitle: 'Experiments',
+                        rightContent: 'Quantum-inspired computation controls',
+                        headerTitle: 'QUANTUM LAB',
+                        headerSubtitle: 'Wave Function Interface',
+                        footerContent: 'Wave state - Probability interference patterns',
+                        action1: 'Measure',
+                        action2: 'Collapse'
+                    }
+                };
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                console.log('🎨 Initializing State Cycling System...');
+                
+                // Create 5 visualizer instances
+                for (let i = 0; i < 5; i++) {
+                    const instance = new StateCyclingVisualizer(`instance-${i}`, i);
+                    this.instances.push(instance);
+                }
+                
+                this.setupInteractions();
+                this.setupStateControls();
+                this.setupScrollCycling();
+                this.startRenderLoop();
+                this.updateContent();
+                
+                console.log('✅ State Cycling System ready - 5 instances with snap transitions');
+            }
+            
+            setupInteractions() {
+                // Mouse tracking
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX / window.innerWidth;
+                    this.mouseY = 1.0 - (e.clientY / window.innerHeight);
+                    this.interactionIntensity = Math.min(1.0, Math.sqrt(e.movementX*e.movementX + e.movementY*e.movementY) / 30);
+                    
+                    this.instances.forEach(instance => {
+                        instance.updateInteraction(this.mouseX, this.mouseY, this.interactionIntensity);
+                    });
+                    
+                    document.getElementById('mouse-pos').textContent = `${this.mouseX.toFixed(2)}, ${this.mouseY.toFixed(2)}`;
+                });
+            }
+            
+            setupStateControls() {
+                document.querySelectorAll('.state-dot').forEach((dot, index) => {
+                    dot.addEventListener('click', () => {
+                        this.snapToState(index);
+                        
+                        document.querySelectorAll('.state-dot').forEach(d => d.classList.remove('active'));
+                        dot.classList.add('active');
+                    });
+                });
+            }
+            
+            setupScrollCycling() {
+                let scrollTimeout;
+                
+                document.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    
+                    clearTimeout(scrollTimeout);
+                    
+                    // Determine scroll direction
+                    const direction = e.deltaY > 0 ? 1 : -1;
+                    const newState = (this.currentState + direction + 5) % 5;
+                    
+                    this.snapToState(newState);
+                    
+                    // Update active dot
+                    document.querySelectorAll('.state-dot').forEach(d => d.classList.remove('active'));
+                    document.querySelectorAll('.state-dot')[newState].classList.add('active');
+                    
+                    scrollTimeout = setTimeout(() => {
+                        console.log('🎯 Scroll cycling complete');
+                    }, 500);
+                });
+            }
+            
+            snapToState(stateIndex) {
+                if (stateIndex === this.currentState || this.isTransitioning) return;
+                
+                console.log(`🔄 SNAPPING ALL INSTANCES TO STATE: ${stateIndex}`);
+                
+                this.isTransitioning = true;
+                this.currentState = stateIndex;
+                
+                // Snap all instances to new state
+                this.instances.forEach(instance => {
+                    instance.snapToState(stateIndex);
+                });
+                
+                // Update content immediately
+                this.updateContent();
+                
+                // Update state indicator
+                const state = this.instances[0].states[stateIndex];
+                document.getElementById('current-state').textContent = state.name;
+                document.getElementById('current-geometry').textContent = state.geometryName;
+                document.getElementById('transition-status').textContent = 'Snapping';
+                
+                setTimeout(() => {
+                    document.getElementById('transition-status').textContent = 'Complete';
+                    this.isTransitioning = false;
+                }, 500);
+            }
+            
+            updateContent() {
+                const content = this.stateContent[this.currentState];
+                
+                // Update all content overlays
+                document.getElementById('left-title').textContent = content.leftTitle;
+                document.getElementById('left-content').textContent = content.leftContent;
+                document.getElementById('right-title').textContent = content.rightTitle;
+                document.getElementById('right-content').textContent = content.rightContent;
+                document.getElementById('header-title').textContent = content.headerTitle;
+                document.getElementById('header-subtitle').textContent = content.headerSubtitle;
+                document.getElementById('footer-content').textContent = content.footerContent;
+                document.getElementById('action-1').textContent = content.action1;
+                document.getElementById('action-2').textContent = content.action2;
+            }
+            
+            startRenderLoop() {
+                const render = () => {
+                    this.instances.forEach(instance => {
+                        instance.render();
+                    });
+                    requestAnimationFrame(render);
+                };
+                
+                render();
+                console.log('🎬 State cycling render loop started');
+            }
+        }
+        
+        // Utility functions
+        function cycleState(direction) {
+            const newState = (window.stateCyclingSystem.currentState + direction + 5) % 5;
+            window.stateCyclingSystem.snapToState(newState);
+            
+            document.querySelectorAll('.state-dot').forEach(d => d.classList.remove('active'));
+            document.querySelectorAll('.state-dot')[newState].classList.add('active');
+        }
+        
+        function actionClick(action) {
+            console.log(`Action: ${action}`);
+            const state = window.stateCyclingSystem.instances[0].states[window.stateCyclingSystem.currentState];
+            document.getElementById('footer-content').textContent = `Action: ${action.toUpperCase()} executed in ${state.name} state`;
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            console.log('🚀 Initializing State Cycling System...');
+            const system = new StateCyclingSystem();
+            window.stateCyclingSystem = system;
+        });
+        
+    </script>
+</body>
+</html>

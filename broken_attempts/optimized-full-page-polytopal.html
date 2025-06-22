@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB3STYLEPACK - OPTIMIZED FULL PAGE POLYTOPAL SYSTEM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: white;
+            font-family: 'Orbitron', 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            cursor: crosshair;
+        }
+        
+        /* FULL PAGE LAYOUT - 5 LARGE SECTIONS FILLING ENTIRE VIEWPORT */
+        .page-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* HEADER SECTION - Full width, top 20% */
+        .header-section {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 20%;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* LEFT PANEL - Left 35%, remaining height */
+        .left-panel {
+            position: absolute;
+            top: 20%;
+            left: 0;
+            width: 35%;
+            height: 80%;
+            overflow: hidden;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* RIGHT PANEL - Right 35%, remaining height */
+        .right-panel {
+            position: absolute;
+            top: 20%;
+            right: 0;
+            width: 35%;
+            height: 80%;
+            overflow: hidden;
+            border-left: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* CENTER CONTENT - Middle 30%, remaining height */
+        .center-content {
+            position: absolute;
+            top: 20%;
+            left: 35%;
+            width: 30%;
+            height: 60%;
+            overflow: hidden;
+        }
+        
+        /* FOOTER OVERLAY - Bottom 20%, center area */
+        .footer-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 35%;
+            width: 30%;
+            height: 20%;
+            overflow: hidden;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            z-index: 10;
+        }
+        
+        /* Canvas elements fill their sections completely */
+        .section-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        /* Glassmorphic content overlays */
+        .content-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            z-index: 5;
+            pointer-events: none;
+            background: rgba(0,0,0,0.1);
+            backdrop-filter: blur(1px);
+        }
+        
+        .content-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: rgba(255,255,255,0.95);
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+        
+        .content-subtitle {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 20px;
+        }
+        
+        .content-description {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.4;
+            max-width: 90%;
+        }
+        
+        /* Interactive elements */
+        .ui-button {
+            padding: 12px 25px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+            margin: 8px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .ui-button:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255,255,255,0.2);
+        }
+        
+        /* Section switching controls */
+        .section-switcher {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .section-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .section-dot.active {
+            background: #0ff;
+            box-shadow: 0 0 30px #0ff;
+            transform: scale(1.2);
+        }
+        
+        .section-dot:hover {
+            background: rgba(255,255,255,0.6);
+            transform: scale(1.1);
+        }
+        
+        /* Debug panel */
+        .debug-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #0ff;
+            font-family: monospace;
+            font-size: 0.8rem;
+            z-index: 2000;
+            min-width: 200px;
+        }
+        
+        .debug-row {
+            margin: 3px 0;
+            color: #0ff;
+        }
+        
+        .debug-value {
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .left-panel, .right-panel {
+                width: 50%;
+            }
+            .center-content, .footer-overlay {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- DEBUG PANEL -->
+    <div class="debug-panel">
+        <div class="debug-row">Section: <span class="debug-value" id="debug-section">home</span></div>
+        <div class="debug-row">Geometry: <span class="debug-value" id="debug-geometry">hypercube</span></div>
+        <div class="debug-row">Mouse: <span class="debug-value" id="debug-mouse">0.5, 0.5</span></div>
+        <div class="debug-row">Intensity: <span class="debug-value" id="debug-intensity">0.0</span></div>
+        <div class="debug-row">Instances: <span class="debug-value">5 Full-Page</span></div>
+    </div>
+
+    <!-- FULL PAGE LAYOUT WITH 5 LARGE VISUALIZER SECTIONS -->
+    <div class="page-container">
+        
+        <!-- HEADER SECTION - Visualizer Instance 0 -->
+        <div class="header-section">
+            <canvas id="visualizer-0" class="section-canvas"></canvas>
+            <div class="content-overlay">
+                <div class="content-title" id="header-title">VIB3STYLEPACK</div>
+                <div class="content-subtitle" id="header-subtitle">Full Page Polytopal Projection System</div>
+            </div>
+        </div>
+        
+        <!-- LEFT PANEL - Visualizer Instance 1 -->
+        <div class="left-panel">
+            <canvas id="visualizer-1" class="section-canvas"></canvas>
+            <div class="content-overlay">
+                <div class="content-title">Navigation</div>
+                <div class="content-description">
+                    Interactive polytopal geometry responds to user input with 4D projections and morphological transitions.
+                </div>
+                <button class="ui-button" onclick="actionClick('navigate')">Explore Geometry</button>
+                <button class="ui-button" onclick="actionClick('settings')">Parameters</button>
+            </div>
+        </div>
+        
+        <!-- RIGHT PANEL - Visualizer Instance 2 -->
+        <div class="right-panel">
+            <canvas id="visualizer-2" class="section-canvas"></canvas>
+            <div class="content-overlay">
+                <div class="content-title">Actions</div>
+                <div class="content-description">
+                    Full VIB34D polytopal projection system with hypercube, tetrahedron, sphere, torus, and Klein bottle geometries.
+                </div>
+                <button class="ui-button" onclick="actionClick('create')">Create Scene</button>
+                <button class="ui-button" onclick="actionClick('export')">Export Config</button>
+            </div>
+        </div>
+        
+        <!-- CENTER CONTENT - Visualizer Instance 3 -->
+        <div class="center-content">
+            <canvas id="visualizer-3" class="section-canvas"></canvas>
+            <div class="content-overlay">
+                <div class="content-title" id="content-title">Multi-Dimensional Interface</div>
+                <div class="content-description" id="content-text">
+                    Experience the future of interface design where visualizers ARE the UI elements themselves. 
+                    Each instance uses different parameter sets to create unique visual signatures.
+                </div>
+            </div>
+        </div>
+        
+        <!-- FOOTER OVERLAY - Visualizer Instance 4 -->
+        <div class="footer-overlay">
+            <canvas id="visualizer-4" class="section-canvas"></canvas>
+            <div class="content-overlay">
+                <div class="content-title" id="footer-status">System Active</div>
+                <div class="content-description">
+                    Parameter morphing between sections without scrolling - pure mathematical transitions.
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- SECTION SWITCHER -->
+    <div class="section-switcher">
+        <div class="section-dot active" data-section="home" title="Home - Hypercube"></div>
+        <div class="section-dot" data-section="articles" title="Articles - Tetrahedron"></div>
+        <div class="section-dot" data-section="videos" title="Videos - Sphere"></div>
+        <div class="section-dot" data-section="podcasts" title="Podcasts - Torus"></div>
+        <div class="section-dot" data-section="ema" title="EMA - Wave Function"></div>
+    </div>
+
+    <script>
+        console.log('🌌 VIB3STYLEPACK - OPTIMIZED FULL PAGE POLYTOPAL SYSTEM');
+        
+        // FULL VIB34D POLYTOPAL PROJECTION VISUALIZER
+        class FullPagePolytopVisualization {
+            constructor(canvasId, instanceId, role) {
+                this.canvas = document.getElementById(canvasId);
+                this.instanceId = instanceId;
+                this.role = role; // 'header', 'left', 'right', 'center', 'footer'
+                this.gl = this.canvas.getContext('webgl');
+                
+                if (!this.gl) {
+                    console.error(`WebGL not supported for ${canvasId}`);
+                    return;
+                }
+                
+                // Instance-specific parameters for visual differentiation
+                this.instanceParams = {
+                    'header': { densityMult: 1.2, speedMult: 0.8, colorShift: 0, intensity: 0.9 },
+                    'left': { densityMult: 1.8, speedMult: 1.2, colorShift: 72, intensity: 0.7 },
+                    'right': { densityMult: 1.5, speedMult: 1.4, colorShift: 144, intensity: 0.8 },
+                    'center': { densityMult: 1.0, speedMult: 1.0, colorShift: 216, intensity: 1.0 },
+                    'footer': { densityMult: 2.2, speedMult: 0.6, colorShift: 288, intensity: 0.6 }
+                }[role] || { densityMult: 1.0, speedMult: 1.0, colorShift: 0, intensity: 0.5 };
+                
+                // Section parameters for morphing
+                this.currentSection = 'home';
+                this.targetSection = 'home';
+                this.transitionProgress = 1.0;
+                
+                this.sectionParams = {
+                    home: { geometry: 0.0, density: 12.0, speed: 1.0, color: [1.0, 0.0, 1.0], dimension: 3.5 },
+                    articles: { geometry: 1.0, density: 8.0, speed: 0.7, color: [0.0, 1.0, 1.0], dimension: 3.2 },
+                    videos: { geometry: 2.0, density: 15.0, speed: 1.5, color: [1.0, 1.0, 0.0], dimension: 3.8 },
+                    podcasts: { geometry: 3.0, density: 10.0, speed: 1.1, color: [0.0, 1.0, 0.0], dimension: 3.6 },
+                    ema: { geometry: 6.0, density: 18.0, speed: 0.9, color: [1.0, 0.0, 0.5], dimension: 3.9 }
+                };
+                
+                // Interaction state
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.interactionIntensity = 0.0;
+                
+                this.startTime = Date.now();
+                this.initShaders();
+                this.initBuffers();
+                this.resize();
+                
+                console.log(`✅ Full Page Polytop Instance ${instanceId} (${role}) initialized`);
+            }
+            
+            initShaders() {
+                const vertexShaderSource = `
+                    attribute vec2 a_position;
+                    void main() {
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `
+                    precision highp float;
+                    
+                    uniform vec2 u_resolution;
+                    uniform float u_time;
+                    uniform vec2 u_mouse;
+                    uniform float u_geometry;
+                    uniform float u_density;
+                    uniform float u_speed;
+                    uniform vec3 u_color;
+                    uniform float u_dimension;
+                    uniform float u_intensity;
+                    uniform float u_instanceDensity;
+                    uniform float u_instanceSpeed;
+                    uniform float u_colorShift;
+                    
+                    // 4D rotation matrices
+                    mat4 rotateXW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(c, 0, 0, -s, 0, 1, 0, 0, 0, 0, 1, 0, s, 0, 0, c);
+                    }
+                    
+                    mat4 rotateYW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(1, 0, 0, 0, 0, c, 0, -s, 0, 0, 1, 0, 0, s, 0, c);
+                    }
+                    
+                    mat4 rotateZW(float theta) {
+                        float c = cos(theta);
+                        float s = sin(theta);
+                        return mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, c, -s, 0, 0, s, c);
+                    }
+                    
+                    vec3 project4Dto3D(vec4 p) {
+                        float w = 2.0 / (2.0 + p.w);
+                        return vec3(p.x * w, p.y * w, p.z * w);
+                    }
+                    
+                    // Complete geometry functions from working demo
+                    float hypercubeLattice(vec3 p, float gridSize) {
+                        vec3 grid = fract(p * gridSize);
+                        vec3 edges = 1.0 - smoothstep(0.0, 0.02, abs(grid - 0.5));
+                        return max(max(edges.x, edges.y), edges.z);
+                    }
+                    
+                    float tetrahedronLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float d1 = length(q);
+                        float d2 = length(q - vec3(0.5, 0.0, 0.0));
+                        float d3 = length(q - vec3(0.0, 0.5, 0.0));
+                        float d4 = length(q - vec3(0.0, 0.0, 0.5));
+                        return 1.0 - smoothstep(0.0, 0.08, min(min(d1, d2), min(d3, d4)));
+                    }
+                    
+                    float sphereLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r = length(q);
+                        return 1.0 - smoothstep(0.15, 0.45, r);
+                    }
+                    
+                    float torusLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize) - 0.5;
+                        float r1 = sqrt(q.x*q.x + q.y*q.y);
+                        float r2 = sqrt((r1 - 0.25)*(r1 - 0.25) + q.z*q.z);
+                        return 1.0 - smoothstep(0.0, 0.1, r2);
+                    }
+                    
+                    float kleinBottleLattice(vec3 p, float gridSize) {
+                        vec3 q = p * gridSize;
+                        float x = q.x, y = q.y, z = q.z;
+                        float a = 2.0;
+                        float u = sin(x / a) * (1.0 + cos(y / a));
+                        float v = cos(x / a) * (1.0 + cos(y / a));
+                        float w = sin(y / a) + z / a;
+                        vec3 klein = vec3(u, v, w);
+                        float d = length(fract(klein) - 0.5);
+                        return 1.0 - smoothstep(0.0, 0.3, d);
+                    }
+                    
+                    float fractalLattice(vec3 p, float gridSize) {
+                        vec3 q = p * gridSize;
+                        float d = 0.0;
+                        float scale = 1.0;
+                        for (int i = 0; i < 4; i++) {
+                            q = abs(q) - scale;
+                            d += length(max(q, 0.0)) / scale;
+                            q *= 2.0;
+                            scale *= 0.5;
+                        }
+                        return 1.0 - smoothstep(0.0, 2.0, d);
+                    }
+                    
+                    float waveLattice(vec3 p, float gridSize) {
+                        vec3 q = p * gridSize;
+                        float wave1 = sin(q.x * 2.0 + u_time * u_speed * 0.001);
+                        float wave2 = sin(q.y * 2.0 + u_time * u_speed * 0.0013);
+                        float wave3 = sin(q.z * 2.0 + u_time * u_speed * 0.0007);
+                        float interference = wave1 * wave2 * wave3;
+                        return smoothstep(-0.3, 0.3, interference);
+                    }
+                    
+                    float crystalLattice(vec3 p, float gridSize) {
+                        vec3 q = fract(p * gridSize);
+                        vec3 center = vec3(0.5);
+                        float d = length(q - center);
+                        float crystal = 0.0;
+                        for (int i = 0; i < 6; i++) {
+                            float angle = float(i) * 1.047;
+                            vec3 dir = vec3(cos(angle), sin(angle), cos(angle * 0.5));
+                            crystal += max(0.0, dot(normalize(q - center), dir));
+                        }
+                        return smoothstep(0.0, 2.0, crystal);
+                    }
+                    
+                    float getGeometryValue(vec3 p, float gridSize, float geomType) {
+                        if (geomType < 0.5) return hypercubeLattice(p, gridSize);
+                        else if (geomType < 1.5) return tetrahedronLattice(p, gridSize);
+                        else if (geomType < 2.5) return sphereLattice(p, gridSize);
+                        else if (geomType < 3.5) return torusLattice(p, gridSize);
+                        else if (geomType < 4.5) return kleinBottleLattice(p, gridSize);
+                        else if (geomType < 5.5) return fractalLattice(p, gridSize);
+                        else if (geomType < 6.5) return waveLattice(p, gridSize);
+                        else return crystalLattice(p, gridSize);
+                    }
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    void main() {
+                        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                        float aspectRatio = u_resolution.x / u_resolution.y;
+                        uv.x *= aspectRatio;
+                        uv -= 0.5;
+                        
+                        // 4D space setup
+                        float time = u_time * 0.001 * u_speed * u_instanceSpeed;
+                        
+                        // Create 4D point
+                        vec4 p4d = vec4(uv, sin(time * 0.3) * 0.5, cos(time * 0.4) * 0.3);
+                        
+                        // Apply 4D rotations
+                        p4d = rotateXW(time * 0.5) * p4d;
+                        p4d = rotateYW(time * 0.3) * p4d;
+                        p4d = rotateZW(time * 0.7) * p4d;
+                        
+                        // Project to 3D space
+                        vec3 p = project4Dto3D(p4d);
+                        
+                        // Apply instance-specific density
+                        float instanceDensity = u_density * u_instanceDensity;
+                        
+                        // Get geometry value
+                        float lattice = getGeometryValue(p, instanceDensity, u_geometry);
+                        
+                        // Color with instance-specific shift
+                        float hue = atan(u_color.r, u_color.g) + u_colorShift * 0.017453;
+                        float saturation = 0.8 + lattice * 0.2;
+                        float brightness = 0.4 + lattice * 0.6 + u_intensity * 0.3;
+                        
+                        vec3 color = hsv2rgb(vec3(hue, saturation, brightness));
+                        
+                        // Mouse interaction glow
+                        float mouseDist = length(uv - (u_mouse - 0.5) * vec2(aspectRatio, 1.0));
+                        float mouseGlow = exp(-mouseDist * 3.0) * 0.3;
+                        color += vec3(mouseGlow) * u_color;
+                        
+                        gl_FragColor = vec4(color, 0.95);
+                    }
+                `;
+                
+                this.program = this.createProgram(vertexShaderSource, fragmentShaderSource);
+                this.uniforms = {
+                    resolution: this.gl.getUniformLocation(this.program, 'u_resolution'),
+                    time: this.gl.getUniformLocation(this.program, 'u_time'),
+                    mouse: this.gl.getUniformLocation(this.program, 'u_mouse'),
+                    geometry: this.gl.getUniformLocation(this.program, 'u_geometry'),
+                    density: this.gl.getUniformLocation(this.program, 'u_density'),
+                    speed: this.gl.getUniformLocation(this.program, 'u_speed'),
+                    color: this.gl.getUniformLocation(this.program, 'u_color'),
+                    dimension: this.gl.getUniformLocation(this.program, 'u_dimension'),
+                    intensity: this.gl.getUniformLocation(this.program, 'u_intensity'),
+                    instanceDensity: this.gl.getUniformLocation(this.program, 'u_instanceDensity'),
+                    instanceSpeed: this.gl.getUniformLocation(this.program, 'u_instanceSpeed'),
+                    colorShift: this.gl.getUniformLocation(this.program, 'u_colorShift')
+                };
+            }
+            
+            createProgram(vertexSource, fragmentSource) {
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = this.gl.createProgram();
+                this.gl.attachShader(program, vertexShader);
+                this.gl.attachShader(program, fragmentShader);
+                this.gl.linkProgram(program);
+                
+                if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+                    console.error('Program linking failed:', this.gl.getProgramInfoLog(program));
+                    return null;
+                }
+                
+                return program;
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    console.error('Shader compilation failed:', this.gl.getShaderInfoLog(shader));
+                    return null;
+                }
+                
+                return shader;
+            }
+            
+            initBuffers() {
+                const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                
+                this.buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+            
+            resize() {
+                this.canvas.width = this.canvas.clientWidth;
+                this.canvas.height = this.canvas.clientHeight;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            morphToSection(sectionKey) {
+                if (sectionKey !== this.targetSection) {
+                    this.targetSection = sectionKey;
+                    this.transitionProgress = 0.0;
+                }
+            }
+            
+            updateInteraction(mouseX, mouseY, intensity) {
+                this.mouseX = mouseX;
+                this.mouseY = mouseY;
+                this.interactionIntensity = intensity;
+            }
+            
+            render() {
+                if (!this.program) return;
+                
+                this.resize();
+                this.gl.useProgram(this.program);
+                
+                // Update transition
+                if (this.transitionProgress < 1.0) {
+                    this.transitionProgress = Math.min(1.0, this.transitionProgress + 0.02);
+                }
+                
+                // Interpolate parameters
+                const currentParams = this.sectionParams[this.currentSection];
+                const targetParams = this.sectionParams[this.targetSection];
+                const t = this.transitionProgress;
+                
+                const interpolated = {
+                    geometry: currentParams.geometry + (targetParams.geometry - currentParams.geometry) * t,
+                    density: currentParams.density + (targetParams.density - currentParams.density) * t,
+                    speed: currentParams.speed + (targetParams.speed - currentParams.speed) * t,
+                    color: [
+                        currentParams.color[0] + (targetParams.color[0] - currentParams.color[0]) * t,
+                        currentParams.color[1] + (targetParams.color[1] - currentParams.color[1]) * t,
+                        currentParams.color[2] + (targetParams.color[2] - currentParams.color[2]) * t
+                    ],
+                    dimension: currentParams.dimension + (targetParams.dimension - currentParams.dimension) * t
+                };
+                
+                if (this.transitionProgress >= 1.0 && this.currentSection !== this.targetSection) {
+                    this.currentSection = this.targetSection;
+                }
+                
+                const time = Date.now() - this.startTime;
+                
+                // Set uniforms
+                this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+                this.gl.uniform1f(this.uniforms.time, time);
+                this.gl.uniform2f(this.uniforms.mouse, this.mouseX, this.mouseY);
+                this.gl.uniform1f(this.uniforms.geometry, interpolated.geometry);
+                this.gl.uniform1f(this.uniforms.density, interpolated.density);
+                this.gl.uniform1f(this.uniforms.speed, interpolated.speed);
+                this.gl.uniform3fv(this.uniforms.color, new Float32Array(interpolated.color));
+                this.gl.uniform1f(this.uniforms.dimension, interpolated.dimension);
+                this.gl.uniform1f(this.uniforms.intensity, this.instanceParams.intensity + this.interactionIntensity * 0.5);
+                this.gl.uniform1f(this.uniforms.instanceDensity, this.instanceParams.densityMult);
+                this.gl.uniform1f(this.uniforms.instanceSpeed, this.instanceParams.speedMult);
+                this.gl.uniform1f(this.uniforms.colorShift, this.instanceParams.colorShift);
+                
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+        }
+        
+        // MAIN SYSTEM
+        class FullPagePolytopSystem {
+            constructor() {
+                this.instances = [];
+                this.currentSection = 'home';
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.interactionIntensity = 0.0;
+                
+                this.sectionContent = {
+                    home: {
+                        title: 'VIB3STYLEPACK',
+                        subtitle: 'Full Page Polytopal Projection System',
+                        content: 'Multi-dimensional interface using complete VIB34D polytopal system',
+                        status: 'Hypercube Lattice Active'
+                    },
+                    articles: {
+                        title: 'Technical Documentation',
+                        subtitle: 'Geometric Precision Interface',
+                        content: 'Tetrahedron lattice structures with mathematical precision',
+                        status: 'Tetrahedron Mode Active'
+                    },
+                    videos: {
+                        title: 'Dynamic Media Hub',
+                        subtitle: 'Spherical Potential Space',
+                        content: 'Infinite possibility represented through spherical geometries',
+                        status: 'Sphere Projection Active'
+                    },
+                    podcasts: {
+                        title: 'Audio Experiences',
+                        subtitle: 'Toroidal Flow Patterns',
+                        content: 'Continuous flow through dimensional boundaries',
+                        status: 'Torus Flow Active'
+                    },
+                    ema: {
+                        title: 'Quantum Philosophy',
+                        subtitle: 'Wave Function Interference',
+                        content: 'Probability spaces and quantum-inspired computation',
+                        status: 'Wave Function Active'
+                    }
+                };
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                console.log('🎨 Initializing Full Page Polytop System...');
+                
+                // Create 5 full-page visualizer instances
+                const roles = ['header', 'left', 'right', 'center', 'footer'];
+                for (let i = 0; i < 5; i++) {
+                    const instance = new FullPagePolytopVisualization(`visualizer-${i}`, i, roles[i]);
+                    this.instances.push(instance);
+                }
+                
+                this.setupInteractions();
+                this.setupSectionSwitcher();
+                this.startRenderLoop();
+                this.updateContent();
+                
+                console.log('✅ Full Page Polytop System ready - 5 large instances filling viewport');
+            }
+            
+            setupInteractions() {
+                // Mouse movement
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX / window.innerWidth;
+                    this.mouseY = 1.0 - (e.clientY / window.innerHeight);
+                    this.interactionIntensity = Math.min(1.0, Math.sqrt(e.movementX*e.movementX + e.movementY*e.movementY) / 30);
+                    
+                    this.instances.forEach(instance => {
+                        instance.updateInteraction(this.mouseX, this.mouseY, this.interactionIntensity);
+                    });
+                    
+                    document.getElementById('debug-mouse').textContent = `${this.mouseX.toFixed(2)}, ${this.mouseY.toFixed(2)}`;
+                    document.getElementById('debug-intensity').textContent = this.interactionIntensity.toFixed(2);
+                });
+            }
+            
+            setupSectionSwitcher() {
+                document.querySelectorAll('.section-dot').forEach(dot => {
+                    dot.addEventListener('click', () => {
+                        const sectionKey = dot.dataset.section;
+                        this.morphToSection(sectionKey);
+                        
+                        document.querySelectorAll('.section-dot').forEach(d => d.classList.remove('active'));
+                        dot.classList.add('active');
+                    });
+                });
+            }
+            
+            morphToSection(sectionKey) {
+                console.log(`🔄 MORPHING ALL FULL-PAGE INSTANCES TO: ${sectionKey}`);
+                
+                this.currentSection = sectionKey;
+                
+                // Morph all visualizer instances
+                this.instances.forEach(instance => {
+                    instance.morphToSection(sectionKey);
+                });
+                
+                // Update content
+                this.updateContent();
+                
+                // Update debug
+                const geometryNames = { 
+                    home: 'hypercube', 
+                    articles: 'tetrahedron', 
+                    videos: 'sphere', 
+                    podcasts: 'torus', 
+                    ema: 'wave' 
+                };
+                document.getElementById('debug-section').textContent = sectionKey;
+                document.getElementById('debug-geometry').textContent = geometryNames[sectionKey];
+            }
+            
+            updateContent() {
+                const content = this.sectionContent[this.currentSection];
+                
+                // Update header
+                document.getElementById('header-title').textContent = content.title;
+                document.getElementById('header-subtitle').textContent = content.subtitle;
+                
+                // Update center content
+                document.getElementById('content-title').textContent = content.title;
+                document.getElementById('content-text').textContent = content.content;
+                
+                // Update footer status
+                document.getElementById('footer-status').textContent = content.status;
+            }
+            
+            startRenderLoop() {
+                const render = () => {
+                    this.instances.forEach(instance => {
+                        instance.render();
+                    });
+                    requestAnimationFrame(render);
+                };
+                
+                render();
+                console.log('🎬 Render loop started - 5 full-page instances continuously rendering');
+            }
+        }
+        
+        // Action functions
+        function actionClick(action) {
+            console.log(`Action clicked: ${action}`);
+            document.getElementById('content-text').textContent = `Action: ${action.toUpperCase()} activated! Full polytopal system responding.`;
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            console.log('🚀 Initializing Full Page Polytop System...');
+            const system = new FullPagePolytopSystem();
+            window.vib3FullPageSystem = system;
+        });
+        
+    </script>
+</body>
+</html>
