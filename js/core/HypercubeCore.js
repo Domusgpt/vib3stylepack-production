@@ -75,11 +75,15 @@ class HypercubeCore {
         this.effectiveParameters = { ...this.baseParameters }; // Will hold modulated values
 
         this.chromaticEngine = new VIB34DChromaticEngine();
-        this.homeMasterBridge = new VIB3HomeMasterBridge(this); // Bridge needs 'this'
+        this.homeMasterBridge = new VIB3HomeMasterBridge(this);
 
-        // Dashboard Support
-        this.availableGeometries = ['hypercube', 'hypersphere', 'hypertetrahedron', 'torus', 'kleinbottle', 'fractal', 'wave', 'crystal']; // Example list
-        this.availableProjections = ['perspective', 'orthographic', 'stereographic']; // Example list
+        // Preset and Dashboard Support
+        // Assumes VIB3_PRESETS_EXPANDED and PresetManager are globally available or imported
+        this.presetManager = new PresetManager(this, typeof VIB3_PRESETS_EXPANDED !== 'undefined' ? VIB3_PRESETS_EXPANDED : []);
+        this.presetManager.loadUserPresetsFromLocalStorage(); // Load user presets
+
+        this.availableGeometries = ['hypercube', 'hypersphere', 'hypertetrahedron', 'torus', 'kleinbottle', 'fractal', 'wave', 'crystal'];
+        this.availableProjections = ['perspective', 'orthographic', 'stereographic'];
 
         this.currentGeometry = null;
         this.currentProjection = null;
@@ -281,8 +285,8 @@ class HypercubeCore {
      * @returns {Array<string>}
      */
     getAvailableProjections() {
-        // Could also get from projectionManager.listProjections()
-        return this.availableProjections;
+        // Could also get from projectionManager.listProjections() if they are pre-registered
+        return this.projectionManager.listProjections().length > 0 ? this.projectionManager.listProjections() : this.availableProjections;
     }
 
     /**
@@ -310,19 +314,34 @@ class HypercubeCore {
 
     /**
      * Loads a preset object, updating base parameters and active geometry/projection.
+     * This method is typically called by PresetManager.
      * @param {object} preset - A preset object.
-     *                          Example: { geometry: 'hypercube', projection: 'perspective', params: { u_gridDensity: 15, ... } }
+     *                          Example: { name: "My Preset", geometry: 'hypercube', projection: 'perspective', params: { u_gridDensity: 15, ... } }
      */
     loadPreset(preset) {
+        if (!preset || !preset.params) {
+            console.error("HypercubeCore: Invalid preset object passed to loadPreset.", preset);
+            return;
+        }
+        console.log(`HypercubeCore: Loading preset "${preset.name || 'Unnamed Preset'}"...`);
+
         if (preset.geometry) {
             this.setGeometry(preset.geometry, preset.geometryParams || {});
         }
         if (preset.projection) {
             this.setProjection(preset.projection, preset.projectionParams || {});
         }
-        if (preset.params) {
-            this.updateBaseParameter(preset.params);
+
+        // Important: Create a new object for base parameters to avoid modifying the preset object itself.
+        // Only update parameters that are defined in the preset's `params`.
+        const newBaseParams = { ...this.baseParameters }; // Start with current base
+        for (const key in preset.params) {
+            if (this.baseParameters.hasOwnProperty(key)) { // Only update known base parameters
+                newBaseParams[key] = preset.params[key];
+            }
         }
+        this.updateBaseParameter(newBaseParams); // This will update baseParameters and notify ParameterMapper
+
         console.log("HypercubeCore: Loaded preset.", preset);
     }
 
@@ -331,12 +350,27 @@ class HypercubeCore {
      * @returns {object}
      */
     getCurrentSettingsAsPreset() {
+        const currentGeomName = this.currentGeometry ?
+            (this.currentGeometry.constructor.name.toLowerCase().replace('geometry', '')) :
+            (this.baseParameters.geometryName || 'default');
+
+        // Create a clean params object, excluding non-serializable or irrelevant stuff
+        const exportableBaseParams = { ...this.baseParameters };
+        delete exportableBaseParams.u_resolution; // Usually not part of a preset content
+        delete exportableBaseParams.u_time;       // Runtime value
+        delete exportableBaseParams.u_mouse;      // Runtime value
+        // geometryName and projectionType are stored at top level of preset.
+        delete exportableBaseParams.geometryName;
+        // delete exportableBaseParams.projectionType; // projectionType is good to keep in params for consistency.
+
+
         return {
-            geometry: this.currentGeometry ? this.currentGeometry.constructor.name.toLowerCase().replace('geometry', '') : 'default',
+            // name: "Unnamed Preset", // Name should be assigned when saving via PresetManager
+            geometry: currentGeomName,
             projection: this.baseParameters.projectionType || 'perspective',
-            // geometryParams: this.currentGeometry ? this.currentGeometry.parameters : {}, // Might be too verbose or contain non-serializable
-            // projectionParams: this.currentProjection ? this.currentProjection.parameters : {},
-            params: { ...this.baseParameters } // Save all base parameters
+            // geometryParams: this.currentGeometry && this.currentGeometry.parameters ? { ...this.currentGeometry.parameters } : {},
+            // projectionParams: this.currentProjection && this.currentProjection.parameters ? { ...this.currentProjection.parameters } : {},
+            params: exportableBaseParams
         };
     }
     // End Dashboard Support Methods
