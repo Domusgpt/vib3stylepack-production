@@ -7,16 +7,17 @@ class HypercubeGeometry extends BaseGeometry {
         super();
         // Default parameters for the hypercube
         this.parameters = {
-            size: options.size || 1.0, // Half-length of the sides
-            // Other parameters like grid density for subdivision could be added here
+            size: options.size || 1.0,
         };
-        this.baseVertices4D = []; // Store the 4D vertices before projection
+        this.baseVertices4D = [];
+        this.normals = []; // Initialize normals array
         this.generate();
     }
 
     generate() {
-        this.vertices = []; // This will store 3D projected vertices if needed, or could be unused if projection is shader-based
+        this.vertices = [];
         this.indices = [];
+        this.normals = []; // Clear normals for regeneration
         this.baseVertices4D = [];
 
         const s = this.parameters.size;
@@ -29,6 +30,15 @@ class HypercubeGeometry extends BaseGeometry {
             const z = (i & 4) ? s : -s;
             const w = (i & 8) ? s : -s;
             this.baseVertices4D.push(x, y, z, w);
+
+            // Simplified normal: normalized position vector (Option A)
+            // This will give a "rounded" lighting effect.
+            const L = Math.sqrt(x*x + y*y + z*z + w*w);
+            if (L > 0) {
+                this.normals.push(x/L, y/L, z/L, w/L);
+            } else {
+                this.normals.push(0,0,1,0); // Default for origin point (not expected for hypercube)
+            }
         }
 
         // Edges of a hypercube:
@@ -233,8 +243,10 @@ class HypercubeGeometry extends BaseGeometry {
     destroy(gl) {
         if (this.vertexPosBuffer) gl.deleteBuffer(this.vertexPosBuffer);
         if (this.indexBuffer) gl.deleteBuffer(this.indexBuffer);
+        if (this.normalBuffer) gl.deleteBuffer(this.normalBuffer); // Added
         this.vertexPosBuffer = null;
         this.indexBuffer = null;
+        this.normalBuffer = null; // Added
     }
 }
 

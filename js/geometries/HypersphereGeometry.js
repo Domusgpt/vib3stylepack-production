@@ -14,13 +14,15 @@ class HypersphereGeometry extends BaseGeometry {
             isShell: options.isShell !== undefined ? options.isShell : true, // Whether to generate a shell or solid
         };
         this.baseVertices4D = [];
+        this.normals = []; // Initialize normals array
         this.generate();
     }
 
     generate() {
-        this.vertices = []; // Will store 4D vertex data
-        this.indices = [];  // Will store indices for triangles (or lines if wireframe)
-        this.baseVertices4D = []; // Store unrotated 4D vertices
+        this.vertices = [];
+        this.indices = [];
+        this.normals = []; // Clear normals for regeneration
+        this.baseVertices4D = [];
 
         const { radius, shellWidth, divisionsU, divisionsV, divisionsW, isShell } = this.parameters;
 
@@ -136,6 +138,17 @@ class HypersphereGeometry extends BaseGeometry {
                     const w = r * sinChi;                     // The 4th dimension component
 
                     targetArray.push(x, y, z, w);
+
+                    // Normal for a point on a hypersphere centered at origin is the normalized position vector
+                    // For a 4D hypersphere, the normal is a 4D vector.
+                    // If we need 3D normals for 3D lighting after projection, this needs careful consideration.
+                    // For now, let's store 4D normals. The vertex shader can then decide how to use/project it.
+                    if (r > 0) { // Avoid division by zero for a point sphere
+                        const invLength = 1.0 / r; // Since x,y,z,w are on the sphere of radius r
+                        this.normals.push(x * invLength, y * invLength, z * invLength, w * invLength);
+                    } else {
+                        this.normals.push(0, 0, 1, 0); // Default normal for a point
+                    }
                 }
             }
         }
@@ -245,16 +258,18 @@ class HypersphereGeometry extends BaseGeometry {
         return this.vertexPosBuffer;
     }
 
+    // getNormals() is inherited from BaseGeometry
+    // getNormalsBuffer(gl) is inherited from BaseGeometry
+
     getIndexBuffer(gl) {
         if (!this.indexBuffer) {
             this.indexBuffer = gl.createBuffer();
         }
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-        // Hypersphere can have many vertices, check if Uint16 is enough for indices
-        const maxIndex = this.vertices.length / 4 -1; // 4 components per vertex
+        const maxIndex = this.vertices.length / 4 -1;
         if (maxIndex > 65535 && !this.warnedAboutIndices) {
             console.warn("HypersphereGeometry: Number of vertices exceeds Uint16 limit for indices. Consider using Uint32 if available (WebGL 2). Drawing may be incorrect.");
-            this.warnedAboutIndices = true; // Prevent spamming console
+            this.warnedAboutIndices = true;
         }
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), gl.STATIC_DRAW);
         return this.indexBuffer;
@@ -263,8 +278,10 @@ class HypersphereGeometry extends BaseGeometry {
     destroy(gl) {
         if (this.vertexPosBuffer) gl.deleteBuffer(this.vertexPosBuffer);
         if (this.indexBuffer) gl.deleteBuffer(this.indexBuffer);
+        if (this.normalBuffer) gl.deleteBuffer(this.normalBuffer); // Added cleanup for normalBuffer
         this.vertexPosBuffer = null;
         this.indexBuffer = null;
+        this.normalBuffer = null; // Added cleanup
         this.warnedAboutIndices = false;
     }
 }
