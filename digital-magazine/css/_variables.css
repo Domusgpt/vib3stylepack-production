@@ -1,0 +1,85 @@
+/* digital-magazine/css/_variables.css */
+
+:root {
+    /* Color Palette (Base values for VIB3 Shaders & CSS Fallbacks) */
+    --color-cyan-base: #00ffff;
+    --color-red-base: #ff0000;
+    --color-purple-base: #800080; /* Traditional Purple */
+    --color-magenta-base: #ff00ff;
+    --color-dark-blue-base: #00008b;
+
+    /* Neon Accents (can be brighter versions or specific neons) */
+    --color-neon-cyan: #0ff;
+    --color-neon-magenta: #f0f;
+    --color-neon-red: #f00; /* More intense red */
+    --color-neon-green: #0f0; /* A common neon for contrast */
+    --color-neon-yellow: #ff0;
+
+    /* Greyscale & Backgrounds */
+    --color-black: #000000;
+    --color-near-black: #0a0a0a; /* For dark theme base */
+    --color-dark-grey: #1a1a1a;
+    --color-medium-grey: #2c2c2c;
+    --color-light-grey: #cccccc;
+    --color-white: #ffffff;
+
+    /* Typography */
+    --font-family-headlines: 'Orbitron', sans-serif;
+    --font-family-body: 'Inter', sans-serif;
+    --font-family-monospace: 'Courier New', Courier, monospace; /* For code blocks or specific accents */
+
+    /* Typographic Scale (Modular Scale, e.g., 1.250 - Major Third) */
+    --font-size-base: 16px; /* Root font size */
+    --font-scale-ratio: 1.250;
+    --font-size-sm: calc(var(--font-size-base) / var(--font-scale-ratio));         /* Small */
+    --font-size-md: var(--font-size-base);                                       /* Medium (base) */
+    --font-size-lg: calc(var(--font-size-base) * var(--font-scale-ratio));        /* Large */
+    --font-size-xl: calc(var(--font-size-lg) * var(--font-scale-ratio));         /* XL */
+    --font-size-xxl: calc(var(--font-size-xl) * var(--font-scale-ratio));        /* XXL */
+    --font-size-xxxl: calc(var(--font-size-xxl) * var(--font-scale-ratio));       /* XXXL */
+
+    /* Spacing Units (Base 8px grid) */
+    --space-unit: 8px;
+    --space-xs: var(--space-unit);        /* 8px */
+    --space-sm: calc(var(--space-unit) * 2);  /* 16px */
+    --space-md: calc(var(--space-unit) * 3);  /* 24px */
+    --space-lg: calc(var(--space-unit) * 4);  /* 32px */
+    --space-xl: calc(var(--space-unit) * 6);  /* 48px */
+    --space-xxl: calc(var(--space-unit) * 8); /* 64px */
+
+    /* Borders & Radii */
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-width-thin: 1px;
+    --border-width-medium: 2px;
+
+    /* Glassmorphism Properties */
+    --glass-panel-background: rgba(20, 20, 30, 0.65); /* Dark, slightly transparent */
+    --glass-panel-background-hover: rgba(30, 30, 45, 0.75);
+    --glass-blur-radius: 10px;
+    --glass-border-color: rgba(var(--color-neon-cyan-rgb, 0, 255, 255), 0.3); /* Use RGB version for opacity */
+
+    /* For VIB3 preset mapping - these are conceptual names */
+    --vib3-geometry-default: 'hypercube';
+    --vib3-geometry-category-ema: 'tetrahedron';
+    --vib3-geometry-category-ai: 'sphere';
+    --vib3-geometry-category-code: 'torus';
+    /* ... more category geometries */
+
+    /* Convert hex to RGB values for rgba() usage (example for neon-cyan) */
+    /* This is more a reminder for JS/shader land or if a preprocessor is used.
+       Pure CSS cannot directly convert hex to RGB for rgba() in this manner.
+       For CSS, you'd define --color-neon-cyan-rgb: 0, 255, 255; */
+    --color-neon-cyan-rgb: 0, 255, 255;
+    --color-neon-magenta-rgb: 255, 0, 255;
+    --color-neon-red-rgb: 255, 0, 0;
+    --color-neon-green-rgb: 0, 255, 0;
+    --color-neon-yellow-rgb: 255, 255, 0;
+    --color-purple-base-rgb: 128, 0, 128;
+    --color-dark-blue-base-rgb: 0, 0, 139;
+    --color-medium-grey-rgb: 44, 44, 44;
+    --color-white-rgb: 255, 255, 255;
+
+    /* Transitions */
+    --page-transition-duration: 0.3s; /* Matches JS PAGE_TRANSITION_DURATION */
+}

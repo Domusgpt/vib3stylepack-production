@@ -1,0 +1,253 @@
+/* digital-magazine/css/_effects.css */
+
+/* --- Text Glitch Effect --- */
+/* Apply .text-glitch class to an element */
+.text-glitch {
+    position: relative;
+    color: var(--color-neon-cyan); /* Base color */
+    text-shadow: 0 0 2px rgba(var(--color-neon-cyan-rgb), 0.5);
+    animation: glitch-scanline 8s linear infinite; /* Subtle scanline movement */
+}
+
+.text-glitch::before,
+.text-glitch::after {
+    content: attr(data-text); /* Requires the element to have data-text="THE_SAME_TEXT" */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent; /* Or match parent background if needed */
+}
+
+.text-glitch::before {
+    left: 2px;
+    text-shadow: -1px 0 var(--color-neon-magenta);
+    clip-path: inset(0 0 0 0); /* Start fully visible */
+    animation: glitch-anim-1 4s infinite linear alternate-reverse;
+}
+
+.text-glitch::after {
+    left: -2px;
+    text-shadow: 1px 0 var(--color-neon-green); /* Using green for the other channel */
+    clip-path: inset(0 0 0 0); /* Start fully visible */
+    animation: glitch-anim-2 3s infinite linear alternate-reverse; /* Slightly different timing */
+}
+
+@keyframes glitch-anim-1 {
+    0% { clip-path: inset(30% 0 60% 0); }
+    10% { clip-path: inset(10% 0 80% 0); }
+    20% { clip-path: inset(90% 0 5% 0); }
+    30% { clip-path: inset(40% 0 30% 0); }
+    40% { clip-path: inset(75% 0 10% 0); }
+    50% { clip-path: inset(20% 0 70% 0); }
+    60% { clip-path: inset(95% 0 2% 0); }
+    70% { clip-path: inset(50% 0 25% 0); }
+    80% { clip-path: inset(15% 0 88% 0); }
+    90% { clip-path: inset(60% 0 15% 0); }
+    100% { clip-path: inset(35% 0 50% 0); }
+}
+
+@keyframes glitch-anim-2 {
+    0% { clip-path: inset(70% 0 20% 0); }
+    10% { clip-path: inset(5% 0 90% 0); }
+    20% { clip-path: inset(80% 0 10% 0); }
+    30% { clip-path: inset(25% 0 45% 0); }
+    40% { clip-path: inset(60% 0 15% 0); }
+    50% { clip-path: inset(30% 0 55% 0); }
+    60% { clip-path: inset(85% 0 5% 0); }
+    70% { clip-path: inset(40% 0 35% 0); }
+    80% { clip-path: inset(20% 0 78% 0); }
+    90% { clip-path: inset(70% 0 5% 0); }
+    100% { clip-path: inset(45% 0 30% 0); }
+}
+
+@keyframes glitch-scanline {
+    0% { transform: translateY(0); }
+    10% { transform: translateY(-1px); }
+    20% { transform: translateY(1px); }
+    30% { transform: translateY(-0.5px); }
+    40% { transform: translateY(0.5px); }
+    50% { transform: translateY(0); }
+    /* Stays stable for the rest, less jarring */
+    100% { transform: translateY(0); }
+}
+
+
+/* --- Pulsing Glow Hover Effect for Links/Buttons --- */
+/* Apply .pulsing-glow-hover to an interactive element */
+.pulsing-glow-hover {
+    transition: text-shadow 0.3s ease-in-out, color 0.3s ease;
+}
+.pulsing-glow-hover:hover,
+.pulsing-glow-hover:focus {
+    /* Default color is defined on the element itself */
+    animation: pulse-glow-anim 1.5s infinite alternate;
+}
+
+@keyframes pulse-glow-anim {
+    from {
+        text-shadow: 0 0 5px rgba(var(--color-white-rgb, 255,255,255), 0.5), /* Add --color-white-rgb */
+                     0 0 10px rgba(var(--color-white-rgb, 255,255,255), 0.4),
+                     0 0 15px currentColor, /* Uses the element's current text color */
+                     0 0 20px currentColor;
+    }
+    to {
+        text-shadow: 0 0 10px rgba(var(--color-white-rgb, 255,255,255), 0.7),
+                     0 0 20px rgba(var(--color-white-rgb, 255,255,255), 0.6),
+                     0 0 30px currentColor,
+                     0 0 40px currentColor,
+                     0 0 50px currentColor; /* Wider glow */
+    }
+}
+
+/* --- Simple Holographic Text Hover --- */
+/* Apply .text-holographic-hover */
+.text-holographic-hover {
+    position: relative;
+    display: inline-block; /* Or block */
+    color: var(--color-light-grey); /* Base color */
+    transition: color 0.3s ease;
+}
+
+.text-holographic-hover:hover {
+    color: var(--color-white);
+}
+
+.text-holographic-hover::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--color-neon-cyan);
+    opacity: 0;
+    transform: translate3d(2px, 2px, -1px) scale(1.01);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    text-shadow: 0 0 5px rgba(var(--color-neon-cyan-rgb), 0.7);
+    z-index: -1; /* Behind the main text */
+}
+
+.text-holographic-hover:hover::after {
+    opacity: 1;
+    transform: translate3d(0px, 0px, 0px) scale(1);
+}
+
+
+/* Add --color-white-rgb to _variables.css if not present */
+/* :root { --color-white-rgb: 255, 255, 255; } */
+
+/* --- Page Transition Effects --- */
+body {
+    /* Starts transparent, JS will add 'page-fade-in' to make it visible */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out; /* Matches PAGE_TRANSITION_DURATION in JS */
+}
+
+body.page-fade-in {
+    opacity: 1;
+}
+
+body.page-fade-out {
+    opacity: 0 !important; /* Important to override initial or fade-in state */
+}
+
+/* --- Geometric Wipe Page Transition --- */
+#page-wipe-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--color-neon-cyan); /* Wipe color */
+    clip-path: circle(0% at 50% 50%); /* Start as a tiny circle in the center */
+    z-index: 9999; /* Highest z-index */
+    pointer-events: none; /* Allow clicks through if needed, though it covers screen */
+    transition: clip-path var(--page-transition-duration, 0.3s) cubic-bezier(0.65, 0, 0.35, 1); /* Smooth easing */
+}
+
+#page-wipe-overlay.wipe-in {
+    clip-path: circle(150% at 50% 50%); /* Expand to cover screen */
+}
+
+#page-wipe-overlay.wipe-out {
+    clip-path: circle(0% at 50% 50%); /* Shrink back to disappear */
+    /* Ensure transition happens on wipe-out too if not already covered by base transition */
+    transition-duration: calc(var(--page-transition-duration, 0.3s) * 1.2); /* Slightly longer wipe out */
+}
+
+/* --- Article Card Entry Animation --- */
+/* Apply .card-entry to article cards when they are added to the DOM,
+   or use a staggered animation approach with JS if preferred.
+   For now, a simple class to be added by JS after elements are in DOM.
+*/
+@keyframes card-entry-anim {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.article-card-placeholder.animate-entry { /* JS will add .animate-entry after appending */
+    animation: card-entry-anim 0.5s 0.1s ease-out forwards; /* 0.1s delay */
+    opacity: 0; /* Start hidden before animation */
+}
+
+
+/* --- Enhanced Glass Panel Hover Shimmer --- */
+/* This can be applied to .glass-panel elements for a CSS-driven shimmer on hover,
+   complementing any VIB3 internal effects.
+*/
+.glass-panel-shimmer { /* Add this class to glass panels you want this effect on */
+    position: relative; /* Needed for the pseudo-element */
+    overflow: hidden; /* Keep shimmer contained */
+}
+
+.glass-panel-shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%; /* Start off-screen to the left */
+    width: 75%; /* Width of the shimmer highlight */
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(var(--color-white-rgb), 0.08) 50%, /* Very subtle white shimmer */
+        transparent 100%
+    );
+    transform: skewX(-25deg); /* Angled shimmer */
+    transition: left 0.5s cubic-bezier(0.23, 1, 0.32, 1); /* Smooth transition */
+    z-index: 0; /* Behind the panel's direct content, but above its VIB3 canvas if VIB3 canvas z-index is < 0 */
+                /* This might need careful z-index management with VIB3 canvas */
+}
+
+.glass-panel-shimmer:hover::before {
+    left: 125%; /* Move across and off-screen to the right */
+}
+
+/* Adjusting z-index for content within shimmer panels if needed */
+/* This rule from style.css ([data-vib3-style] > *) should already handle it:
+   .glass-panel-shimmer > * {
+       position: relative;
+       z-index: 1;
+   }
+*/
+
+/* --- Page Transition Effects --- */
+body {
+    opacity: 0; /* Start pages transparent */
+    transition: opacity var(--page-transition-duration, 0.3s) ease-in-out;
+}
+
+body.page-fade-in {
+    opacity: 1;
+}
+
+body.page-fade-out {
+    opacity: 0 !important; /* Ensure it fades out even if page-fade-in is also present initially */
+}
