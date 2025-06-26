@@ -69,6 +69,57 @@ export class VIB34D {
         `;
     }
 
+    // --- Shaders for aiCategoryShader (e.g., particle system) ---
+    getAICategoryVertexShader() {
+        // For particles, vertex shader might do more, e.g., calculating point size, or just pass through
+        return `
+            attribute vec2 a_particlePosition; // Each particle's base position (could be random)
+            attribute float a_particleLife;   // Current life of the particle (0 to 1)
+            uniform float u_time;
+            uniform vec2 u_resolution;
+            uniform float u_pointSize;
+
+            varying float v_life;
+
+            void main() {
+                v_life = a_particleLife;
+                // Simple movement example: move particles in a direction, reset based on life
+                // More complex logic would be here for particle physics
+                vec2 pos = a_particlePosition;
+                pos.y -= u_time * 0.1; // Move up
+                pos.y = fract(pos.y); // Wrap around
+
+                // Convert normalized position to screen space
+                vec2 screenPos = (pos * 2.0 - 1.0) * vec2(1.0, -1.0); // Flip Y
+
+                gl_Position = vec4(screenPos, 0.0, 1.0);
+                gl_PointSize = u_pointSize * (1.0 - v_life) + 5.0 ; // Smaller as life fades, min size 5
+            }
+        `;
+    }
+
+    getAICategoryFragmentShader() {
+        return `
+            precision mediump float;
+            uniform vec4 u_particleColor; // e.g., [0.7, 0.3, 0.9, 1.0] (AI purple/magenta)
+            varying float v_life; // Particle's current life (0 to 1, 1 is new, 0 is old)
+
+            void main() {
+                // Fade out particle as its life diminishes
+                float alpha = smoothstep(0.0, 0.5, v_life) * smoothstep(1.0, 0.5, v_life);
+
+                // Make particle a circle
+                vec2 cxy = 2.0 * gl_PointCoord - 1.0;
+                float r = dot(cxy, cxy);
+                if (r > 1.0) {
+                    discard;
+                }
+
+                gl_FragColor = vec4(u_particleColor.rgb, u_particleColor.a * alpha);
+            }
+        `;
+    }
+
     // --- Shaders for glassPanelEffect ---
     getGlassPanelVertexShader() { // Can be the same as holoBackground's VS
         return `
@@ -163,6 +214,50 @@ export class VIB34D {
         `;
     }
 
+    // --- Shaders for articleHeaderEffect ---
+    getArticleHeaderVertexShader() { // Can be the same as holoBackground's VS
+        return `
+            attribute vec4 a_position;
+            void main() {
+                gl_Position = a_position;
+            }
+        `;
+    }
+
+    getArticleHeaderFragmentShader() {
+        return `
+            precision mediump float;
+            uniform vec2 u_resolution;
+            uniform float u_time;
+            uniform vec4 u_baseColor; // e.g., [0.4, 0.4, 0.5, 0.05] from preset
+            uniform float u_pulseSpeed; // e.g., 0.5
+            uniform float u_pulseWidth; // e.g., 0.2 (percentage of height)
+            uniform float u_intensity;  // Overall intensity/visibility
+
+            void main() {
+                vec2 st = gl_FragCoord.xy / u_resolution.xy;
+
+                // Create a horizontal band that moves vertically
+                float pulse = sin(st.y * 5.0 - u_time * u_pulseSpeed) * 0.5 + 0.5; // Creates multiple bands
+                // Sharpen the pulse into a band
+                pulse = smoothstep(1.0 - u_pulseWidth, 1.0, pulse) - smoothstep(1.0, 1.0 + u_pulseWidth, pulse);
+                // A simpler single band:
+                // float yPos = fract(u_time * u_pulseSpeed * 0.2); // Normalized position of the band center
+                // pulse = smoothstep(u_pulseWidth, 0.0, abs(st.y - yPos));
+
+
+                // Add some horizontal distortion/shimmer to the band
+                float shimmer = (sin(st.x * 30.0 + u_time * u_pulseSpeed * 2.0) * 0.5 + 0.5) * 0.3 + 0.7;
+                pulse *= shimmer;
+
+                vec3 color = u_baseColor.rgb * pulse * u_intensity;
+
+                gl_FragColor = vec4(color, u_baseColor.a * pulse * u_intensity);
+            }
+        `;
+    }
+
+
     initWebGL() {
         const gl = this.canvas.getContext('webgl');
         if (!gl) {
@@ -184,6 +279,16 @@ export class VIB34D {
             fsSource = this.getGlassPanelFragmentShader();
             specificUniformKeys = ["noiseScale", "noiseSpeed", "noiseIntensity"];
             console.log(`VIB34D ${this.id}: Initializing WebGL for glassPanelEffect shader.`);
+        } else if (this.currentParams.shader === "articleHeaderEffect") {
+            vsSource = this.getArticleHeaderVertexShader();
+            fsSource = this.getArticleHeaderFragmentShader();
+            specificUniformKeys = ["baseColor", "pulseSpeed", "pulseWidth", "intensity"];
+            console.log(`VIB34D ${this.id}: Initializing WebGL for articleHeaderEffect shader.`);
+        } else if (this.currentParams.shader === "aiCategoryShader") {
+            vsSource = this.getAICategoryVertexShader();
+            fsSource = this.getAICategoryFragmentShader();
+            specificUniformKeys = ["particleColor", "pointSize"]; // u_time, u_resolution are common
+            console.log(`VIB34D ${this.id}: Initializing WebGL for aiCategoryShader.`);
         } else {
             console.log(`VIB34D ${this.id}: No specific WebGL shader defined in preset or preset shader not recognized. Defaulting to 2D/none.`);
             this.gl = null;
@@ -212,30 +317,56 @@ export class VIB34D {
             this.uniformLocations[key] = gl.getUniformLocation(this.shaderProgram, uniformName);
         });
 
-        // Buffer for a screen-filling quad
-        const positions = [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1];
-        this.vertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+        if (this.currentParams.shader === "aiCategoryShader") {
+            const numParticles = this.currentParams.numParticles || 200; // Get from preset or default
+            this.numParticles = numParticles;
+            const particleData = new Float32Array(numParticles * 3); // x, y, life per particle
+            for (let i = 0; i < numParticles; i++) {
+                particleData[i * 3 + 0] = Math.random(); // x (0 to 1)
+                particleData[i * 3 + 1] = Math.random(); // y (0 to 1)
+                particleData[i * 3 + 2] = Math.random(); // life (0 to 1)
+            }
+            this.particleBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, particleData, gl.STATIC_DRAW); // For now, static
 
-        // VAO setup
-        this.vao = gl.createVertexArray(); // WebGL2 specific, for WebGL1 use extensions or direct attrib pointers
-        if (this.vao) { // WebGL2 path
-            gl.bindVertexArray(this.vao);
-            const positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
-            gl.enableVertexAttribArray(positionAttributeLocation);
-            gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-            gl.bindVertexArray(null); // Unbind VAO
-        } else { // WebGL1 path (or if VAO extension not available/used)
-             // If no VAO, this binding needs to happen per render or ensure it's part of render state setup
-            const positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
-            gl.enableVertexAttribArray(positionAttributeLocation);
-            gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+            this.attributeLocations = {
+                particlePosition: gl.getAttribLocation(this.shaderProgram, "a_particlePosition"),
+                particleLife: gl.getAttribLocation(this.shaderProgram, "a_particleLife"),
+            };
+            // VAO setup for particles (if WebGL2)
+            // Note: This simple particle system doesn't use a typical VAO for drawing a quad.
+            // It will draw POINTS. If using VAO, it would bind these attribute buffers.
+
+        } else {
+            // Buffer for a screen-filling quad (for other shaders)
+            const positions = [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1];
+            this.vertexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+            // VAO setup for quad
+            this.vao = gl.createVertexArray();
+            if (this.vao) {
+                gl.bindVertexArray(this.vao);
+                const positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
+                if (positionAttributeLocation !== -1) {
+                    gl.enableVertexAttribArray(positionAttributeLocation);
+                    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+                }
+                gl.bindVertexArray(null);
+            } else {
+                const positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
+                 if (positionAttributeLocation !== -1) {
+                    gl.enableVertexAttribArray(positionAttributeLocation);
+                    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+                }
+            }
         }
 
 
         this.isWebGLActive = true;
-        console.log(`VIB34D ${this.id}: WebGL initialized for holo-dark-background.`);
+        console.log(`VIB34D ${this.id}: WebGL initialized for shader: ${this.currentParams.shader}.`);
         return true;
     }
 
@@ -377,10 +508,44 @@ export class VIB34D {
                 this.gl.uniform1f(this.uniformLocations.noiseScale, this.currentParams.noiseScale || 20.0);
                 this.gl.uniform1f(this.uniformLocations.noiseSpeed, this.currentParams.noiseSpeed || 0.1);
                 this.gl.uniform1f(this.uniformLocations.noiseIntensity, this.currentParams.noiseIntensity || 0.03);
+            } else if (this.currentParams.shader === "articleHeaderEffect") {
+                this.gl.uniform4fv(this.uniformLocations.baseColor, this.currentParams.color || [0.4, 0.4, 0.5, 0.05]);
+                this.gl.uniform1f(this.uniformLocations.pulseSpeed, this.currentParams.pulseSpeed || 0.5);
+                this.gl.uniform1f(this.uniformLocations.pulseWidth, this.currentParams.pulseWidth || 0.2);
+                this.gl.uniform1f(this.uniformLocations.intensity, this.currentParams.intensity || 0.5); // Default intensity for header effect
+            } else if (this.currentParams.shader === "aiCategoryShader") {
+                this.gl.uniform4fv(this.uniformLocations.particleColor, this.currentParams.color || [0.7, 0.3, 0.9, 1.0]);
+                this.gl.uniform1f(this.uniformLocations.pointSize, this.currentParams.pointSize || 10.0);
+                // The u_time uniform is already set above for all shaders
             }
             // Add other shader uniform updates here if more shaders are introduced
 
-            this.gl.drawArrays(this.gl.TRIANGLES, 0, 6); // Draw the quad (6 vertices for 2 triangles)
+            if (this.currentParams.shader === "aiCategoryShader") {
+                // Setup attributes for particle system
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.particleBuffer);
+                // Position
+                this.gl.enableVertexAttribArray(this.attributeLocations.particlePosition);
+                this.gl.vertexAttribPointer(this.attributeLocations.particlePosition, 2, this.gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0);
+                // Life
+                this.gl.enableVertexAttribArray(this.attributeLocations.particleLife);
+                this.gl.vertexAttribPointer(this.attributeLocations.particleLife, 1, this.gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+
+                this.gl.drawArrays(this.gl.POINTS, 0, this.numParticles);
+
+            } else { // For quad-based shaders
+                if (this.vao) { // WebGL2
+                    this.gl.bindVertexArray(this.vao);
+                } else { // WebGL1 - ensure attributes are set up
+                    const positionAttributeLocation = this.gl.getAttribLocation(this.shaderProgram, "a_position");
+                    if (positionAttributeLocation !== -1) { // Check if shader uses a_position
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+                        this.gl.vertexAttribPointer(positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
+                        this.gl.enableVertexAttribArray(positionAttributeLocation);
+                    }
+                }
+                this.gl.drawArrays(this.gl.TRIANGLES, 0, 6); // Draw the quad
+            }
+
 
             if (this.vao) { // WebGL2
                 this.gl.bindVertexArray(null);

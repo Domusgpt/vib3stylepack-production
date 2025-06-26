@@ -94,8 +94,35 @@ export function filterArticlesByCategory(categoryId, articles) {
  * @param {string} articlesContainerId - The ID of the container for the articles grid.
  * @param {string} filterControlsContainerId - The ID of the container for filter buttons.
  */
+// Store current sort criteria
+let currentSortBy = 'date-desc'; // Default sort
+
+export function sortArticles(articles, sortBy) {
+    const sortedArticles = [...articles]; // Create a new array to avoid mutating the original
+
+    switch (sortBy) {
+        case 'date-asc':
+            sortedArticles.sort((a, b) => new Date(a.publicationDate) - new Date(b.publicationDate));
+            break;
+        case 'title-asc':
+            sortedArticles.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+            break;
+        case 'title-desc':
+            sortedArticles.sort((a, b) => (b.title || '').localeCompare(a.title || ''));
+            break;
+        case 'date-desc': // Fallthrough for default
+        default:
+            sortedArticles.sort((a, b) => new Date(b.publicationDate) - new Date(a.publicationDate));
+            break;
+    }
+    return sortedArticles;
+}
+
+
 export function setupCategoryFilters(articles, siteCategories, articlesContainerId, filterControlsContainerId) {
     const filterContainer = document.getElementById(filterControlsContainerId);
+    const sortSelectElement = document.getElementById('sort-by-select'); // Get sort dropdown
+
     if (!filterContainer) {
         console.error(`Filter controls container "${filterControlsContainerId}" not found.`);
         return;
@@ -112,26 +139,32 @@ export function setupCategoryFilters(articles, siteCategories, articlesContainer
 
     const filterButtons = filterContainer.querySelectorAll('.filter-button');
 
+    function applyFiltersAndSort() {
+        const activeFilterButton = filterContainer.querySelector('.filter-button.active');
+        const categoryId = activeFilterButton ? activeFilterButton.dataset.categoryFilter : 'all';
+        currentSortBy = sortSelectElement ? sortSelectElement.value : 'date-desc';
+
+        let processedArticles = filterArticlesByCategory(categoryId, articles);
+        processedArticles = sortArticles(processedArticles, currentSortBy);
+        displayArticles(processedArticles, articlesContainerId);
+    }
+
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
-            // Update active state for buttons
             filterButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
-
-            const categoryId = button.dataset.categoryFilter;
-            const filteredArticles = filterArticlesByCategory(categoryId, articles);
-            displayArticles(filteredArticles, articlesContainerId);
+            applyFiltersAndSort();
         });
     });
 
-    // Initially display all articles (or trigger the 'all' filter)
-    const initialActiveButton = filterContainer.querySelector('.filter-button.active');
-    if (initialActiveButton) {
-        initialActiveButton.click(); // Programmatically click to apply initial filter
-    } else if (filterButtons.length > 0) {
-        filterButtons[0].click(); // Or click the first available button if no 'active' default
+    if (sortSelectElement) {
+        sortSelectElement.addEventListener('change', () => {
+            applyFiltersAndSort();
+        });
     }
 
+    // Initial display
+    applyFiltersAndSort();
 
-    console.log("Category filters set up.");
+    console.log("Category filters and sorting set up.");
 }

@@ -52,15 +52,15 @@
       }
     },
     "category-ai-visual": {
-      "description": "Visual theme for AI Vibes category using holoBackground shader.",
+      "description": "Visual theme for AI Vibes category with particle system.",
       "parameters": {
-        "shader": "holoBackground",
-        "color": [0.25, 0.1, 0.3, 1.0], // More purple/magenta for AI
-        "timeScale": 0.15,
-        "intensity": 0.30,
-        "noiseAmount": 0.08
-        // "shape": "sphere",
-        // "flowFieldStrength": 0.3
+        "shader": "aiCategoryShader",
+        "color": [0.7, 0.3, 0.9, 0.7], // u_particleColor (AI purple/magenta, slightly transparent)
+        "pointSize": 15.0,             // u_pointSize for particles
+        "numParticles": 250,           // Number of particles for this instance
+        "timeScale": 0.2               // Affects u_time, influencing particle movement speed in VS
+        // "shape": "sphere", // Conceptual, not directly used by this particle shader
+        // "flowFieldStrength": 0.3 // Conceptual
       }
     },
     "category-code-visual": {
@@ -124,13 +124,14 @@
       }
     },
     "article-header-visual": {
-        "description": "Subtle visual for article headers.",
+        "description": "Subtle WebGL visual for article headers.",
         "parameters": {
-            "shape": "wave",
-            "color": [0.4, 0.4, 0.5, 0.05],
-            "speed": 0.02,
-            "intensity": 0.1,
-            "heightPercentage": 0.2 /* Conceptual: only fill 20% of container height */
+            "shader": "articleHeaderEffect",
+            "color": [0.3, 0.3, 0.45, 0.1], // Base color for the effect (RGBA) - subtle dark blue/purple
+            "pulseSpeed": 0.3,          // Speed of the vertical pulse/scanline
+            "pulseWidth": 0.15,         // Width of the pulse band (as a percentage of height)
+            "intensity": 0.6            // Overall visibility/alpha multiplier for the effect
+            // "heightPercentage" is not directly used by this shader, CSS/layout controls height
         }
     }
   },
