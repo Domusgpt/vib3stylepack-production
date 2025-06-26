@@ -59,3 +59,11 @@ export function initializePageFadeEffect() {
     // This function will just trigger the fade-in.
     document.body.classList.add('page-loaded'); // CSS will transition opacity to 1
 }
+
+/**
+ * Alias for fadeOutPageAndNavigate for backwards compatibility
+ * @param {string} url - The URL to navigate to after fade out.
+ */
+export function navigateWithTransition(url) {
+    fadeOutPageAndNavigate(url);
+}

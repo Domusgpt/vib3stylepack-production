@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VIB3 Framework Test</title>
+</head>
+<body>
+    <h1>VIB3 Framework Deployment Test</h1>
+    <p>If you can see this, GitHub Pages is working.</p>
+    <script>
+        console.log('Test page loaded successfully');
+        
+        // Test if we can fetch the main files
+        fetch('presets.json')
+            .then(response => {
+                console.log('presets.json status:', response.status);
+                return response.text();
+            })
+            .then(text => console.log('presets.json content:', text.substring(0, 100)))
+            .catch(err => console.error('presets.json error:', err));
+            
+        fetch('css/_variables.css')
+            .then(response => {
+                console.log('_variables.css status:', response.status);
+                return response.text();
+            })
+            .then(text => console.log('_variables.css content:', text.substring(0, 100)))
+            .catch(err => console.error('_variables.css error:', err));
+    </script>
+</body>
+</html>

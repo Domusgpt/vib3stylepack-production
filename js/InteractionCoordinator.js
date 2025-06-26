@@ -23,92 +23,70 @@ export class InteractionCoordinator {
     bindInteractions() {
         const interactiveElements = document.querySelectorAll('[data-vib3-interaction-preset]');
         interactiveElements.forEach(element => {
-            const presetName = element.dataset.vib3InteractionPreset;
-            const preset = this.presetManager.getInteractionPreset(presetName);
-
-            if (preset && preset.events && Array.isArray(preset.events)) {
-                preset.events.forEach(eventType => {
-                    // Store the preset details with the handler for easy access
-                    const handler = (event) => this.handleInteraction(event, presetName, preset, element);
-                    element.addEventListener(eventType, handler);
-                    // Consider adding a cleanup method to remove these listeners if elements are removed
-                });
-                console.log(`InteractionCoordinator: Bound preset "${presetName}" to element:`, element);
-            } else {
-                console.warn(`InteractionCoordinator: Preset "${presetName}" not found or misconfigured for element:`, element);
-            }
+            this.bindInteractionsToElement(element);
         });
     }
 
     /**
-     * Generic interaction handler.
-     * @param {Event} event - The DOM event.
-     * @param {string} presetName - Name of the interaction preset.
-     * @param {object} preset - The interaction preset object.
-     * @param {HTMLElement} targetElement - The element that triggered the interaction.
+     * Binds interactions to a single element.
+     * @param {HTMLElement} element - The element to bind interactions to.
      */
-    handleInteraction(event, presetName, preset, targetElement) {
-        console.log(`Interaction on ${targetElement.className} with preset ${presetName} for event ${event.type}`);
-        const eventType = event.type;
+    bindInteractionsToElement(element) {
+        const presetName = element.dataset.vib3InteractionPreset;
+        const preset = this.presetManager.getInteractionPreset(presetName);
 
-        // 1. Apply Target Actions
-        if (preset.targetActions && preset.targetActions[eventType]) {
-            const targetVisualizer = this.visualizers.get(targetElement);
-            if (targetVisualizer) {
-                this.applyActions(targetVisualizer, preset.targetActions[eventType], `target:${targetElement.id || targetElement.className}:${presetName}:${eventType}`);
-            } else {
-                console.warn(`InteractionCoordinator: No visualizer found for target element:`, targetElement);
+        if (preset && preset.trigger) {
+            // Handle the trigger event
+            const triggerHandler = (event) => this.handleTrigger(event, preset, element);
+            element.addEventListener(preset.trigger, triggerHandler);
+            
+            // Handle the revert event if specified
+            if (preset.revert) {
+                const revertHandler = (event) => this.handleRevert(event, preset, element);
+                element.addEventListener(preset.revert, revertHandler);
             }
-        }
-
-        // 2. Apply Ecosystem Reactions
-        if (preset.ecosystemReactions && Array.isArray(preset.ecosystemReactions)) {
-            preset.ecosystemReactions.forEach(reaction => {
-                if (reaction.actions && reaction.actions[eventType]) {
-                    const ecosystemElements = document.querySelectorAll(reaction.selector);
-                    ecosystemElements.forEach(ecoElement => {
-                        if (reaction.excludeTarget && ecoElement === targetElement) {
-                            return; // Skip if it's the target and excludeTarget is true
-                        }
-                        const ecoVisualizer = this.visualizers.get(ecoElement);
-                        if (ecoVisualizer) {
-                            this.applyActions(ecoVisualizer, reaction.actions[eventType], `eco:${ecoElement.id || ecoElement.className}:${presetName}:${eventType}`);
-                        } else {
-                             console.warn(`InteractionCoordinator: No visualizer found for ecosystem element matching selector "${reaction.selector}":`, ecoElement);
-                        }
-                    });
-                }
-            });
+            
+            console.log(`InteractionCoordinator: Bound preset "${presetName}" to element:`, element);
+        } else {
+            console.warn(`InteractionCoordinator: Preset "${presetName}" not found or misconfigured for element:`, element);
         }
     }
 
     /**
-     * Applies actions (parameter updates or reset) to a visualizer.
-     * @param {VIB34D} visualizerInstance - The VIB34D instance to apply actions to.
-     * @param {object} actionDetails - The action details from the preset.
-     * @param {string} effectId - A unique ID for managing temporary effects.
+     * Handles trigger events (e.g., mouseover).
+     * @param {Event} event - The DOM event.
+     * @param {object} preset - The interaction preset object.
+     * @param {HTMLElement} element - The target element.
      */
-    applyActions(visualizerInstance, actionDetails, effectId) {
-        if (!visualizerInstance || !actionDetails) return;
-
-        // Clear any existing temporary effect timeout for this visualizer and effectId
-        if (this.activeTimeouts.has(effectId)) {
-            clearTimeout(this.activeTimeouts.get(effectId));
-            this.activeTimeouts.delete(effectId);
+    handleTrigger(event, preset, element) {
+        const visualizer = this.visualizers.get(element);
+        if (!visualizer) {
+            console.warn(`InteractionCoordinator: No visualizer found for element:`, element);
+            return;
         }
 
-        if (actionDetails.resetToBase) {
-            visualizerInstance.resetToBaseState(actionDetails.duration);
-        } else if (actionDetails.params) {
-            visualizerInstance.updateParameters(actionDetails.params, actionDetails.duration);
-
-            if (actionDetails.temporary && actionDetails.resetDelay) {
-                const timeoutId = setTimeout(() => {
-                    visualizerInstance.resetToBaseState(actionDetails.duration || 300); // Use action's duration or a default for reset
-                    this.activeTimeouts.delete(effectId);
-                }, actionDetails.resetDelay);
-                this.activeTimeouts.set(effectId, timeoutId);
-            }
+        if (preset.animation && preset.animation.properties) {
+            const duration = preset.animation.duration || 300;
+            visualizer.updateParameters(preset.animation.properties, duration);
         }
     }
+
+    /**
+     * Handles revert events (e.g., mouseout).
+     * @param {Event} event - The DOM event.
+     * @param {object} preset - The interaction preset object.
+     * @param {HTMLElement} element - The target element.
+     */
+    handleRevert(event, preset, element) {
+        const visualizer = this.visualizers.get(element);
+        if (!visualizer) {
+            console.warn(`InteractionCoordinator: No visualizer found for element:`, element);
+            return;
+        }
+
+        // Reset to base parameters
+        const duration = preset.animation ? preset.animation.duration || 300 : 300;
+        visualizer.resetToBaseState(duration);
+    }
+
 }

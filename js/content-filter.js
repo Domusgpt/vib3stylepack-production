@@ -135,3 +135,57 @@ export function setupCategoryFilters(articles, siteCategories, articlesContainer
 
     console.log("Category filters set up.");
 }
+
+/**
+ * Sorts an array of articles based on the specified criteria.
+ * @param {Array<Object>} articles - Array of article objects to sort.
+ * @param {string} sortBy - Sort criteria: 'date-desc', 'date-asc', 'title-asc', 'title-desc'
+ * @returns {Array<Object>} Sorted array of articles.
+ */
+export function sortArticles(articles, sortBy = 'date-desc') {
+    const sorted = [...articles];
+    
+    switch(sortBy) {
+        case 'date-desc':
+            sorted.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+            break;
+        case 'date-asc':
+            sorted.sort((a, b) => new Date(a.publishDate) - new Date(b.publishDate));
+            break;
+        case 'title-asc':
+            sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+            break;
+        case 'title-desc':
+            sorted.sort((a, b) => (b.title || '').localeCompare(a.title || ''));
+            break;
+        default:
+            console.warn(`Unknown sort criteria: ${sortBy}. Using date-desc.`);
+            sorted.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+    }
+    
+    return sorted;
+}
+
+/**
+ * Sets up sort controls and their event listeners.
+ * @param {string} sortControlId - The ID of the sort select element.
+ * @param {string} articlesContainerId - The ID of the container for the articles grid.
+ * @param {function} getCurrentFilteredArticles - Function to get currently filtered articles.
+ */
+export function setupSortControls(sortControlId, articlesContainerId, getCurrentFilteredArticles) {
+    const sortSelect = document.getElementById(sortControlId);
+    if (!sortSelect) {
+        console.error(`Sort control with ID "${sortControlId}" not found.`);
+        return;
+    }
+    
+    sortSelect.addEventListener('change', (e) => {
+        const sortBy = e.target.value;
+        const currentArticles = getCurrentFilteredArticles();
+        const sortedArticles = sortArticles(currentArticles, sortBy);
+        displayArticles(sortedArticles, articlesContainerId);
+        console.log(`Articles sorted by: ${sortBy}`);
+    });
+    
+    console.log("Sort controls set up.");
+}

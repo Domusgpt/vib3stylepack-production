@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Test</title>
+</head>
+<body>
+    <h1>VIB3 Framework Debug Test</h1>
+    <div id="results"></div>
+    <script>
+        const results = document.getElementById('results');
+        
+        async function testFile(path, description) {
+            try {
+                const response = await fetch(path);
+                const success = response.ok;
+                const status = response.status;
+                const text = await response.text();
+                
+                results.innerHTML += `<p><strong>${description}:</strong> ${success ? 'SUCCESS' : 'FAILED'} (${status})</p>`;
+                if (success) {
+                    results.innerHTML += `<pre style="background:#f0f0f0;padding:10px;max-height:200px;overflow:auto;">${text.substring(0, 500)}...</pre>`;
+                }
+            } catch (error) {
+                results.innerHTML += `<p><strong>${description}:</strong> ERROR - ${error.message}</p>`;
+            }
+        }
+        
+        // Test all the files that are failing
+        testFile('./presets.json', 'Presets JSON');
+        testFile('./content/site-meta.json', 'Site Meta JSON');
+        testFile('./content/article-index.json', 'Article Index JSON');
+        testFile('./content/articles/ema-report-monolith-eversuite-analysis.json', 'Featured Article JSON');
+        testFile('./css/_variables.css', 'Variables CSS');
+    </script>
+</body>
+</html>

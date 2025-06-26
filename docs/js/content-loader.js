@@ -28,35 +28,6 @@ export async function loadSiteMeta() {
         if (navListElement && meta.categories && Array.isArray(meta.categories)) {
             navListElement.innerHTML = ''; // Clear existing placeholders
             meta.categories.forEach(category => {
-import { navigateWithTransition } from './article-transitions.js';
-
-const CONTENT_BASE_PATH = '../content/'; // Relative to this JS file's location in digital-magazine/js/
-
-/**
- * Fetches and populates site metadata like site title, tagline,
- * and dynamically generates primary navigation.
- */
-export async function loadSiteMeta() {
-    try {
-        const response = await fetch(`${CONTENT_BASE_PATH}site-meta.json`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const meta = await response.json();
-
-        // Populate site title and tagline
-        const siteTitleElement = document.querySelector('#site-header .site-title a');
-        const taglineElement = document.querySelector('#site-header .tagline');
-        if (siteTitleElement) siteTitleElement.textContent = meta.siteName;
-        if (taglineElement) taglineElement.textContent = meta.tagline;
-        document.title = `${meta.siteName} - ${meta.tagline}`;
-
-
-        // Populate primary navigation
-        const navListElement = document.getElementById('nav-list');
-        if (navListElement && meta.categories && Array.isArray(meta.categories)) {
-            navListElement.innerHTML = ''; // Clear existing placeholders
-            meta.categories.forEach(category => {
                 const listItem = document.createElement('li');
                 const link = document.createElement('a');
                 const categoryUrl = `category.html?id=${category.id}`;
@@ -189,6 +160,7 @@ export async function loadLatestArticles(limit = 3) {
     // After adding all cards, scan the container for new VIB3 elements
     if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.scanAndInitializeNewElements) {
         window.Vib3codeApp.vib3System.scanAndInitializeNewElements(articlesGrid);
+    }
     }
 }
 

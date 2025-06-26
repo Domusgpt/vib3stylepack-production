@@ -114,6 +114,59 @@ export class VIB34D {
             }
         `;
     }
+    
+    getVaporwaveGridVertexShader() {
+        return `
+            attribute vec4 a_position;
+            void main() {
+                gl_Position = a_position;
+            }
+        `;
+    }
+    
+    getVaporwaveGridFragmentShader() {
+        return `
+            precision mediump float;
+            uniform vec2 u_resolution;
+            uniform float u_time;
+            uniform vec4 u_gridColor;
+            uniform float u_gridScale;
+            uniform float u_gridSpeed;
+            uniform float u_glowIntensity;
+            
+            float grid(vec2 st, float scale) {
+                st *= scale;
+                vec2 grid = abs(fract(st - 0.5) - 0.5) / fwidth(st);
+                return 1.0 - min(grid.x, grid.y);
+            }
+            
+            void main() {
+                vec2 st = gl_FragCoord.xy / u_resolution.xy;
+                st.x *= u_resolution.x / u_resolution.y;
+                
+                // Create perspective effect
+                float perspective = 1.0 / (1.0 + st.y * 2.0);
+                vec2 warpedSt = vec2(st.x - 0.5, st.y) * perspective + vec2(0.5, 0.0);
+                
+                // Animate the grid
+                warpedSt.y -= u_time * u_gridSpeed;
+                
+                // Create the grid
+                float g = grid(warpedSt, u_gridScale);
+                
+                // Add glow effect
+                float glow = pow(g, 1.0 / u_glowIntensity);
+                
+                // Fade out at the top
+                float fade = 1.0 - st.y;
+                
+                vec3 color = u_gridColor.rgb * glow * fade;
+                float alpha = g * fade * u_gridColor.a;
+                
+                gl_FragColor = vec4(color, alpha);
+            }
+        `;
+    }
 
     getHoloBackgroundFragmentShader() {
         return `
@@ -164,7 +217,18 @@ export class VIB34D {
     }
 
     initWebGL() {
-        const gl = this.canvas.getContext('webgl');
+        // Try WebGL2 first, then fall back to WebGL1
+        let gl = this.canvas.getContext('webgl2');
+        this.isWebGL2 = true;
+        
+        if (!gl) {
+            gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
+            this.isWebGL2 = false;
+            console.log(`VIB34D ${this.id}: Using WebGL1`);
+        } else {
+            console.log(`VIB34D ${this.id}: Using WebGL2`);
+        }
+        
         if (!gl) {
             console.warn(`VIB34D ${this.id}: WebGL not supported or disabled.`);
             return false;
@@ -184,6 +248,11 @@ export class VIB34D {
             fsSource = this.getGlassPanelFragmentShader();
             specificUniformKeys = ["noiseScale", "noiseSpeed", "noiseIntensity"];
             console.log(`VIB34D ${this.id}: Initializing WebGL for glassPanelEffect shader.`);
+        } else if (this.currentParams.shader === "vaporwaveGrid") {
+            vsSource = this.getVaporwaveGridVertexShader();
+            fsSource = this.getVaporwaveGridFragmentShader();
+            specificUniformKeys = ["gridColor", "gridScale", "gridSpeed", "glowIntensity"];
+            console.log(`VIB34D ${this.id}: Initializing WebGL for vaporwaveGrid shader.`);
         } else {
             console.log(`VIB34D ${this.id}: No specific WebGL shader defined in preset or preset shader not recognized. Defaulting to 2D/none.`);
             this.gl = null;
@@ -218,17 +287,19 @@ export class VIB34D {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
-        // VAO setup
-        this.vao = gl.createVertexArray(); // WebGL2 specific, for WebGL1 use extensions or direct attrib pointers
-        if (this.vao) { // WebGL2 path
+        // VAO setup - handle both WebGL1 and WebGL2
+        const positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
+        
+        if (this.isWebGL2) {
+            // WebGL2 path with VAO
+            this.vao = gl.createVertexArray();
             gl.bindVertexArray(this.vao);
-            const positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
             gl.enableVertexAttribArray(positionAttributeLocation);
             gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-            gl.bindVertexArray(null); // Unbind VAO
-        } else { // WebGL1 path (or if VAO extension not available/used)
-             // If no VAO, this binding needs to happen per render or ensure it's part of render state setup
-            const positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
+            gl.bindVertexArray(null);
+        } else {
+            // WebGL1 path - no VAO, just set up attributes directly
+            this.vao = null;
             gl.enableVertexAttribArray(positionAttributeLocation);
             gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
         }
@@ -352,15 +423,15 @@ export class VIB34D {
 
             this.gl.useProgram(this.shaderProgram);
 
-            if (this.vao) { // WebGL2
+            if (this.isWebGL2 && this.vao) {
+                // WebGL2 with VAO
                 this.gl.bindVertexArray(this.vao);
-            } else { // WebGL1 - ensure attributes are set up if not using VAO
-                // This might need to re-bind buffer and set vertexAttribPointer if state is lost
-                // For this simple quad, it's often okay if done once at init.
-                 const positionAttributeLocation = this.gl.getAttribLocation(this.shaderProgram, "a_position");
-                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-                 this.gl.vertexAttribPointer(positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
-                 this.gl.enableVertexAttribArray(positionAttributeLocation); // Ensure it's enabled
+            } else {
+                // WebGL1 - need to bind buffer and set up attributes each frame
+                const positionAttributeLocation = this.gl.getAttribLocation(this.shaderProgram, "a_position");
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+                this.gl.vertexAttribPointer(positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
+                this.gl.enableVertexAttribArray(positionAttributeLocation);
             }
 
             // Update uniforms
@@ -377,12 +448,17 @@ export class VIB34D {
                 this.gl.uniform1f(this.uniformLocations.noiseScale, this.currentParams.noiseScale || 20.0);
                 this.gl.uniform1f(this.uniformLocations.noiseSpeed, this.currentParams.noiseSpeed || 0.1);
                 this.gl.uniform1f(this.uniformLocations.noiseIntensity, this.currentParams.noiseIntensity || 0.03);
+            } else if (this.currentParams.shader === "vaporwaveGrid") {
+                this.gl.uniform4fv(this.uniformLocations.gridColor, this.currentParams.gridColor || [0.0, 1.0, 1.0, 0.8]);
+                this.gl.uniform1f(this.uniformLocations.gridScale, this.currentParams.gridScale || 20.0);
+                this.gl.uniform1f(this.uniformLocations.gridSpeed, this.currentParams.gridSpeed || 0.5);
+                this.gl.uniform1f(this.uniformLocations.glowIntensity, this.currentParams.glowIntensity || 2.0);
             }
-            // Add other shader uniform updates here if more shaders are introduced
 
             this.gl.drawArrays(this.gl.TRIANGLES, 0, 6); // Draw the quad (6 vertices for 2 triangles)
 
-            if (this.vao) { // WebGL2
+            if (this.isWebGL2 && this.vao) {
+                // WebGL2 - unbind VAO
                 this.gl.bindVertexArray(null);
             }
 

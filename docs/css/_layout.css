@@ -1,0 +1,331 @@
+/* digital-magazine/css/_layout.css */
+
+/* Page Container */
+.page-container {
+    max-width: 1400px; /* Slightly wider for a more expansive feel */
+    margin: 0 auto;
+    padding: 0 var(--space-lg); /* Horizontal padding */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure footer can be at the bottom */
+}
+
+/* Site Header Layout */
+#site-header {
+    padding: var(--space-lg) var(--space-md);
+    margin-bottom: var(--space-md); /* Space between header and nav */
+    /* Component styling (glassmorphism) will be in _components.css */
+}
+
+#site-header .header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+/* Primary Navigation Layout */
+#primary-navigation {
+    padding: var(--space-sm) 0;
+    margin-bottom: var(--space-xl); /* More space before main content */
+    /* Component styling (glassmorphism) will be in _components.css */
+}
+
+#primary-navigation ul#nav-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap; /* Allow nav items to wrap on smaller screens */
+    gap: var(--space-sm);
+}
+
+/* Main Content Area */
+main {
+    flex-grow: 1; /* Allows main to take up available space, pushing footer down */
+    padding: var(--space-md) 0; /* Vertical padding for main content area */
+}
+
+/* Section Styling */
+main section {
+    margin-bottom: var(--space-xxl); /* Generous spacing between content sections */
+}
+
+.section-title {
+    font-size: var(--font-size-xxl); /* From _typography.css */
+    margin-bottom: var(--space-lg);
+    text-align: center; /* Default for section titles */
+    color: var(--color-neon-magenta); /* Differentiate section titles */
+    text-shadow: 0 0 8px rgba(var(--color-neon-magenta-rgb), 0.5);
+}
+
+/* Featured Article Section Layout */
+#featured-article-section {
+    /* Specific layout for featured article can be added if needed,
+       e.g., centering its placeholder or defining max-width */
+}
+
+#featured-article-placeholder {
+    padding: var(--space-xl); /* Generous padding for featured content */
+    min-height: 300px; /* Example min height */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* Component styling (glassmorphism) in _components.css */
+}
+
+/* Latest Articles Grid Layout */
+.article-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); /* Responsive columns */
+    gap: var(--space-xl); /* Generous gap for cards */
+}
+
+.article-card-placeholder { /* Placeholder styling, real cards in _components.css */
+    min-height: 250px; /* Example min height */
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* Component styling (glassmorphism) in _components.css */
+}
+
+
+/* Site Footer Layout */
+#site-footer {
+    padding: var(--space-xl) var(--space-md);
+    margin-top: auto; /* Pushes footer to bottom if content is short */
+    /* Component styling (glassmorphism) in _components.css */
+}
+
+#site-footer .footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+
+/* Responsive Breakpoints (Initial Basic Adjustments) */
+@media (max-width: 1024px) {
+    .page-container {
+        padding: 0 var(--space-md);
+    }
+
+    .article-grid-container {
+        gap: var(--space-lg);
+    }
+}
+
+@media (max-width: 768px) {
+    #site-header {
+        padding: var(--space-md);
+    }
+    #site-header .header-content .site-title { /* Accessing site title via class */
+        font-size: var(--font-size-xl); /* Reduce site title size */
+    }
+     #site-header .header-content .tagline {
+        font-size: var(--font-size-sm);
+    }
+
+
+    #primary-navigation ul#nav-list {
+        flex-direction: column; /* Stack nav items vertically */
+        align-items: center;
+        gap: var(--space-xs);
+    }
+    #primary-navigation ul#nav-list li a {
+        padding: var(--space-xs); /* Reduce padding for stacked items */
+    }
+
+
+    .section-title {
+        font-size: var(--font-size-xl); /* Reduce section title size */
+        margin-bottom: var(--space-md);
+    }
+
+    .article-grid-container {
+        grid-template-columns: 1fr; /* Stack cards on mobile */
+        gap: var(--space-md);
+    }
+
+    #featured-article-placeholder,
+    .article-card-placeholder {
+        padding: var(--space-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .page-container {
+        padding: 0 var(--space-sm);
+    }
+     #site-header .header-content .site-title {
+        font-size: var(--font-size-lg); /* Further reduce site title */
+    }
+}
+
+/* --- Article Page Layout Styles --- */
+#article-content-area {
+    max-width: 800px; /* Optimal reading width */
+    margin: 0 auto var(--space-xxl) auto; /* Center content, bottom margin */
+    padding: var(--space-lg);
+    /* Potential for a glass panel style itself if not transparent */
+    /* background-color: rgba(var(--color-medium-grey-rgb), 0.3); */
+    /* border-radius: var(--border-radius-md); */
+}
+
+.article-header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+    padding: var(--space-lg) 0; /* Padding for VIB3 visual effect */
+    position: relative; /* For VIB3 canvas */
+    min-height: 150px; /* Ensure space for VIB3 visual */
+}
+
+.article-header-content { /* Wrapper to ensure text is above VIB3 canvas */
+    position: relative;
+    z-index: 1;
+}
+
+.article-header #article-title { /* ID selector for specificity */
+    font-size: var(--font-size-xxxl); /* Large title for articles */
+    color: var(--color-neon-yellow); /* Distinct article title color */
+    margin-bottom: var(--space-sm);
+    text-shadow: 0 0 10px rgba(var(--color-neon-yellow-rgb), 0.5);
+}
+
+.article-header .article-meta {
+    font-size: var(--font-size-sm);
+    color: var(--color-light-grey);
+    opacity: 0.8;
+    margin-bottom: 0;
+}
+
+.article-header .article-meta span { /* Individual meta items */
+    margin: 0 var(--space-xs);
+}
+
+#article-body {
+    /* Typography for p, h2-h6, blockquote, ul, ol, pre, code
+       is handled by _typography.css */
+}
+
+#article-body h2,
+#article-body h3,
+#article-body h4,
+#article-body h5,
+#article-body h6 {
+    margin-top: var(--space-xl); /* More top margin for subheadings within article body */
+    margin-bottom: var(--space-sm);
+    color: var(--color-neon-cyan); /* Default heading color for article content */
+    text-shadow: 0 0 5px rgba(var(--color-neon-cyan-rgb), 0.5);
+}
+#article-body h2 { font-size: var(--font-size-xxl); }
+#article-body h3 { font-size: var(--font-size-xl); }
+
+
+#article-body p {
+    font-size: var(--font-size-md); /* Ensure body text is at base size */
+    line-height: 1.8; /* Slightly more line height for readability */
+    margin-bottom: var(--space-md);
+}
+
+#article-body figure {
+    margin: var(--space-lg) 0;
+    text-align: center;
+}
+
+#article-body figure img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid rgba(var(--color-neon-cyan-rgb), 0.2);
+}
+
+#article-body figure figcaption {
+    font-size: var(--font-size-sm);
+    color: var(--color-light-grey);
+    opacity: 0.7;
+    margin-top: var(--space-xs);
+}
+
+/* Placeholder for VIB3 Embed */
+.vib3-embed-placeholder {
+    min-height: 200px;
+    background-color: rgba(var(--color-dark-blue-base-rgb), 0.3);
+    border: 1px dashed var(--color-neon-cyan);
+    border-radius: var(--border-radius-sm);
+    margin: var(--space-lg) 0;
+    padding: var(--space-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative; /* For VIB3 canvas */
+}
+.vib3-embed-placeholder p {
+    margin: 0;
+    color: var(--color-light-grey);
+    opacity: 0.8;
+}
+
+
+.article-footer {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid rgba(var(--color-neon-cyan-rgb), 0.1);
+    text-align: center;
+    font-size: var(--font-size-sm);
+}
+/* Article Page Responsive Adjustments */
+@media (max-width: 768px) {
+    #article-content-area {
+        padding: var(--space-md);
+    }
+    .article-header #article-title {
+        font-size: var(--font-size-xxl);
+    }
+    #article-body h2 { font-size: var(--font-size-xl); }
+    #article-body h3 { font-size: var(--font-size-lg); }
+}
+
+/* --- Category Page Layout Styles --- */
+.category-header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+    padding: var(--space-lg) var(--space-md);
+    /* Optional: could be a glass panel too */
+    /* background-color: rgba(var(--color-medium-grey-rgb), 0.2); */
+    /* border-radius: var(--border-radius-md); */
+}
+
+.category-header #category-title { /* ID selector for specificity */
+    font-size: var(--font-size-xxxl);
+    color: var(--color-neon-yellow); /* Match article title color for prominence */
+    margin-bottom: var(--space-xs);
+    text-shadow: 0 0 10px rgba(var(--color-neon-yellow-rgb), 0.5);
+}
+
+.category-header #category-description {
+    font-size: var(--font-size-lg);
+    color: var(--color-light-grey);
+    opacity: 0.9;
+    max-width: 700px; /* Keep description readable */
+    margin: 0 auto;
+}
+
+#category-articles-grid {
+    /* Uses .article-grid-container styles if class is applied,
+       or can have its own specific grid settings if needed.
+       Assuming .article-grid-container is used by content-loader.js or similar. */
+}
+
+/* Category Page Responsive Adjustments */
+@media (max-width: 768px) {
+    .category-header #category-title {
+        font-size: var(--font-size-xxl);
+    }
+    .category-header #category-description {
+        font-size: var(--font-size-md);
+    }
+}

@@ -1,108 +1,126 @@
 {
-  "visualStyles": {
-    "default-visual": {
-      "description": "A default visual style for general elements.",
-      "parameters": {
-        "color": [0.2, 0.2, 0.2, 1.0],
-        "shape": "cube",
-        "speed": 0.5,
-        "intensity": 0.5
-      }
-    },
-    "card-visual-style": {
-      "description": "Visual style for cards.",
-      "parameters": {
-        "color": [0.3, 0.3, 0.8, 1.0],
-        "shape": "quad",
-        "speed": 0.2,
-        "intensity": 0.7,
-        "texture": "noise"
-      }
-    },
-    "background-visual-style": {
-      "description": "Visual style for full backgrounds.",
-      "parameters": {
-        "color": [0.1, 0.1, 0.15, 1.0],
-        "shape": "plane",
-        "speed": 0.1,
-        "intensity": 0.3,
-        "shaderEffect": "starfield"
-      }
-    }
-  },
-  "interactionPresets": {
-    "gravitational-well": {
-      "description": "Hovering the target card causes all other cards to react.",
-      "events": ["mouseover", "mouseout"],
-      "targetActions": {
-        "mouseover": {
-          "duration": 300,
-          "params": { "scale": 1.1, "intensity": 1.0, "color": [0.5, 0.8, 0.5, 1.0] }
+    "visualStyles": {
+        "holo-dark-background": {
+            "type": "background",
+            "parameters": {
+                "shader": "holoBackground",
+                "color": [0.02, 0.02, 0.05, 1.0],
+                "noiseAmount": 0.07,
+                "intensity": 0.25,
+                "timeScale": 0.1
+            }
         },
-        "mouseout": {
-          "duration": 500,
-          "resetToBase": true
+        "glass-panel-primary": {
+            "type": "ui-element", 
+            "parameters": {
+                "shader": "glassPanelEffect",
+                "noiseScale": 20.0,
+                "noiseSpeed": 0.1,
+                "noiseIntensity": 0.03,
+                "timeScale": 0.1
+            }
+        },
+        "glass-panel-accent": {
+            "type": "ui-element",
+            "parameters": {
+                "shader": "glassPanelEffect", 
+                "noiseScale": 25.0,
+                "noiseSpeed": 0.15,
+                "noiseIntensity": 0.05,
+                "timeScale": 0.1
+            }
+        },
+        "vaporwave-grid-accent": {
+            "type": "ui-element",
+            "parameters": {
+                "shader": "vaporwaveGrid",
+                "gridColor": [0.0, 1.0, 1.0, 0.8],
+                "gridScale": 20.0,
+                "gridSpeed": 0.5,
+                "glowIntensity": 2.0,
+                "timeScale": 0.1
+            }
+        },
+        "category-ema-visual": {
+            "type": "background",
+            "parameters": {
+                "shader": "holoBackground",
+                "color": [0.1, 0.0, 0.05, 1.0],
+                "noiseAmount": 0.08,
+                "intensity": 0.3,
+                "timeScale": 0.1
+            }
+        },
+        "ema-verdict-visualizer": {
+            "type": "ui-element",
+            "parameters": {
+                "shader": "vaporwaveGrid",
+                "gridColor": [1.0, 0.2, 0.2, 0.9],
+                "gridScale": 15.0,
+                "gridSpeed": 0.3,
+                "glowIntensity": 1.5,
+                "timeScale": 0.1
+            }
+        },
+        "article-background-placeholder": {
+            "type": "background",
+            "parameters": {
+                "shader": "holoBackground",
+                "color": [0.01, 0.02, 0.04, 1.0],
+                "noiseAmount": 0.05,
+                "intensity": 0.2,
+                "timeScale": 0.08
+            }
+        },
+        "article-header-visual": {
+            "type": "ui-element",
+            "parameters": {
+                "shader": "glassPanelEffect",
+                "noiseScale": 30.0,
+                "noiseSpeed": 0.05,
+                "noiseIntensity": 0.02,
+                "timeScale": 0.1
+            }
         }
-      },
-      "ecosystemReactions": [
-        {
-          "selector": ".article-card",
-          "excludeTarget": true,
-          "actions": {
-            "mouseover": {
-              "duration": 500,
-              "params": { "speed": 0.1, "intensity": 0.3, "color": [0.4, 0.4, 0.6, 1.0] }
+    },
+    "interactionPresets": {
+        "glass-panel-hover": {
+            "trigger": "mouseover",
+            "target": "self",
+            "animation": {
+                "duration": 300,
+                "easing": "ease-out",
+                "properties": {
+                    "noiseIntensity": 0.08,
+                    "noiseSpeed": 0.2
+                }
             },
-            "mouseout": {
-              "duration": 500,
-              "resetToBase": true
-            }
-          }
-        }
-      ]
-    },
-    "quantum-flip": {
-      "description": "Clicking triggers a system-wide effect.",
-      "events": ["click"],
-      "targetActions": {
-        "click": {
-          "duration": 100,
-          "params": { "intensity": 1.5, "shaderEffect": "invertTemporary" }
-        }
-      },
-      "ecosystemReactions": [
-        {
-          "selector": "[data-vib3-style]",
-          "excludeTarget": false,
-          "actions": {
-            "click": {
-              "duration": 2000,
-              "params": { "colorInvert": true, "speedMultiplier": -1 },
-              "temporary": true,
-              "resetDelay": 2000
-            }
-          }
-        }
-      ]
-    },
-    "button-press": {
-      "description": "Standard button press and release effect.",
-      "events": ["mousedown", "mouseup", "mouseleave"],
-      "targetActions": {
-        "mousedown": {
-          "duration": 100,
-          "params": { "scale": 0.95, "intensity": 0.9 }
+            "revert": "mouseout"
         },
-        "mouseup": {
-          "duration": 200,
-          "resetToBase": true
+        "category-link-pulse": {
+            "trigger": "mouseover", 
+            "target": "self",
+            "animation": {
+                "duration": 500,
+                "easing": "ease-in-out",
+                "properties": {
+                    "intensity": 0.4
+                }
+            },
+            "revert": "mouseout"
         },
-        "mouseleave": {
-          "duration": 200,
-          "resetToBase": true
+        "featured-article-focus": {
+            "trigger": "mouseover",
+            "target": "self", 
+            "animation": {
+                "duration": 400,
+                "easing": "ease-out",
+                "properties": {
+                    "noiseIntensity": 0.1,
+                    "noiseSpeed": 0.25
+                }
+            },
+            "revert": "mouseout"
         }
-      },
-      "ecosystemReactions": []
     }
-  }
 }
