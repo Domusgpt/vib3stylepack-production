@@ -152,6 +152,68 @@ body.page-fade-out {
     opacity: 0 !important; /* Important to override initial or fade-in state */
 }
 
+/* --- Article Card Entry Animation --- */
+/* Apply .card-entry to article cards when they are added to the DOM,
+   or use a staggered animation approach with JS if preferred.
+   For now, a simple class to be added by JS after elements are in DOM.
+*/
+@keyframes card-entry-anim {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.article-card-placeholder.animate-entry { /* JS will add .animate-entry after appending */
+    animation: card-entry-anim 0.5s 0.1s ease-out forwards; /* 0.1s delay */
+    opacity: 0; /* Start hidden before animation */
+}
+
+
+/* --- Enhanced Glass Panel Hover Shimmer --- */
+/* This can be applied to .glass-panel elements for a CSS-driven shimmer on hover,
+   complementing any VIB3 internal effects.
+*/
+.glass-panel-shimmer { /* Add this class to glass panels you want this effect on */
+    position: relative; /* Needed for the pseudo-element */
+    overflow: hidden; /* Keep shimmer contained */
+}
+
+.glass-panel-shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%; /* Start off-screen to the left */
+    width: 75%; /* Width of the shimmer highlight */
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(var(--color-white-rgb), 0.08) 50%, /* Very subtle white shimmer */
+        transparent 100%
+    );
+    transform: skewX(-25deg); /* Angled shimmer */
+    transition: left 0.5s cubic-bezier(0.23, 1, 0.32, 1); /* Smooth transition */
+    z-index: 0; /* Behind the panel's direct content, but above its VIB3 canvas if VIB3 canvas z-index is < 0 */
+                /* This might need careful z-index management with VIB3 canvas */
+}
+
+.glass-panel-shimmer:hover::before {
+    left: 125%; /* Move across and off-screen to the right */
+}
+
+/* Adjusting z-index for content within shimmer panels if needed */
+/* This rule from style.css ([data-vib3-style] > *) should already handle it:
+   .glass-panel-shimmer > * {
+       position: relative;
+       z-index: 1;
+   }
+*/
+
 /* --- Page Transition Effects --- */
 body {
     opacity: 0; /* Start pages transparent */

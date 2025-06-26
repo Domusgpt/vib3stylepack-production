@@ -53,13 +53,22 @@ export function displayArticles(articles, containerId) {
             });
         }
         containerElement.appendChild(card);
+        // Trigger entry animation - slight delay to ensure it's in DOM and transition can be seen
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                card.classList.add('animate-entry');
+            }, 50); // Small delay
+        });
     });
 
-    // Important: Notify VIB3StyleSystem to process newly added elements
-    // This is still conceptual until VIB3StyleSystem has such a method.
-    if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.scanNewElements) {
-        window.Vib3codeApp.vib3System.scanNewElements(containerElement);
-        console.log("Hinted VIB3StyleSystem to scan new article cards.");
+    // Notify VIB3StyleSystem to process newly added elements
+    if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.scanAndInitializeNewElements) {
+        // Call after a short delay to ensure all cards are in DOM and animations started
+        const scanDelay = 500; // ms, allow time for card entry animations and page fade if any
+        setTimeout(() => {
+            window.Vib3codeApp.vib3System.scanAndInitializeNewElements(containerElement);
+            // console.log("VIB3StyleSystem scanned new article cards in container:", containerElement.id);
+        }, scanDelay);
     } else {
         console.warn("VIB3StyleSystem re-scan method not available for new article cards. VIB3 effects might not apply to new cards.");
     }

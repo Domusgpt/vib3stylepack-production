@@ -69,6 +69,52 @@ export class VIB34D {
         `;
     }
 
+    // --- Shaders for glassPanelEffect ---
+    getGlassPanelVertexShader() { // Can be the same as holoBackground's VS
+        return `
+            attribute vec4 a_position;
+            void main() {
+                gl_Position = a_position;
+            }
+        `;
+    }
+
+    getGlassPanelFragmentShader() {
+        return `
+            precision mediump float;
+            uniform vec2 u_resolution;
+            uniform float u_time;
+            uniform float u_noiseScale; // e.g., 20.0
+            uniform float u_noiseSpeed; // e.g., 0.1
+            uniform float u_noiseIntensity; // e.g., 0.03 (very subtle)
+            // Glass panel base color is transparent, this shader adds subtle internal noise.
+
+            float random(vec2 st) {
+                return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+            }
+
+            float valueNoise(vec2 st) {
+                vec2 i = floor(st);
+                vec2 f = fract(st);
+                float a = random(i);
+                float b = random(i + vec2(1.0, 0.0));
+                float c = random(i + vec2(0.0, 1.0));
+                float d = random(i + vec2(1.0, 1.0));
+                vec2 u = f * f * (3.0 - 2.0 * f);
+                return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+            }
+
+            void main() {
+                vec2 st = gl_FragCoord.xy / u_resolution.xy;
+                float noiseVal = valueNoise(st * u_noiseScale + u_time * u_noiseSpeed);
+
+                // Output a very subtle, slightly varying alpha based on noise
+                // This will appear as a faint texture on top of the CSS glass panel background
+                gl_FragColor = vec4(1.0, 1.0, 1.0, noiseVal * u_noiseIntensity); // White noise, very low alpha
+            }
+        `;
+    }
+
     getHoloBackgroundFragmentShader() {
         return `
             precision mediump float;
@@ -125,32 +171,46 @@ export class VIB34D {
         }
         this.gl = gl;
 
-        // Use a 'shader' property in the preset to determine if it's a WebGL preset
-        if (this.currentParams.shader !== "holoBackground") {
-            console.log(`VIB34D ${this.id}: Preset does not specify 'holoBackground' shader. Defaulting to 2D or none.`);
+        let vsSource, fsSource;
+        let specificUniformKeys = []; // To store keys for shader-specific uniforms
+
+        if (this.currentParams.shader === "holoBackground") {
+            vsSource = this.getHoloBackgroundVertexShader();
+            fsSource = this.getHoloBackgroundFragmentShader();
+            specificUniformKeys = ["baseColor", "noiseAmount", "intensity"];
+            console.log(`VIB34D ${this.id}: Initializing WebGL for holoBackground shader.`);
+        } else if (this.currentParams.shader === "glassPanelEffect") {
+            vsSource = this.getGlassPanelVertexShader();
+            fsSource = this.getGlassPanelFragmentShader();
+            specificUniformKeys = ["noiseScale", "noiseSpeed", "noiseIntensity"];
+            console.log(`VIB34D ${this.id}: Initializing WebGL for glassPanelEffect shader.`);
+        } else {
+            console.log(`VIB34D ${this.id}: No specific WebGL shader defined in preset or preset shader not recognized. Defaulting to 2D/none.`);
             this.gl = null;
             return false;
         }
-        // Add shader name to currentParams if successfully initializing for it
-        // this.currentParams.activeShader = "holoBackground"; // Or just rely on isWebGLActive
-
-        const vsSource = this.getHoloBackgroundVertexShader();
-        const fsSource = this.getHoloBackgroundFragmentShader();
 
         const vertexShader = this.createShader(gl.VERTEX_SHADER, vsSource);
         const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, fsSource);
-        if (!vertexShader || !fragmentShader) return false;
+        if (!vertexShader || !fragmentShader) {
+            this.gl = null; return false; // Ensure gl is nulled if shader compilation fails
+        }
 
         this.shaderProgram = this.createProgram(vertexShader, fragmentShader);
-        if (!this.shaderProgram) return false;
+        if (!this.shaderProgram) {
+            this.gl = null; return false;
+        }
 
+        // Common uniforms
         this.uniformLocations = {
             resolution: gl.getUniformLocation(this.shaderProgram, "u_resolution"),
             time: gl.getUniformLocation(this.shaderProgram, "u_time"),
-            baseColor: gl.getUniformLocation(this.shaderProgram, "u_baseColor"),
-            noiseAmount: gl.getUniformLocation(this.shaderProgram, "u_noiseAmount"),
-            intensity: gl.getUniformLocation(this.shaderProgram, "u_intensity"),
         };
+        // Shader-specific uniforms
+        specificUniformKeys.forEach(key => {
+            const uniformName = "u_" + key.charAt(0).toLowerCase() + key.slice(1); // e.g. baseColor -> u_baseColor
+            this.uniformLocations[key] = gl.getUniformLocation(this.shaderProgram, uniformName);
+        });
 
         // Buffer for a screen-filling quad
         const positions = [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1];
@@ -308,9 +368,17 @@ export class VIB34D {
 
             this.gl.uniform2f(this.uniformLocations.resolution, this.canvas.width, this.canvas.height);
             this.gl.uniform1f(this.uniformLocations.time, timeParam);
-            this.gl.uniform4fv(this.uniformLocations.baseColor, this.currentParams.color || [0.02, 0.02, 0.05, 1.0]);
-            this.gl.uniform1f(this.uniformLocations.noiseAmount, this.currentParams.noiseAmount || 0.07);
-            this.gl.uniform1f(this.uniformLocations.intensity, this.currentParams.intensity || 0.25);
+
+            if (this.currentParams.shader === "holoBackground") {
+                this.gl.uniform4fv(this.uniformLocations.baseColor, this.currentParams.color || [0.02, 0.02, 0.05, 1.0]);
+                this.gl.uniform1f(this.uniformLocations.noiseAmount, this.currentParams.noiseAmount || 0.07);
+                this.gl.uniform1f(this.uniformLocations.intensity, this.currentParams.intensity || 0.25);
+            } else if (this.currentParams.shader === "glassPanelEffect") {
+                this.gl.uniform1f(this.uniformLocations.noiseScale, this.currentParams.noiseScale || 20.0);
+                this.gl.uniform1f(this.uniformLocations.noiseSpeed, this.currentParams.noiseSpeed || 0.1);
+                this.gl.uniform1f(this.uniformLocations.noiseIntensity, this.currentParams.noiseIntensity || 0.03);
+            }
+            // Add other shader uniform updates here if more shaders are introduced
 
             this.gl.drawArrays(this.gl.TRIANGLES, 0, 6); // Draw the quad (6 vertices for 2 triangles)
 

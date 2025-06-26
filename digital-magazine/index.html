@@ -45,6 +45,16 @@
                     <!-- Category filter buttons will be populated here by JS -->
                 </div>
 
+                <div id="sort-controls-container" class="sort-controls">
+                    <label for="sort-by-select">Sort by:</label>
+                    <select id="sort-by-select" class="sort-select">
+                        <option value="date-desc">Date (Newest)</option>
+                        <option value="date-asc">Date (Oldest)</option>
+                        <option value="title-asc">Title (A-Z)</option>
+                        <option value="title-desc">Title (Z-A)</option>
+                    </select>
+                </div>
+
                 <div id="latest-articles-grid" class="article-grid-container">
                     <!-- Article cards will be loaded here by JS -->
                     <div class="article-card-placeholder" data-vib3-style="glass-panel-primary" data-vib3-interaction-preset="glass-panel-hover"><p>Loading Article...</p></div>

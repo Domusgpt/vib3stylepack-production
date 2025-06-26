@@ -92,9 +92,10 @@ export class InteractionCoordinator {
         if (!visualizerInstance || !actionDetails) return;
 
         // Clear any existing temporary effect timeout for this visualizer and effectId
-        if (this.activeTimeouts.has(effectId)) {
-            clearTimeout(this.activeTimeouts.get(effectId));
-            this.activeTimeouts.delete(effectId);
+        const fullEffectId = `${visualizerInstance.id}-${effectId}`; // Make effectId more unique per instance
+        if (this.activeTimeouts.has(fullEffectId)) {
+            clearTimeout(this.activeTimeouts.get(fullEffectId));
+            this.activeTimeouts.delete(fullEffectId);
         }
 
         if (actionDetails.resetToBase) {
@@ -104,11 +105,33 @@ export class InteractionCoordinator {
 
             if (actionDetails.temporary && actionDetails.resetDelay) {
                 const timeoutId = setTimeout(() => {
-                    visualizerInstance.resetToBaseState(actionDetails.duration || 300); // Use action's duration or a default for reset
-                    this.activeTimeouts.delete(effectId);
+                    visualizerInstance.resetToBaseState(actionDetails.duration || 300);
+                    this.activeTimeouts.delete(fullEffectId);
                 }, actionDetails.resetDelay);
-                this.activeTimeouts.set(effectId, timeoutId);
+                this.activeTimeouts.set(fullEffectId, timeoutId);
             }
+        }
+    }
+
+    /**
+     * Binds interaction preset events to a single dynamically added element.
+     * @param {HTMLElement} element - The DOM element to bind interactions to.
+     */
+    bindInteractionsToElement(element) {
+        if (!element.dataset.vib3InteractionPreset) return;
+
+        const presetName = element.dataset.vib3InteractionPreset;
+        const preset = this.presetManager.getInteractionPreset(presetName);
+
+        if (preset && preset.events && Array.isArray(preset.events)) {
+            preset.events.forEach(eventType => {
+                const handler = (event) => this.handleInteraction(event, presetName, preset, element);
+                element.addEventListener(eventType, handler);
+                // TODO: Store these listeners if we need to unbind them later (e.g., element removal)
+            });
+            console.log(`InteractionCoordinator: Dynamically bound preset "${presetName}" to element:`, element);
+        } else {
+            console.warn(`InteractionCoordinator: Preset "${presetName}" not found or misconfigured for dynamically added element:`, element);
         }
     }
 }

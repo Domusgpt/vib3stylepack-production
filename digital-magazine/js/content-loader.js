@@ -185,6 +185,10 @@ export async function loadLatestArticles(limit = 3) {
         // For now, this is beyond "basic" content loader.
         // A more robust solution would involve having VIB3StyleSystem expose a method
         // to initialize new elements, e.g., window.Vib3codeApp.vib3System.initializeElements(articlesGrid.childNodes);
+
+    // After adding all cards, scan the container for new VIB3 elements
+    if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.scanAndInitializeNewElements) {
+        window.Vib3codeApp.vib3System.scanAndInitializeNewElements(articlesGrid);
     }
 }
 
@@ -306,6 +310,11 @@ export async function loadFullArticle(articleSlug) {
         }
         console.log(`Full article "${article.title}" loaded and rendered.`);
 
+        // After adding all blocks, scan the article body for new VIB3 elements (like embeds)
+        if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.scanAndInitializeNewElements && articleBodyEl) {
+            window.Vib3codeApp.vib3System.scanAndInitializeNewElements(articleBodyEl);
+        }
+
     } catch (error) {
         console.error(`Error loading full article "${articleSlug}":`, error);
         const articleBodyEl = document.getElementById('article-body');
@@ -401,7 +410,20 @@ export async function loadCategoryPage(categoryId) {
                     if(titleElement) titleElement.dataset.text = titleText;
 
                     articlesGridEl.appendChild(card);
+                    // Trigger entry animation
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            card.classList.add('animate-entry');
+                        }, 50);
+                    });
                 });
+                 // Notify VIB3StyleSystem after all cards in this grid are appended
+                if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.scanAndInitializeNewElements) {
+                    const scanDelay = 500;
+                    setTimeout(() => {
+                        window.Vib3codeApp.vib3System.scanAndInitializeNewElements(articlesGridEl);
+                    }, scanDelay);
+                }
             } else {
                 articlesGridEl.innerHTML = '<p>No articles found in this category yet.</p>';
             }
