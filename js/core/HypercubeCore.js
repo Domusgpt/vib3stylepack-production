@@ -479,14 +479,9 @@ if (typeof VIB34DChromaticEngine === 'undefined') { global.VIB34DChromaticEngine
 if (typeof VIB3HomeMasterBridge === 'undefined') { global.VIB3HomeMasterBridge = class { constructor(hcCore){} navigateToFace(faceId){} update(deltaTime){} }; }
 if (typeof PresetManager === 'undefined') { global.PresetManager = class { constructor(core, presets){} loadUserPresetsFromLocalStorage(){} getAllPresetNames(){return [];} loadPresetByName(name){} saveCurrentSettingsAsUserPreset(name){} exportUserPresetsToString(){} importUserPresetsFromString(json){} }; }
 if (typeof VIB3_PRESETS_EXPANDED === 'undefined') { global.VIB3_PRESETS_EXPANDED = []; }
-if (typeof mat4 === 'undefined') {
-    global.mat4 = {
-        create: () => [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], identity: (out) => { out.fill(0); out[0]=out[5]=out[10]=out[15]=1; return out; },
-        translate: (out,a,v)=>{return out;}, multiply:(out,a,b)=>{return out;},
-        fromValues:function(m00,m01,m02,m03,m10,m11,m12,m13,m20,m21,m22,m23,m30,m31,m32,m33){var out=new Array(16);out[0]=m00;out[1]=m01;out[2]=m02;out[3]=m03;out[4]=m10;out[5]=m11;out[6]=m12;out[7]=m13;out[8]=m20;out[9]=m21;out[10]=m22;out[11]=m23;out[12]=m30;out[13]=m31;out[14]=m32;out[15]=m33;return out;},
-        invert:function(out,a){Object.assign(out,a); /* mock */ return out;},transpose:function(out,a){Object.assign(out,a); /* mock */ return out;}
-    };
-}
+// The mat4 mock previously here has been removed.
+// Ensure gl-matrix.js is loaded via <script> tag in HTML before this file.
+// Then, access mat4 via `glMatrix.mat4` (or destructure: `const { mat4 } = glMatrix;`).
 
 /* HTML and script loader comments remain the same */
 /* ... */

@@ -182,22 +182,17 @@ class StereographicProjection extends BaseProjection {
     }
 }
 
-// Mock BaseProjection and mat4 if not available
+// Mock BaseProjection if not available
 if (typeof BaseProjection === 'undefined') {
+    const mockMat4Create = (typeof mat4 !== 'undefined' && mat4.create) ? mat4.create : () => new Array(16).fill(0).map((_, i) => (i % 5 === 0 ? 1 : 0));
     global.BaseProjection = class {
-        constructor() { this.projectionMatrix = mat4.create(); }
+        constructor() { this.projectionMatrix = mockMat4Create(); }
         update(params) { throw new Error("Update method must be implemented."); }
         getProjectionMatrix() { return this.projectionMatrix; }
         project(target) { throw new Error("Project method must be implemented."); }
     };
 }
-if (typeof mat4 === 'undefined') {
-    global.mat4 = {
-        create: () => new Array(16).fill(0).map((_, i) => (i % 5 === 0 ? 1 : 0)), // Identity
-        perspective: (out, fovy, aspect, near, far) => { /* mock */ },
-        lookAt: (out, eye, center, up) => { /* mock */ },
-    };
-}
+// Removed mat4 mock. Assumes gl-matrix.js is loaded globally.
 
 // Example Usage (conceptual):
 /*
