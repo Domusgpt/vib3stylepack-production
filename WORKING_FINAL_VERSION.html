@@ -297,6 +297,7 @@
                 
                 if (!this.gl) {
                     console.error(`WebGL not supported for ${canvasId}`);
+                    this.renderDisabled = true;
                     return;
                 }
                 
@@ -624,6 +625,11 @@
                 
                 const time = Date.now() - this.startTime;
                 
+                // Skip rendering if WebGL is disabled or not initialized
+                if (this.renderDisabled || !this.gl || !this.program) {
+                    return;
+                }
+                
                 // Set uniforms
                 this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
                 this.gl.uniform1f(this.uniforms.time, time);
@@ -633,10 +639,20 @@
                 this.gl.uniform1f(this.uniforms.speed, interpolated.speed);
                 this.gl.uniform3fv(this.uniforms.color, new Float32Array(interpolated.color));
                 this.gl.uniform1f(this.uniforms.dimension, interpolated.dimension);
-                this.gl.uniform1f(this.uniforms.intensity, this.instanceParams.intensity + this.interactionIntensity * 0.5);
-                this.gl.uniform1f(this.uniforms.instanceDensity, this.instanceParams.densityMult);
-                this.gl.uniform1f(this.uniforms.instanceSpeed, this.instanceParams.speedMult);
-                this.gl.uniform1f(this.uniforms.colorShift, this.instanceParams.colorShift);
+                
+                // Safety check for instanceParams
+                if (this.instanceParams) {
+                    this.gl.uniform1f(this.uniforms.intensity, this.instanceParams.intensity + this.interactionIntensity * 0.5);
+                    this.gl.uniform1f(this.uniforms.instanceDensity, this.instanceParams.densityMult);
+                    this.gl.uniform1f(this.uniforms.instanceSpeed, this.instanceParams.speedMult);
+                    this.gl.uniform1f(this.uniforms.colorShift, this.instanceParams.colorShift);
+                } else {
+                    // Default values if instanceParams is not initialized
+                    this.gl.uniform1f(this.uniforms.intensity, 0.5 + this.interactionIntensity * 0.5);
+                    this.gl.uniform1f(this.uniforms.instanceDensity, 1.0);
+                    this.gl.uniform1f(this.uniforms.instanceSpeed, 1.0);
+                    this.gl.uniform1f(this.uniforms.colorShift, 0.0);
+                }
                 
                 this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
             }
