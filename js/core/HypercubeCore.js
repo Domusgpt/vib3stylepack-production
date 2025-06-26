@@ -375,6 +375,42 @@ class HypercubeCore {
     }
     // End Dashboard Support Methods
 
+    getCoreParametersSchema() {
+        // Provides metadata for dashboard UI generation.
+        // 'group' suggests a dashboard section.
+        // 'relevantToGeometries' (optional): array of geometry constructor names (lowercase, no "geometry" suffix)
+        // if this parameter is primarily specific to them. Dashboard can use this to show/hide controls.
+        return [
+            // Global Setup
+            { name: 'u_dimension', label: '4D Dimension', type: 'slider', min: 3.0, max: 5.0, step: 0.01, defaultValue: 4.0, group: 'Global Setup' },
+
+            // Appearance & Structure
+            { name: 'u_gridDensity', label: 'Grid Density / Divisions', type: 'slider', min: 1.0, max: 30.0, step: 0.5, defaultValue: 10.0, group: 'Appearance & Structure',
+              description: "Controls divisions for most geometries. For Fractal, maps to iterations. For Crystal, maps to lattice points per axis." },
+            { name: 'u_lineThickness', label: 'Line/Point Size', type: 'slider', min: 0.001, max: 0.1, step: 0.001, defaultValue: 0.01, group: 'Appearance & Structure' },
+            { name: 'u_shellWidth', label: 'Shell Width', type: 'slider', min: 0.001, max: 0.25, step: 0.001, defaultValue: 0.05, group: 'Appearance & Structure', relevantToGeometries: ['hypersphere'] },
+            { name: 'u_tetraThickness', label: 'Tetra Plane Thickness', type: 'slider', min: 0.001, max: 0.15, step: 0.001, defaultValue: 0.02, group: 'Appearance & Structure', relevantToGeometries: ['hypertetrahedron'] },
+
+            // Animation & Morphing
+            { name: 'u_rotationSpeed', label: 'Rotation Speed', type: 'slider', min: 0.0, max: 3.0, step: 0.01, defaultValue: 0.5, group: 'Animation & Morphing' },
+            { name: 'u_morphFactor', label: 'Morph Factor', type: 'slider', min: 0.0, max: 1.5, step: 0.01, defaultValue: 0.0, group: 'Animation & Morphing', isAdvanced: true },
+
+            // Visual Effects
+            { name: 'u_colorShift', label: 'Color Shift (Hue)', type: 'slider', min: -1.0, max: 1.0, step: 0.01, defaultValue: 0.0, group: 'Visual Effects' },
+            { name: 'u_patternIntensity', label: 'Pattern Intensity', type: 'slider', min: 0.1, max: 3.0, step: 0.01, defaultValue: 1.0, group: 'Visual Effects', isAdvanced: true },
+            { name: 'u_universeModifier', label: 'Universe Modifier (Scale)', type: 'slider', min: 0.3, max: 2.5, step: 0.01, defaultValue: 1.0, group: 'Visual Effects', isAdvanced: true },
+            { name: 'u_glitchIntensity', label: 'Glitch Intensity', type: 'slider', min: 0.0, max: 0.15, step: 0.001, defaultValue: 0.0, group: 'Visual Effects', isAdvanced: true },
+
+            // Note: Parameters like fov, near, far for projections could also be added here if they are to be user-controllable
+            // For example:
+            // { name: 'fov', label: 'Field of View (Persp)', type: 'slider', min: 0.1, max: Math.PI * 0.9, step: 0.01, defaultValue: Math.PI / 4, group: 'Projection', relevantToProjections: ['perspective', 'orthographic_blend_perspective'] },
+
+            // Audio reactivity base levels (usually these are outputs, but base levels could be set)
+            // { name: 'u_audioBass', label: 'Audio Bass Base', type: 'slider', min: 0.0, max: 1.0, step: 0.01, defaultValue: 0.0, group: 'Interaction Reactivity' },
+            // { name: 'u_audioMid', label: 'Audio Mid Base', type: 'slider', min: 0.0, max: 1.0, step: 0.01, defaultValue: 0.0, group: 'Interaction Reactivity' },
+            // { name: 'u_audioHigh', label: 'Audio High Base', type: 'slider', min: 0.0, max: 1.0, step: 0.01, defaultValue: 0.0, group: 'Interaction Reactivity' },
+        ];
+    }
 
     /**
      * Updates a specific base parameter or a set of base parameters.
@@ -564,33 +600,57 @@ class HypercubeCore {
             // This part will be more fleshed out when specific geometries are implemented.
             // For now, let's assume a generic draw call if the geometry provides necessary info.
 
-            // A. Get attribute locations (should be done once after program linking, or cached by ShaderManager)
-            const positionAttribLocation = this.shaderManager.getAttributeLocation('a_position'); // Example attribute name
-            // const normalAttribLocation = this.shaderManager.getAttributeLocation('a_normal');
-            // const uvAttribLocation = this.shaderManager.getAttributeLocation('a_texCoord');
+            // A. Get attribute locations
+            const positionAttribLocation = this.shaderManager.getAttributeLocation('a_position4D');
+            // const uvAttribLocation = this.shaderManager.getAttributeLocation('a_uv'); // If using UVs from geometry
 
-            if (positionAttribLocation !== -1 && typeof this.currentGeometry.getVertexPositionsBuffer === 'function') {
-                 // B. Bind Buffer for vertex positions
-                // const vbo = this.currentGeometry.getVertexPositionsBuffer(this.gl); // Geometry needs to manage its VBOs
-                // gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-                // gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0); // numComponents, type, normalize, stride, offset
-                // gl.enableVertexAttribArray(positionAttribLocation);
+            if (positionAttribLocation !== -1 && this.currentGeometry.getVertexPositionsBuffer) {
+                // B. Bind Vertex Buffer (VBO)
+                const vbo = this.currentGeometry.getVertexPositionsBuffer(this.gl);
+                gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+                gl.vertexAttribPointer(
+                    positionAttribLocation, // attributeLocation
+                    4,                      // numComponents (x,y,z,w)
+                    gl.FLOAT,               // type
+                    false,                  // normalize
+                    0,                      // stride
+                    0                       // offset
+                );
+                gl.enableVertexAttribArray(positionAttribLocation);
 
-                // C. Bind Index Buffer (if using indexed drawing)
-                // if (typeof this.currentGeometry.getIndexBuffer === 'function') {
-                //    const ibo = this.currentGeometry.getIndexBuffer(this.gl);
-                //    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-                //    gl.drawElements(gl.TRIANGLES, this.currentGeometry.getIndices().length, gl.UNSIGNED_SHORT, 0);
-                // } else {
-                //    gl.drawArrays(gl.TRIANGLES, 0, this.currentGeometry.getVertices().length / 3); // Assuming 3 components per vertex
+                // Optional: Setup UVs if current geometry provides them
+                // if (uvAttribLocation !== -1 && typeof this.currentGeometry.getUVBuffer === 'function') {
+                //     const uvBuffer = this.currentGeometry.getUVBuffer(this.gl);
+                //     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+                //     gl.vertexAttribPointer(uvAttribLocation, 2, gl.FLOAT, false, 0, 0); // Assuming 2D UVs
+                //     gl.enableVertexAttribArray(uvAttribLocation);
                 // }
+
+                // C. Draw Logic
+                if (typeof this.currentGeometry.getEdgeIndices === 'function' && this.currentGeometry.getEdgeIndices().length > 0) {
+                    // Render as lines if edge indices are available (e.g., Hypercube, Hypertetrahedron, Crystal)
+                    const ibo = this.currentGeometry.getIndexBuffer(this.gl); // getIndexBuffer should provide edge indices
+                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+                    gl.drawElements(gl.LINES, this.currentGeometry.getEdgeIndices().length, gl.UNSIGNED_SHORT, 0);
+                } else if (this.currentGeometry.constructor.name === "FractalGeometry" || this.currentGeometry.constructor.name === "WaveGeometry" ) {
+                    // Render FractalGeometry or WaveGeometry as points
+                    // WaveGeometry's current indices are for cells, point rendering might be better for some wave viz
+                    const numPoints = this.currentGeometry.getVertices().length / 4; // 4 components per vertex
+                    gl.drawArrays(gl.POINTS, 0, numPoints);
+                } else if (typeof this.currentGeometry.getIndices === 'function' && this.currentGeometry.getIndices().length > 0) {
+                    // Fallback to triangles if general indices are available (e.g., Hypersphere, Torus, KleinBottle)
+                    const ibo = this.currentGeometry.getIndexBuffer(this.gl);
+                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+                    gl.drawElements(gl.TRIANGLES, this.currentGeometry.getIndices().length, gl.UNSIGNED_SHORT, 0);
+                } else {
+                    // Fallback for geometries without specific indices (draw as points)
+                    const numVertices = this.currentGeometry.getVertices().length / 4;
+                    gl.drawArrays(gl.POINTS, 0, numVertices);
+                }
             } else {
-                // Fallback or placeholder draw if geometry/attributes not fully set up
-                // For example, draw a single point or a small triangle if nothing else is ready
-                // This is useful for verifying the pipeline is running.
-                 if (this.isPlaceholderRenderNeeded()) {
+                if (this.isPlaceholderRenderNeeded()) {
                     this.drawPlaceholder();
-                 }
+                }
             }
         } else {
             if (this.isPlaceholderRenderNeeded()) {
@@ -607,24 +667,24 @@ class HypercubeCore {
     }
 
     drawPlaceholder() {
-        // Simple placeholder: draws a small triangle if no geometry is active
-        // This helps verify the render loop and shaders are working at a basic level.
         const gl = this.gl;
-        const positionAttribLocation = this.shaderManager.getAttributeLocation('a_position');
+        const positionAttribLocation = this.shaderManager.getAttributeLocation('a_position4D');
         if (positionAttribLocation === -1) return;
 
+        // Draw a few points as placeholder
         const placeholderVertices = new Float32Array([
-             0.0,  0.1,  0.0,
-            -0.1, -0.1,  0.0,
-             0.1, -0.1,  0.0
+             0.0,  0.1,  0.0, 1.0, // x,y,z,w
+            -0.1, -0.1,  0.0, 1.0,
+             0.1, -0.1,  0.0, 1.0,
+             0.0,  0.0,  0.1, 1.0
         ]);
         const placeholderBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, placeholderBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, placeholderVertices, gl.STATIC_DRAW);
-        gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(positionAttribLocation, 4, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(positionAttribLocation);
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
-        gl.deleteBuffer(placeholderBuffer); // Clean up
+        gl.drawArrays(gl.POINTS, 0, 4); // Draw 4 points
+        gl.deleteBuffer(placeholderBuffer);
     }
 
 
@@ -682,26 +742,59 @@ class HypercubeCore {
         return `
             precision mediump float;
 
-            attribute vec3 a_position; // Vertex positions from buffer
+            attribute vec4 a_position4D; // Input: 4D vertex position (x,y,z,w)
 
-            // Uniforms provided by HypercubeCore/ShaderManager
-            uniform mat4 u_modelViewMatrix;    // Transforms model to view space
-            uniform mat4 u_projectionMatrix; // Projects view space to clip space
+            // --- Standard 3D Matrices (applied AFTER 4D->3D projection) ---
+            uniform mat4 u_modelViewMatrix;  // 3D View Matrix (camera position in 3D space)
+            uniform mat4 u_projectionMatrix; // 3D Projection Matrix (perspective or orthographic)
+
+            // --- 4D Visualization Uniforms ---
             uniform float u_time;
             uniform vec2 u_resolution;
-            uniform float u_dimension; // Example of using a custom uniform
+            uniform float u_dimension;       // Controls the 4D projection (e.g., w-depth, focal length)
+            uniform float u_morphFactor;     // Can be used to alter projection or positions
+            uniform float u_lineThickness;   // For point size
 
-            // Varyings to pass data to fragment shader
-            varying vec3 v_worldPosition;
-            varying vec2 v_uv; // If you had UVs
+            // --- Varyings to Fragment Shader ---
+            varying vec4 v_position4D_world; // Pass original 4D position (or world-transformed 4D)
+            varying vec3 v_position3D_projected; // Pass the intermediate 3D position
+            varying float v_w_component; // Pass the original w component for effects
 
             void main() {
-                // Basic transformation
-                gl_Position = u_projectionMatrix * u_modelViewMatrix * vec4(a_position, 1.0);
+                vec4 P = a_position4D;
 
-                // Pass some data to fragment shader
-                v_worldPosition = (u_modelViewMatrix * vec4(a_position, 1.0)).xyz;
-                // v_uv = a_uv; // If using texture coordinates
+                // Optional: Apply morphFactor to P.w or P.xyz for dynamic effects before projection
+                // P.w += u_morphFactor * sin(P.x * P.y + u_time * 0.1); // Example morph
+
+                v_position4D_world = P;
+                v_w_component = P.w;
+
+                // --- 4D to 3D Projection ---
+                float w_divisor = (P.w / u_dimension) + 1.0;
+
+                if (abs(w_divisor) < 0.0001) {
+                    w_divisor = sign(w_divisor) * 0.0001;
+                }
+                // To prevent points "behind" the view from flipping, you might clamp or discard.
+                // For instance, if w_divisor becomes negative, points are behind the 4D "camera".
+                // if (w_divisor <= 0.0) w_divisor = 0.0001; // Or handle differently (e.g. large value for gl_Position.w)
+
+
+                vec3 pos3D = P.xyz / w_divisor;
+                v_position3D_projected = pos3D;
+
+                gl_Position = u_projectionMatrix * u_modelViewMatrix * vec4(pos3D, 1.0);
+
+                // Set point size - make it smaller for points "further away"
+                // and use u_lineThickness as a base size multiplier.
+                float pointDistance = length(gl_Position.xyz);
+                float basePointSize = u_lineThickness * 500.0;
+                // Adjust 500.0 to scale u_lineThickness (0.002-0.1) to pixel sizes (1-50)
+                // The perspective effect on point size is naturally handled by gl_Position.w
+                // So, a simpler gl_PointSize might be:
+                gl_PointSize = clamp(basePointSize, 1.0, 50.0);
+                 // For distance-based attenuation:
+                 // gl_PointSize = clamp(basePointSize / (1.0 + pointDistance * 0.1), 1.0, 50.0);
             }
         `;
     }
@@ -714,40 +807,76 @@ class HypercubeCore {
         return `
             precision mediump float;
 
-            // Uniforms (must match those set in HypercubeCore and defined in VS if needed there)
+            // --- Uniforms ---
             uniform float u_time;
             uniform vec2 u_resolution;
-            uniform vec2 u_mouse; // Normalized mouse coords [0-1]
+            uniform vec2 u_mouse;
             uniform float u_dimension;
-            uniform float u_lineThickness;
+            // uniform float u_lineThickness; // Not directly used in FS for this basic version if VS handles point size
             uniform float u_patternIntensity;
             uniform float u_colorShift;
-            // ... other uniforms ...
+            uniform float u_morphFactor;
+            uniform float u_glitchIntensity;
+            uniform float u_gridDensity; // Added for potential use
 
-            // Varyings received from vertex shader
-            varying vec3 v_worldPosition;
-            varying vec2 v_uv;
+            // --- Varyings from Vertex Shader ---
+            varying vec4 v_position4D_world;
+            varying vec3 v_position3D_projected;
+            varying float v_w_component;
+
+            // Helper function for HSL to RGB conversion
+            vec3 hsl2rgb(vec3 c) {
+                vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0);
+                return c.z + c.y * (rgb-0.5)*(1.0-abs(2.0*c.z-1.0));
+            }
 
             void main() {
-                vec2 st = gl_FragCoord.xy / u_resolution.xy; // Screen space UV [0-1]
-                vec3 color = vec3(0.0);
+                vec3 finalColor;
 
-                // Example: Simple color based on screen position and time
-                color.r = abs(sin(st.x * 3.14 + u_time * 0.5 + u_colorShift * 3.14));
-                color.g = abs(cos(st.y * 3.14 + u_time * 0.3 + u_colorShift * 2.0 * 3.14));
-                color.b = abs(sin(u_dimension * 0.1 + u_time * 0.2 + u_mouse.x * 3.14));
+                // 1. Base Color from 4D position ("4D Rainbow")
+                vec4 normPos4D = normalize(v_position4D_world);
+                // If geometry is centered and has typical size of ~1, normPos4D will be direction.
+                // Otherwise, consider (v_position4D_world / expectedMaxExtent)
 
-                // Apply pattern intensity (simple brightness/contrast)
-                color = pow(color, vec3(1.0 / u_patternIntensity));
+                float hue = mod((normPos4D.x - normPos4D.y + normPos4D.z - normPos4D.w) * 0.15 /*sens*/ + u_time * 0.03, 1.0);
+                hue = mod(hue + u_colorShift, 1.0); // Apply u_colorShift to hue (0-1 range)
 
-                // Fake line thickness effect for placeholder
-                // float distToCenter = length(st - 0.5);
-                // if (distToCenter > 0.5 - u_lineThickness * 10.0 && distToCenter < 0.5) {
-                //     color = vec3(1.0); // White lines
-                // }
+                float saturation = clamp(0.7 + normPos4D.w * 0.3, 0.5, 1.0);
+
+                // 2. Depth Cueing using v_w_component
+                float w_depth_factor = clamp(1.0 - abs(v_w_component) / (u_dimension * 1.5), 0.2, 1.0);
+
+                float luminance = clamp(0.25 + w_depth_factor * 0.6 + u_morphFactor * 0.05, 0.15, 0.85);
+                luminance = pow(luminance, 1.0 / clamp(u_patternIntensity, 0.1, 3.0));
+
+                finalColor = hsl2rgb(vec3(hue, saturation, luminance));
+
+                // 3. Alpha based on point Z depth (closer points more opaque)
+                // gl_FragCoord.z is depth from 0 (near) to 1 (far)
+                float alpha = clamp(1.0 - gl_FragCoord.z * 0.7, 0.2, 1.0);
 
 
-                gl_FragColor = vec4(color, 1.0);
+                // 4. Glitch Effect
+                if (u_glitchIntensity > 0.0) {
+                    float glitchRand = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)) + u_time * 5.0) * 43758.5453);
+                    if (glitchRand < u_glitchIntensity) {
+                        finalColor.rgb = finalColor.grb;
+                        finalColor.r *= (1.0 + sin(u_time * 10.0 + v_position4D_world.x * 5.0) * 0.5); // Pulsate R
+                    }
+                    if (glitchRand < u_glitchIntensity * 0.3) {
+                         finalColor *= (1.0 - glitchRand * 3.0);
+                         alpha *= 0.5;
+                    }
+                }
+
+                // Conceptual: If rendering lines/tris, u_lineThickness could be used for fake edge highlighting
+                // For gl.POINTS, point size is set in vertex shader.
+                // For gl.LINES, this is harder without geometry shaders or complex line mesh generation.
+                // One simple trick for points is to use `gl_PointCoord` for rounded points.
+                // float dist_to_center = length(gl_PointCoord - vec2(0.5));
+                // if (dist_to_center > 0.5) discard; // Makes points circular
+
+                gl_FragColor = vec4(finalColor, alpha);
             }
         `;
     }
