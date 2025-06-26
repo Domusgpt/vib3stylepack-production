@@ -173,3 +173,46 @@
     color: var(--color-white);
     text-shadow: 0 0 5px rgba(var(--color-neon-green-rgb),0.5);
 }
+
+/* --- Filter Controls --- */
+.filter-controls {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    padding: var(--space-sm) 0;
+    /* Optional: Can be a glass panel itself if desired */
+    /* background-color: rgba(var(--color-medium-grey-rgb), 0.1); */
+    /* border-radius: var(--border-radius-md); */
+}
+
+.filter-button {
+    font-family: var(--font-family-headlines);
+    font-size: var(--font-size-sm); /* Slightly smaller than nav links */
+    font-weight: 500;
+    color: var(--color-neon-cyan);
+    background-color: transparent;
+    border: var(--border-width-thin) solid var(--color-neon-cyan);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    text-shadow: 0 0 3px rgba(var(--color-neon-cyan-rgb), 0.4);
+}
+
+.filter-button:hover,
+.filter-button:focus {
+    background-color: rgba(var(--color-neon-cyan-rgb), 0.15);
+    color: var(--color-white);
+    box-shadow: 0 0 10px rgba(var(--color-neon-cyan-rgb), 0.3);
+    transform: translateY(-1px);
+}
+
+.filter-button.active {
+    background-color: var(--color-neon-cyan);
+    color: var(--color-near-black);
+    text-shadow: none;
+    box-shadow: 0 0 15px rgba(var(--color-neon-cyan-rgb), 0.5);
+    transform: scale(1.05);
+}

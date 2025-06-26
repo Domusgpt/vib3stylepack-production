@@ -37,34 +37,64 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } else if (pagePath === 'category.html') {
 import { VIB3StyleSystem } from './VIB3StyleSystem.js';
-import { loadSiteMeta, loadFeaturedArticle, loadLatestArticles, loadFullArticle, loadCategoryPage } from './content-loader.js';
+import { loadSiteMeta, loadFeaturedArticle, loadFullArticle, loadCategoryPage } from './content-loader.js'; // Removed loadLatestArticles
 import { fadeInPage } from './article-transitions.js';
+import { setAllArticles, setupCategoryFilters, displayArticles } from './content-filter.js'; // Added imports
+
+// Define CONTENT_BASE_PATH for fetching all articles, consistent with content-loader.js
+const CONTENT_BASE_PATH = '../content/';
+
+async function fetchAllArticleData() {
+    // For now, we only have one sample article. In a real scenario, this would fetch an index
+    // or iterate through a list of known article slugs.
+    const articleSlugs = ['ema-report-monolith'];
+    const articles = [];
+    for (const slug of articleSlugs) {
+        try {
+            const response = await fetch(`${CONTENT_BASE_PATH}articles/${slug}.json`);
+            if (response.ok) {
+                articles.push(await response.json());
+            } else {
+                console.warn(`Could not fetch article data for slug: ${slug}`);
+            }
+        } catch (error) {
+            console.error(`Error fetching article ${slug}:`, error);
+        }
+    }
+    return articles;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOM fully loaded and parsed. Initializing Vib3code Digital Magazine Systems...");
 
-    // Initialize page fade-in effect immediately
     fadeInPage();
 
     const vib3System = new VIB3StyleSystem();
-    // For potential future use if VIB3 system needs global access for re-scans
-    window.Vib3codeApp = { vib3System };
+    window.Vib3codeApp = { vib3System, allArticles: [] }; // Initialize allArticles
 
     try {
         await vib3System.init('../presets.json');
         console.log("Vib3code VIB3StyleSystem initialized successfully.");
 
-        // Common setup for all pages
-        await loadSiteMeta();
+        const siteMetaData = await loadSiteMeta(); // Assuming loadSiteMeta might return categories for filter setup
         updateFooterYear();
 
-        // Page-specific content loading
+        // Fetch all articles for filtering logic
+        const allArticles = await fetchAllArticleData();
+        window.Vib3codeApp.allArticles = allArticles; // Store globally for access
+        setAllArticles(allArticles); // Set in content-filter module
+
         const pagePath = window.location.pathname.split("/").pop();
 
         if (pagePath === 'index.html' || pagePath === '') { // Homepage
             await loadFeaturedArticle('ema-report-monolith');
-            await loadLatestArticles(3);
-            console.log("Homepage dynamic content loaded.");
+            // Setup filters, which will also handle initial display of articles
+            if (siteMetaData && siteMetaData.categories) { // Ensure categories are loaded
+                 setupCategoryFilters(allArticles, siteMetaData.categories, 'latest-articles-grid', 'filter-controls-container');
+            } else { // Fallback if categories didn't load from siteMetaData, display all articles
+                displayArticles(allArticles, 'latest-articles-grid');
+            }
+            console.log("Homepage dynamic content and filters initialized.");
         } else if (pagePath === 'article.html') {
             const urlParams = new URLSearchParams(window.location.search);
             const articleSlug = urlParams.get('slug');

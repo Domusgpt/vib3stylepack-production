@@ -1,16 +1,18 @@
 {
   "visualStyles": {
     "holo-dark-background": {
-      "description": "Global holographic dark background for the magazine.",
+      "description": "Global holographic dark background for the magazine (WebGL).",
       "parameters": {
-        "color": [0.02, 0.02, 0.05, 1.0], /* Slightly darker base */
-        "shape": "hypercube",
-        "speed": 0.08, /* Slightly faster */
-        "intensity": 0.25, /* Slightly more intense */
-        "noiseAmount": 0.07,
-        "glitchFrequency": 0.02,
-        "particleSystem": "subtle-stars", /* Conceptual new VIB3 feature */
-        "renderAsBackground": true
+        "shader": "holoBackground", // Identifies this preset for WebGL path in VIB34D.js
+        "color": [0.02, 0.02, 0.05, 1.0], // u_baseColor
+        "timeScale": 0.1, // Multiplier for u_time (shader's internal 0.1 factor removed)
+        "intensity": 0.25, // u_intensity
+        "noiseAmount": 0.07, // u_noiseAmount
+        // Conceptual/unused by current simple shader, but kept for future ideas:
+        // "glitchFrequency": 0.02,
+        // "particleSystem": "subtle-stars",
+        // "shape": "hypercube", // Still useful conceptually or for other logic
+        "renderAsBackground": true // Still useful conceptually
       }
     },
     "glass-panel-primary": {

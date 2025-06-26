@@ -72,9 +72,11 @@ export async function loadSiteMeta() {
             });
         }
         console.log("Site metadata and navigation loaded.");
+        return meta; // Return the loaded metadata
 
     } catch (error) {
         console.error("Error loading site metadata:", error);
+        return null; // Return null or throw error on failure
     }
 }
 
