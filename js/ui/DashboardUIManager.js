@@ -119,7 +119,7 @@ class DashboardUIManager {
             #hyperAVDashboardContainer select, #hyperAVDashboardContainer input[type="text"], #hyperAVDashboardContainer input[type="number"], #hyperAVDashboardContainer input[type="color"] { background:#2a2f34; color:#eee; border:1px solid #555; padding:4px; border-radius:3px; margin-bottom:3px; box-sizing: border-box; }
             #hyperAVDashboardContainer button { background:#4a525a; color:#eee; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; margin-left:5px;}
             #hyperAVDashboardContainer button:hover { background:#5a626a; }
-            #hyperAVDashboardContainer .param-control-group { margin-bottom:5px; padding:3px; border-radius:3px; } /* Changed from .param-slider-group */
+            #hyperAVDashboardContainer .param-control-group { margin-bottom:5px; padding:3px; border-radius:3px; }
             #hyperAVDashboardContainer .param-control-group small {color:#999; font-size:0.85em;}
             #hyperAVDashboardContainer .advanced-param-group { /* managed by JS */ }
             #hyperAVDashboardContainer progress { width:100px; height:10px; }
@@ -137,7 +137,6 @@ class DashboardUIManager {
 
     _createParamControlHtml(param) {
         const coreBaseParams = this.core.getBaseParameters();
-        // Ensure currentValue is correctly sourced, using param.defaultValue if not in coreBaseParams
         let currentValue = param.defaultValue;
         if (coreBaseParams.hasOwnProperty(param.name) && coreBaseParams[param.name] !== undefined) {
             currentValue = coreBaseParams[param.name];
@@ -236,18 +235,18 @@ class DashboardUIManager {
         const baseParams = this.core.getBaseParameters();
         this.parameterSchema.forEach(paramSchema => {
             const uniformName = paramSchema.name;
-            let value = paramSchema.defaultValue; // Start with schema default
+            let value = paramSchema.defaultValue;
             if (baseParams.hasOwnProperty(uniformName) && baseParams[uniformName] !== undefined) {
-                value = baseParams[uniformName]; // Override with core's base param if it exists
+                value = baseParams[uniformName];
             }
 
             const control = document.getElementById(`dashboard_${uniformName}`);
             const valueDisplay = document.getElementById(`dashboard_${uniformName}_value`);
+            const stepStr = paramSchema.step ? paramSchema.step.toString() : (paramSchema.type === 'slider' ? "0.01" : "1");
 
             if (paramSchema.type === 'slider' && control) {
                 control.value = value;
                 if (valueDisplay) {
-                    const stepStr = paramSchema.step ? paramSchema.step.toString() : "0.01";
                     const precision = stepStr.includes('.') ? stepStr.split('.')[1].length : 0;
                     valueDisplay.textContent = parseFloat(value).toFixed(precision);
                 }
@@ -255,7 +254,7 @@ class DashboardUIManager {
                 const currentVec = Array.isArray(value) && value.length === 3 ? value : (paramSchema.defaultValue || [0,0,0]);
                 currentVec.forEach((compVal, i) => {
                     const compInput = document.getElementById(`dashboard_${uniformName}_${['x','y','z'][i]}`);
-                    if (compInput) compInput.value = parseFloat(compVal).toFixed(2); // Ensure display matches step if any
+                    if (compInput) compInput.value = parseFloat(compVal).toFixed(stepStr.includes('.') ? stepStr.split('.')[1].length : 2); // Default precision 2 for vec components
                 });
                 if (valueDisplay) valueDisplay.textContent = `[${currentVec.map(v=>parseFloat(v).toFixed(2)).join(',')}]`;
             } else if (paramSchema.type === 'color' && control) {
@@ -276,6 +275,7 @@ class DashboardUIManager {
 
         this._initControlsFromCoreState();
         this.updateDynamicParamVisibility();
+        this._populatePresetDropdown();
     }
 
     updateDynamicParamVisibility() {
@@ -284,13 +284,9 @@ class DashboardUIManager {
         const showAdvanced = this.elements.toggleAdvancedParams ? this.elements.toggleAdvancedParams.checked : false;
 
         if (this.elements.geometrySpecificParamsContainer) {
-             // Detach all children first to handle re-parenting correctly if schema changes or for initial build
-            while (this.elements.geometrySpecificParamsContainer.firstChild &&
-                   this.elements.geometrySpecificParamsContainer.firstChild.nodeName !== 'H4') { // Keep the H4
-                this.elements.geometrySpecificParamsContainer.removeChild(this.elements.geometrySpecificParamsContainer.lastChild);
-            }
+            let currentGeoSpecificControls = Array.from(this.elements.geometrySpecificParamsContainer.querySelectorAll('.param-control-group'));
+            currentGeoSpecificControls.forEach(el => el.remove());
         }
-
 
         this.parameterSchema.forEach(paramSchema => {
             let groupElement = document.querySelector(`.param-control-group[data-param-name="${paramSchema.name}"]`);
@@ -307,12 +303,11 @@ class DashboardUIManager {
                          this.elements.geometrySpecificParamsContainer.appendChild(groupElement);
                     }
                 } else if (groupElement && groupElement.parentElement === this.elements.geometrySpecificParamsContainer) {
-                    // If it's in geo-specific container but no longer relevant, hide it (or remove if preferred)
                      groupElement.style.display = 'none';
                 }
             }
 
-            if (groupElement) { // This element might be in a main group or in the geo-specific one
+            if (groupElement) {
                 let isVisible = true;
                 if (paramSchema.relevantToGeometries && paramSchema.relevantToGeometries.length > 0) {
                     isVisible = isGeoSpecificAndRelevant;
@@ -336,46 +331,51 @@ class DashboardUIManager {
         }
     }
 
-
     _attachControlListener(controlElement, paramSchema) {
         const uniformName = paramSchema.name;
         const valueDisplay = document.getElementById(`dashboard_${uniformName}_value`);
         const stepStr = paramSchema.step ? paramSchema.step.toString() : (paramSchema.type === 'slider' ? "0.01" : "1");
         const precision = stepStr.includes('.') ? stepStr.split('.')[1].length : 0;
 
-        if (paramSchema.type === 'slider') {
-            controlElement.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value);
-                this.core.updateBaseParameter(uniformName, value);
-                if (valueDisplay) valueDisplay.textContent = value.toFixed(precision);
-            });
-        } else if (paramSchema.type === 'vec3' && controlElement.classList.contains('param-vec3-component')) {
-            controlElement.addEventListener('input', (e) => {
-                const currentVec3 = [...(this.core.getBaseParameters()[uniformName] || paramSchema.defaultValue)];
-                currentVec3[parseInt(e.target.dataset.componentIndex)] = parseFloat(e.target.value);
-                this.core.updateBaseParameter(uniformName, currentVec3);
-                if (valueDisplay) valueDisplay.textContent = `[${currentVec3.map(v=>parseFloat(v).toFixed(2)).join(',')}]`;
-            });
-        } else if (paramSchema.type === 'color') {
-            controlElement.addEventListener('input', (e) => {
-                const rgbArray = this._hexToRgbArray(e.target.value);
-                this.core.updateBaseParameter(uniformName, rgbArray);
+        // Clone to remove old listeners, then re-add
+        const newControlElement = controlElement.cloneNode(true);
+        controlElement.parentNode.replaceChild(newControlElement, controlElement);
+
+        const eventType = (paramSchema.type === 'slider' || paramSchema.type === 'color') ? 'input' : 'change'; // Use 'change' for number inputs if 'input' is too frequent
+
+        newControlElement.addEventListener(eventType, (e) => {
+            let valueToUpdate;
+            if (paramSchema.type === 'slider' || (paramSchema.type === 'vec3' && e.target.classList.contains('param-vec3-component'))) {
+                if (paramSchema.type === 'vec3') {
+                    const currentVec3 = [...(this.core.getBaseParameters()[uniformName] || paramSchema.defaultValue)];
+                    currentVec3[parseInt(e.target.dataset.componentIndex)] = parseFloat(e.target.value);
+                    valueToUpdate = currentVec3;
+                    if (valueDisplay) valueDisplay.textContent = `[${currentVec3.map(v=>parseFloat(v).toFixed(2)).join(',')}]`;
+                } else { // Slider
+                    valueToUpdate = parseFloat(e.target.value);
+                    if (valueDisplay) valueDisplay.textContent = valueToUpdate.toFixed(precision);
+                }
+            } else if (paramSchema.type === 'color') {
+                valueToUpdate = this._hexToRgbArray(e.target.value);
                 if (valueDisplay) valueDisplay.textContent = e.target.value;
-            });
-        }
+            }
+            this.core.updateBaseParameter(uniformName, valueToUpdate);
+        });
     }
 
     _attachCoreEventListeners() {
         if(this.elements.selectGeometry) this.elements.selectGeometry.addEventListener('change', (e) => {
             this.core.setGeometry(e.target.value);
+            // syncDashboardToCoreState will be called by HypercubeCore's onStateChangeCallback
         });
 
         if(this.elements.selectProjection) this.elements.selectProjection.addEventListener('change', (e) => {
             this.core.setProjection(e.target.value);
+            // syncDashboardToCoreState will be called by HypercubeCore's onStateChangeCallback
         });
 
         this.parameterSchema.forEach(paramSchema => {
-            this._reAttachListenerForParam(paramSchema); // Use helper to attach to all types
+            this._reAttachListenerForParam(paramSchema);
         });
     }
 
@@ -392,7 +392,7 @@ class DashboardUIManager {
         });
         if (this.elements.btnSavePreset) this.elements.btnSavePreset.addEventListener('click', () => {
             let presetName = this.elements.inputPresetName.value.trim();
-            if (!presetName) presetName = prompt("Preset name:", `User Preset ${this.core.presetManager.userPresets.length + 1}`);
+            if (!presetName) presetName = prompt("Preset name:", `User Preset ${this.core.presetManager ? this.core.presetManager.userPresets.length + 1 : '1'}`);
             if (!presetName) return;
             if (this.core.presetManager) {
                 const savedPreset = this.core.presetManager.saveCurrentSettingsAsUserPreset(presetName);
@@ -420,7 +420,7 @@ class DashboardUIManager {
                 const key = paramSchema.name;
                 if (effectiveParams.hasOwnProperty(key)) {
                     let value = effectiveParams[key];
-                    const stepStr = paramSchema.step ? paramSchema.step.toString() : (paramSchema.type === 'slider' ? "0.01" : "1");
+                    const stepStr = paramSchema.step ? paramSchema.step.toString() : (paramSchema.type === 'slider' ? "0.01" : (paramSchema.type === 'vec3' ? "0.01" : "1"));
                     const precision = stepStr.includes('.') ? stepStr.split('.')[1].length : (paramSchema.type === 'vec3' || paramSchema.type === 'color' ? 2:0) ;
 
                     if (typeof value === 'number') value = value.toFixed(precision);
