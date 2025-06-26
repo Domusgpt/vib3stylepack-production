@@ -113,25 +113,17 @@ class OrthographicProjection extends BaseProjection {
     }
 }
 
-// Mock BaseProjection and mat4 if not available
+// Mock BaseProjection if not available
 if (typeof BaseProjection === 'undefined') {
+    const mockMat4Create = (typeof mat4 !== 'undefined' && mat4.create) ? mat4.create : () => new Array(16).fill(0).map((_, i) => (i % 5 === 0 ? 1 : 0));
     global.BaseProjection = class {
-        constructor() { this.projectionMatrix = mat4.create(); }
+        constructor() { this.projectionMatrix = mockMat4Create(); }
         update(params) { throw new Error("Update method must be implemented."); }
         getProjectionMatrix() { return this.projectionMatrix; }
         project(target) { throw new Error("Project method must be implemented."); }
     };
 }
-if (typeof mat4 === 'undefined') {
-    global.mat4 = {
-        create: () => new Array(16).fill(0).map((_, i) => (i % 5 === 0 ? 1 : 0)), // Identity
-        ortho: (out, left, right, bottom, top, near, far) => { /* mock */ },
-        perspective: (out, fovy, aspect, near, far) => { /* mock */ },
-        lookAt: (out, eye, center, up) => { /* mock */ },
-        copy: (out, a) => { for(let i=0; i<16; i++) out[i] = a[i]; return out; },
-        // mat4.lerp is not standard, so component-wise lerp is done in update.
-    };
-}
+// Removed mat4 mock. Assumes gl-matrix.js is loaded globally.
 
 // Example Usage (conceptual):
 /*

@@ -142,22 +142,18 @@ class PerspectiveProjection extends BaseProjection {
     }
 }
 
-// Mock BaseProjection and mat4 if not available (e.g., for standalone testing)
+// Mock BaseProjection if not available (e.g., for standalone testing or if BaseProjection.js isn't loaded first)
 if (typeof BaseProjection === 'undefined') {
+    // Ensure a placeholder for mat4 exists if BaseProjection itself uses it in its constructor mock
+    const mockMat4Create = (typeof mat4 !== 'undefined' && mat4.create) ? mat4.create : () => new Array(16).fill(0).map((_, i) => (i % 5 === 0 ? 1 : 0));
     global.BaseProjection = class {
-        constructor() { this.projectionMatrix = mat4.create(); }
+        constructor() { this.projectionMatrix = mockMat4Create(); }
         update(params) { throw new Error("Update method must be implemented."); }
         getProjectionMatrix() { return this.projectionMatrix; }
         project(target) { throw new Error("Project method must be implemented."); }
     };
 }
-if (typeof mat4 === 'undefined') {
-    global.mat4 = {
-        create: () => new Array(16).fill(0).map((_, i) => (i % 5 === 0 ? 1 : 0)), // Identity matrix
-        perspective: (out, fovy, aspect, near, far) => { /* mock */ },
-        lookAt: (out, eye, center, up) => { /* mock */ },
-    };
-}
+// Removed mat4 mock from here. Assumes gl-matrix.js is loaded globally.
 
 // Example Usage (conceptual):
 /*
