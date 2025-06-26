@@ -40,20 +40,7 @@ class BaseProjection {
     }
 }
 
-// Note: This assumes a library like gl-matrix for matrix operations (mat4).
-// If not available, basic matrix operations would need to be implemented or
-// a different library chosen. For now, we'll mock it for the structure.
-// Mock gl-matrix for now if not present in the project
-if (typeof mat4 === 'undefined') {
-    global.mat4 = {
-        create: () => new Array(16).fill(0),
-        perspective: (out, fovy, aspect, near, far) => {},
-        ortho: (out, left, right, bottom, top, near, far) => {},
-        lookAt: (out, eye, center, up) => {},
-        multiply: (out, a, b) => {},
-        translate: (out, a, v) => {},
-        rotate: (out, a, rad, axis) => {},
-        scale: (out, a, v) => {},
-        identity: (out) => { out.fill(0); for(let i=0; i<4; i++) out[i*4+i]=1;},
-    };
-}
+// Note: This class assumes a matrix library like gl-matrix is available globally (e.g., glMatrix.mat4 as mat4).
+// The gl-matrix library should be included in the HTML file before this script.
+// Example: const { mat4 } = glMatrix; (if glMatrix is the global object from the library)
+// For simplicity in these files, we'll assume 'mat4' is available globally after gl-matrix loads.
