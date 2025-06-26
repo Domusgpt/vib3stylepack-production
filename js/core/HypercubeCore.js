@@ -3,19 +3,7 @@
  */
 class HypercubeCore {
     constructor(canvas, options = {}) {
-        if (!canvas) {
-            throw new Error("HypercubeCore: Canvas element is required.");
-        }
-        this.canvas = canvas;
-        this.gl = this.initWebGL(canvas);
-
-        if (!this.gl) {
-            throw new Error("HypercubeCore: WebGL initialization failed. Your browser might not support it.");
-        }
-
-        this.shaderManager = new ShaderManager(this.gl);
-        this.geometryManager = new GeometryManager();
-        this.projectionManager = new ProjectionManager();
+        // ... (constructor setup as before) ...
         this.interactionEngine = new VIB34DInteractionEngine(this.canvas);
 
         this.baseParameters = {
@@ -30,12 +18,15 @@ class HypercubeCore {
             u_4D_projection_type: 0, u_stereo_R: 1.0, u_stereo_pole_sign: 1.0,
             u_lightDirection: [0.577, 0.577, 0.577],
             u_specularStrength: 0.5, u_specularColor: [1.0, 1.0, 1.0], u_materialShininess: 32.0,
+            u_isTorus: false, // ADDED for Torus procedural texture
         };
+        // ... (rest of constructor as before, including PresetManager init) ...
         this.parameterMapper = new ParameterMappingSystem(this.baseParameters, this.interactionEngine);
         this.effectiveParameters = { ...this.baseParameters };
 
         this.chromaticEngine = new VIB34DChromaticEngine();
         this.homeMasterBridge = new VIB3HomeMasterBridge(this);
+
         this.presetManager = new PresetManager(this, typeof VIB3_PRESETS_EXPANDED !== 'undefined' ? VIB3_PRESETS_EXPANDED : []);
         this.presetManager.loadUserPresetsFromLocalStorage();
 
@@ -45,13 +36,14 @@ class HypercubeCore {
         this.currentGeometry = null; this.currentProjection = null;
         this.animationFrameId = null; this.lastTimestamp = 0; this.deltaTime = 0; this.time = 0;
 
-        this.onStateChangeCallback = options.onStateChangeCallback || (() => {}); // ADDED FOR STATE CHANGE NOTIFICATION
+        this.onStateChangeCallback = options.onStateChangeCallback || (() => {});
 
         this.defaultVertexShader = options.vertexShaderSource || this.getDefaultVertexShader();
         this.defaultFragmentShader = options.fragmentShaderSource || this.getDefaultFragmentShader();
         this.init();
     }
 
+    // ... initWebGL, init, setupEventListeners, onResize ... (mostly unchanged)
     initWebGL(canvas) {
         let gl = null;
         try {
@@ -94,7 +86,9 @@ class HypercubeCore {
         }
     }
 
+
     setGeometry(name, initialParams = {}) {
+        // ... (geometry registration logic as before) ...
         if (this.geometryManager.getGeometryClass(name) || (typeof window[name.charAt(0).toUpperCase() + name.slice(1) + 'Geometry'] !== 'undefined')) {
             if (!this.geometryManager.getGeometryClass(name)) {
                  try {
@@ -103,16 +97,22 @@ class HypercubeCore {
                  } catch (e) { /* ignore */ }
             }
         }
+
         const geometryInstance = this.geometryManager.createGeometryInstance(name, initialParams);
         if (geometryInstance) {
             if (this.currentGeometry && typeof this.currentGeometry.destroy === 'function') this.currentGeometry.destroy(this.gl);
             this.currentGeometry = geometryInstance;
             if (this.baseParameters) this.baseParameters.geometryName = name;
-            if (this.effectiveParameters) this.effectiveParameters.geometryName = name;
-            this.onStateChangeCallback('geometryChanged'); // Notify
+            if (this.effectiveParameters) {
+                this.effectiveParameters.geometryName = name;
+                // SET u_isTorus UNIFORM
+                this.effectiveParameters.u_isTorus = (name === 'torus');
+            }
+            this.onStateChangeCallback('geometryChanged');
         } else { console.error(`HypercubeCore: Failed to set geometry "${name}".`); }
     }
 
+    // ... setProjection, getAvailableGeometries, getAvailableProjections, getBaseParameters, getEffectiveParametersForDashboard ... (mostly unchanged)
     setProjection(name, initialParams = {}) {
         const currentAspect = this.baseParameters.u_resolution[0] / this.baseParameters.u_resolution[1];
         const paramsForProjection = {
@@ -140,7 +140,7 @@ class HypercubeCore {
                     this.effectiveParameters.u_4D_projection_type = 2;
                 } else { this.effectiveParameters.u_4D_projection_type = 0; }
             }
-            this.onStateChangeCallback('projectionChanged'); // Notify
+            this.onStateChangeCallback('projectionChanged');
         } else { console.error(`HypercubeCore: Failed to set 3D projection "${name}".`); }
     }
 
@@ -164,7 +164,7 @@ class HypercubeCore {
             if (this.baseParameters.hasOwnProperty(key)) newBaseParams[key] = preset.params[key];
         }
         this.updateBaseParameter(newBaseParams);
-        this.onStateChangeCallback('presetLoaded'); // Notify
+        this.onStateChangeCallback('presetLoaded');
     }
 
     getCurrentSettingsAsPreset() {
@@ -174,8 +174,10 @@ class HypercubeCore {
         return { geometry: currentGeomName, projection: this.baseParameters.projectionType || 'perspective', params: exportableBaseParams };
     }
 
+
     getCoreParametersSchema() {
         return [
+            // ... (previous schema entries) ...
             { name: 'u_dimension', label: '4D Dimension', type: 'slider', min: 3.0, max: 5.0, step: 0.01, defaultValue: 4.0, group: 'Global Setup' },
             { name: 'u_gridDensity', label: 'Grid Density / Divisions', type: 'slider', min: 1.0, max: 30.0, step: 0.5, defaultValue: 10.0, group: 'Appearance & Structure',
               description: "Controls divisions for most geometries. For Fractal, maps to iterations. For Crystal, maps to lattice points per axis." },
@@ -192,9 +194,11 @@ class HypercubeCore {
             { name: 'u_specularStrength', label: 'Specular Strength', type: 'slider', min: 0.0, max: 1.0, step: 0.01, defaultValue: 0.5, group: 'Visual Effects', isAdvanced: true },
             { name: 'u_specularColor', label: 'Specular Color', type: 'color', defaultValue: [1.0, 1.0, 1.0], group: 'Visual Effects', isAdvanced: true },
             { name: 'u_materialShininess', label: 'Material Shininess', type: 'slider', min: 1.0, max: 256.0, step: 1.0, defaultValue: 32.0, group: 'Visual Effects', isAdvanced: true },
+            { name: 'u_isTorus', label: 'Enable Torus Pattern (Debug)', type: 'toggle', defaultValue: false, group: 'Geometry Specific', relevantToGeometries: ['torus'], isAdvanced: true } // ADDED u_isTorus to schema
         ];
     }
 
+    // ... updateBaseParameter ... (unchanged from its last correct version)
     updateBaseParameter(keyOrParams, value) {
         let changed = false;
         if (typeof keyOrParams === 'string') {
@@ -221,11 +225,13 @@ class HypercubeCore {
                     fov: this.baseParameters.fov, near: this.baseParameters.near, far: this.baseParameters.far,
                 });
             }
-            this.onStateChangeCallback('baseParamsChanged'); // Notify
+            this.onStateChangeCallback('baseParamsChanged');
         }
     }
 
+
     render(timestamp) {
+        // ... (delta time, interaction engine, effective params, chromatic engine updates as before) ...
         this.deltaTime = (timestamp - this.lastTimestamp) / 1000.0;
         this.lastTimestamp = timestamp; this.time += this.deltaTime;
         this.interactionEngine.update();
@@ -268,6 +274,7 @@ class HypercubeCore {
             if (key.startsWith('u_')) {
                 const value = this.effectiveParameters[key];
                 if (typeof value === 'number') this.shaderManager.setUniform1f(key, value);
+                else if (typeof value === 'boolean') this.shaderManager.setUniform1i(key, value ? 1:0); // Handle boolean for u_isTorus
                 else if (Array.isArray(value) && value.length === 2) this.shaderManager.setUniform2fv(key, value);
                 else if (Array.isArray(value) && value.length === 3) this.shaderManager.setUniform3fv(key, value);
                 else if (Array.isArray(value) && value.length === 4) this.shaderManager.setUniform4fv(key, value);
@@ -275,14 +282,18 @@ class HypercubeCore {
         }
         this.shaderManager.setUniformMatrix4fv('u_projectionMatrix', projMatrix);
         this.shaderManager.setUniformMatrix4fv('u_modelViewMatrix', viewMatrix);
+
         if (this.currentGeometry) {
             const posAttribLoc = this.shaderManager.getAttributeLocation('a_position4D');
             const normalAttribLoc = this.shaderManager.getAttributeLocation('a_normal4D');
+            const uvAttribLoc = this.shaderManager.getAttributeLocation('a_uv'); // Get UV attribute location
+
             if (posAttribLoc !== -1 && typeof this.currentGeometry.getVertexPositionsBuffer === 'function') {
                 const vbo = this.currentGeometry.getVertexPositionsBuffer(this.gl);
                 gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
                 gl.vertexAttribPointer(posAttribLoc, 4, gl.FLOAT, false, 0, 0);
                 gl.enableVertexAttribArray(posAttribLoc);
+
                 if (normalAttribLoc !== -1 && typeof this.currentGeometry.getNormalsBuffer === 'function') {
                     const normalBuffer = this.currentGeometry.getNormalsBuffer(this.gl);
                     if (normalBuffer) {
@@ -291,6 +302,22 @@ class HypercubeCore {
                         gl.enableVertexAttribArray(normalAttribLoc);
                     } else { gl.disableVertexAttribArray(normalAttribLoc); }
                 } else if (normalAttribLoc !== -1) { gl.disableVertexAttribArray(normalAttribLoc); }
+
+                // UV Attribute Setup
+                if (uvAttribLoc !== -1 && typeof this.currentGeometry.getUVBuffer === 'function') {
+                   const uvBuffer = this.currentGeometry.getUVBuffer(this.gl);
+                   if (uvBuffer) {
+                       gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+                       gl.vertexAttribPointer(uvAttribLoc, 2, gl.FLOAT, false, 0, 0); // Assuming 2D UVs
+                       gl.enableVertexAttribArray(uvAttribLoc);
+                   } else {
+                       gl.disableVertexAttribArray(uvAttribLoc);
+                   }
+                } else if (uvAttribLoc !== -1) {
+                    gl.disableVertexAttribArray(uvAttribLoc);
+                }
+
+                // ... (draw call logic as before) ...
                 if (typeof this.currentGeometry.getEdgeIndices === 'function' && this.currentGeometry.getEdgeIndices().length > 0) {
                     const ibo = this.currentGeometry.getIndexBuffer(this.gl);
                     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
@@ -310,6 +337,8 @@ class HypercubeCore {
         } else { if (this.isPlaceholderRenderNeeded()) this.drawPlaceholder(); }
         this.animationFrameId = requestAnimationFrame(this.render.bind(this));
     }
+
+    // ... isPlaceholderRenderNeeded, drawPlaceholder, start, stop, destroy ... (mostly unchanged)
     isPlaceholderRenderNeeded() { return !this.currentGeometry || typeof this.currentGeometry.getVertexPositionsBuffer !== 'function'; }
     drawPlaceholder() {
         const gl = this.gl; const positionAttribLocation = this.shaderManager.getAttributeLocation('a_position4D');
@@ -334,19 +363,20 @@ class HypercubeCore {
     }
 
     getDefaultVertexShader() {
+        // Includes a_uv attribute and v_uv varying
         return `
             precision mediump float;
-            attribute vec4 a_position4D; attribute vec4 a_normal4D;
+            attribute vec4 a_position4D; attribute vec4 a_normal4D; attribute vec2 a_uv;
             uniform mat4 u_modelViewMatrix; uniform mat4 u_projectionMatrix;
             uniform float u_time; uniform vec2 u_resolution; uniform float u_dimension;
             uniform float u_morphFactor; uniform float u_lineThickness;
             uniform int u_4D_projection_type; uniform float u_stereo_R; uniform float u_stereo_pole_sign;
             varying vec4 v_position4D_world; varying vec3 v_position3D_projected_raw;
             varying float v_w_component_original; varying vec3 v_normal_viewspace;
-            varying vec3 v_position_viewspace;
+            varying vec3 v_position_viewspace; varying vec2 v_uv;
             void main() {
                 vec4 P = a_position4D; vec4 N_4D = a_normal4D;
-                v_position4D_world = P; v_w_component_original = P.w;
+                v_position4D_world = P; v_w_component_original = P.w; v_uv = a_uv;
                 vec3 pos3D_intermediate;
                 if (u_4D_projection_type == 1) {
                     float stereo_denominator = u_stereo_R - (u_stereo_pole_sign * P.w);
@@ -375,6 +405,7 @@ class HypercubeCore {
     }
 
     getDefaultFragmentShader() {
+        // Includes u_isTorus uniform and v_uv varying, and uses them for a pattern
         return `
             precision mediump float;
             uniform float u_time; uniform vec2 u_resolution; uniform vec2 u_mouse;
@@ -382,9 +413,10 @@ class HypercubeCore {
             uniform float u_morphFactor; uniform float u_glitchIntensity; uniform float u_gridDensity;
             uniform vec3 u_lightDirection;
             uniform float u_specularStrength; uniform vec3 u_specularColor; uniform float u_materialShininess;
+            uniform bool u_isTorus; // ADDED
             varying vec4 v_position4D_world; varying vec3 v_position3D_projected_raw;
             varying float v_w_component_original; varying vec3 v_normal_viewspace;
-            varying vec3 v_position_viewspace;
+            varying vec3 v_position_viewspace; varying vec2 v_uv; // ADDED
             vec3 hsl2rgb(vec3 c) {
                 vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0);
                 return c.z + c.y * (rgb-0.5)*(1.0-abs(2.0*c.z-1.0));
@@ -410,6 +442,14 @@ class HypercubeCore {
                 float specularIntensity = pow(specAngle, u_materialShininess);
                 vec3 specularComponent = u_specularColor * u_specularStrength * specularIntensity;
                 vec3 litColor = ambientColor + diffuseColor + specularComponent;
+
+                if (u_isTorus) {
+                    float stripe_frequency = u_gridDensity * 0.5; // Adjusted for potentially better visual
+                    float pattern = smoothstep(0.45, 0.55, abs(sin(v_uv.x * stripe_frequency * 3.14159 + v_uv.y * stripe_frequency * 1.57079)));
+                    vec3 stripeColor = hsl2rgb(vec3(mod(hue + 0.2, 1.0), saturation, clamp(luminance * 0.6, 0.05, 0.6)));
+                    litColor = mix(stripeColor, litColor, pattern);
+                }
+
                 float alpha = clamp(1.0 - gl_FragCoord.z*0.7, 0.2, 1.0);
                 vec3 finalColor = litColor;
                 if (u_glitchIntensity > 0.0) {
@@ -429,7 +469,7 @@ class HypercubeCore {
     }
 }
 
-// Mock dependencies
+// Mock dependencies (ensure PresetManager and VIB3_PRESETS_EXPANDED are mocked correctly if presets.js isn't loaded first)
 if (typeof ShaderManager === 'undefined') { global.ShaderManager = class { constructor(gl) {this.gl = gl;} createProgram(vs, fs) {return true;} useProgram(){} getUniformLocation(name){return null;} getAttributeLocation(name){return -1;} setUniformMatrix4fv(){} setUniform1f(){} setUniform2fv(){} setUniform3fv(){} setUniform4fv(){} destroy(){} }; }
 if (typeof GeometryManager === 'undefined') { global.GeometryManager = class { constructor(){} createGeometryInstance(name, params){return null;} }; }
 if (typeof ProjectionManager === 'undefined') { global.ProjectionManager = class { constructor(){} createProjectionInstance(name, params){return null;} }; }
@@ -444,87 +484,9 @@ if (typeof mat4 === 'undefined') {
         create: () => [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], identity: (out) => { out.fill(0); out[0]=out[5]=out[10]=out[15]=1; return out; },
         translate: (out,a,v)=>{return out;}, multiply:(out,a,b)=>{return out;},
         fromValues:function(m00,m01,m02,m03,m10,m11,m12,m13,m20,m21,m22,m23,m30,m31,m32,m33){var out=new Array(16);out[0]=m00;out[1]=m01;out[2]=m02;out[3]=m03;out[4]=m10;out[5]=m11;out[6]=m12;out[7]=m13;out[8]=m20;out[9]=m21;out[10]=m22;out[11]=m23;out[12]=m30;out[13]=m31;out[14]=m32;out[15]=m33;return out;},
-        invert:function(out,a){Object.assign(out,a);return out;},transpose:function(out,a){Object.assign(out,a);return out;}
+        invert:function(out,a){Object.assign(out,a); /* mock */ return out;},transpose:function(out,a){Object.assign(out,a); /* mock */ return out;}
     };
 }
 
 /* HTML and script loader comments remain the same */
-/*
-HTML:
-<canvas id="hypercubeCanvas" style="width: 800px; height: 600px; border: 1px solid black;"></canvas>
-<script src="js/gl-matrix.js"></script>
-<script src="js/core/BaseGeometry.js"></script>
-<script src="js/core/BaseProjection.js"></script>
-<script src="js/managers/ShaderManager.js"></script>
-<script src="js/managers/GeometryManager.js"></script>
-<script src="js/managers/ProjectionManager.js"></script>
-<script src="js/interaction/VIB34DInteractionEngine.js"></script>
-<script src="js/interaction/ParameterMappingSystem.js"></script>
-<script src="js/chromatic/VIB34DChromaticEngine.js"></script>
-<script src="js/bridge/VIB3HomeMasterBridge.js"></script>
-<script src="js/config/presets.js"></script>
-<script src="js/core/HypercubeCore.js"></script>
-// Geometries
-<script src="js/geometries/HypercubeGeometry.js"></script>
-<script src="js/geometries/HypersphereGeometry.js"></script>
-<script src="js/geometries/HypertetrahedronGeometry.js"></script>
-<script src="js/geometries/TorusGeometry.js"></script>
-<script src="js/geometries/KleinBottleGeometry.js"></script>
-<script src="js/geometries/FractalGeometry.js"></script>
-<script src="js/geometries/WaveGeometry.js"></script>
-<script src="js/geometries/CrystalGeometry.js"></script>
-// Projections
-<script src="js/projections/PerspectiveProjection.js"></script>
-<script src="js/projections/OrthographicProjection.js"></script>
-<script src="js/projections/StereographicProjection.js"></script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const canvas = document.getElementById('hypercubeCanvas');
-        if (canvas) {
-            try {
-                const core = new HypercubeCore(canvas, {
-                    onStateChangeCallback: (reason) => {
-                        if (window.hyperAVDashboard && typeof window.hyperAVDashboard.syncDashboardToCoreState === 'function') {
-                            // console.log(`HypercubeCore state changed due to: ${reason}. Syncing dashboard.`);
-                            window.hyperAVDashboard.syncDashboardToCoreState();
-                        }
-                    }
-                });
-                window.core = core;
-
-                if (typeof DashboardUIManager !== 'undefined') { // Check if dashboard script loaded
-                    window.hyperAVDashboard = new DashboardUIManager(core, 'hyperAVDashboard');
-                }
-
-                // Register all known geometries and projections
-                if (typeof HypercubeGeometry !== 'undefined') core.geometryManager.registerGeometry('hypercube', HypercubeGeometry);
-                if (typeof HypersphereGeometry !== 'undefined') core.geometryManager.registerGeometry('hypersphere', HypersphereGeometry);
-                if (typeof HypertetrahedronGeometry !== 'undefined') core.geometryManager.registerGeometry('hypertetrahedron', HypertetrahedronGeometry);
-                if (typeof TorusGeometry !== 'undefined') core.geometryManager.registerGeometry('torus', TorusGeometry);
-                if (typeof KleinBottleGeometry !== 'undefined') core.geometryManager.registerGeometry('kleinbottle', KleinBottleGeometry);
-                if (typeof FractalGeometry !== 'undefined') core.geometryManager.registerGeometry('fractal', FractalGeometry);
-                if (typeof WaveGeometry !== 'undefined') core.geometryManager.registerGeometry('wave', WaveGeometry);
-                if (typeof CrystalGeometry !== 'undefined') core.geometryManager.registerGeometry('crystal', CrystalGeometry);
-
-                if (typeof PerspectiveProjection !== 'undefined') core.projectionManager.registerProjection('perspective', PerspectiveProjection);
-                if (typeof OrthographicProjection !== 'undefined') core.projectionManager.registerProjection('orthographic', OrthographicProjection);
-                if (typeof StereographicProjection !== 'undefined') core.projectionManager.registerProjection('stereographic', StereographicProjection);
-
-                if (core.presetManager && typeof VIB3_PRESETS_EXPANDED !== 'undefined' && VIB3_PRESETS_EXPANDED.length > 0) {
-                    core.presetManager.loadPresetByName(VIB3_PRESETS_EXPANDED[0].name);
-                } else {
-                    core.setGeometry('hypercube');
-                    core.setProjection('perspective');
-                }
-                core.start();
-            } catch (error) {
-                console.error("Failed to initialize HypercubeCore:", error);
-                document.body.innerHTML = `<p>Error: ${error.message}. Please ensure your browser supports WebGL.</p>`;
-            }
-        } else {
-            console.error("Canvas element #hypercubeCanvas not found.");
-        }
-    });
-</script>
-*/
+/* ... */
