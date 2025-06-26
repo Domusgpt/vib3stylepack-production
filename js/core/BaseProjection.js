@@ -45,7 +45,7 @@ class BaseProjection {
 // a different library chosen. For now, we'll mock it for the structure.
 // Mock gl-matrix for now if not present in the project
 if (typeof mat4 === 'undefined') {
-    global.mat4 = {
+    window.mat4 = {
         create: () => new Array(16).fill(0),
         perspective: (out, fovy, aspect, near, far) => {},
         ortho: (out, left, right, bottom, top, near, far) => {},

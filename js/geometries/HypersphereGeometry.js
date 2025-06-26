@@ -270,7 +270,7 @@ class HypersphereGeometry extends BaseGeometry {
 }
 
 if (typeof BaseGeometry === 'undefined') {
-    global.BaseGeometry = class {
+    window.BaseGeometry = class {
         constructor() { this.vertices = []; this.indices = []; }
         generate() {}
         update(params) {}

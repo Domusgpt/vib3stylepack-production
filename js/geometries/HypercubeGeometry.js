@@ -241,7 +241,7 @@ class HypercubeGeometry extends BaseGeometry {
 // Ensure BaseGeometry is available if not using modules
 if (typeof BaseGeometry === 'undefined') {
     // Mock BaseGeometry for environments where it might not be loaded (e.g. testing snippet)
-    global.BaseGeometry = class {
+    window.BaseGeometry = class {
         constructor() { this.vertices = []; this.indices = []; }
         generate() {}
         update(params) {}

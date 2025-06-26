@@ -73,7 +73,7 @@ class GeometryManager {
 if (typeof BaseGeometry === 'undefined') {
     // This is a simplified mock for environments where BaseGeometry isn't loaded.
     // In a real project, module loading (ESM or CommonJS) would handle this.
-    global.BaseGeometry = class BaseGeometry {
+    window.BaseGeometry = class BaseGeometry {
         constructor() { if (this.constructor === BaseGeometry) throw new Error("Abstract class"); }
         generate() { throw new Error("Must implement"); }
         update(params) {}

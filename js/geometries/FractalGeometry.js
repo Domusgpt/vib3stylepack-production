@@ -214,7 +214,7 @@ class FractalGeometry extends BaseGeometry {
 }
 
 if (typeof BaseGeometry === 'undefined') {
-    global.BaseGeometry = class {
+    window.BaseGeometry = class {
         constructor() { this.vertices = []; this.indices = []; this.uvs = []; }
         generate() {}
         update(params) {}

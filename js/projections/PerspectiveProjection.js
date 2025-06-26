@@ -144,7 +144,7 @@ class PerspectiveProjection extends BaseProjection {
 
 // Mock BaseProjection and mat4 if not available (e.g., for standalone testing)
 if (typeof BaseProjection === 'undefined') {
-    global.BaseProjection = class {
+    window.BaseProjection = class {
         constructor() { this.projectionMatrix = mat4.create(); }
         update(params) { throw new Error("Update method must be implemented."); }
         getProjectionMatrix() { return this.projectionMatrix; }
@@ -152,7 +152,7 @@ if (typeof BaseProjection === 'undefined') {
     };
 }
 if (typeof mat4 === 'undefined') {
-    global.mat4 = {
+    window.mat4 = {
         create: () => new Array(16).fill(0).map((_, i) => (i % 5 === 0 ? 1 : 0)), // Identity matrix
         perspective: (out, fovy, aspect, near, far) => { /* mock */ },
         lookAt: (out, eye, center, up) => { /* mock */ },

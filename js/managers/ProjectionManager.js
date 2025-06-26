@@ -65,7 +65,7 @@ class ProjectionManager {
 
 // Mock BaseProjection if not available (similar to GeometryManager)
 if (typeof BaseProjection === 'undefined') {
-    global.BaseProjection = class BaseProjection {
+    window.BaseProjection = class BaseProjection {
         constructor() { if (this.constructor === BaseProjection) throw new Error("Abstract class"); }
         update(params) { throw new Error("Must implement"); }
         getProjectionMatrix() { return []; }
