@@ -1,5 +1,5 @@
 // digital-magazine/js/content-filter.js
-import { navigateWithTransition } from './article-transitions.js';
+import { navigateWithSimpleFade } from './article-transitions.js'; // Changed to simple fade
 
 // Store all fetched articles here after initial load in main.js
 export let allFetchedArticles = [];
@@ -28,7 +28,7 @@ export function displayArticles(articles, containerId) {
 
     articles.forEach(article => {
         const card = document.createElement('div');
-        card.className = 'article-card-placeholder'; // Use existing class for styling
+        card.className = 'article-card-placeholder glass-panel-shimmer'; // Add shimmer class
         card.dataset.vib3Style = "glass-panel-primary";
         card.dataset.vib3InteractionPreset = "glass-panel-hover";
 

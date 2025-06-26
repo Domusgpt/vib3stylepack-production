@@ -1,5 +1,5 @@
 // digital-magazine/js/content-loader.js
-import { navigateWithTransition } from './article-transitions.js';
+import { navigateWithSimpleFade, geometricWipeNavigate } from './article-transitions.js'; // Updated imports
 
 const CONTENT_BASE_PATH = '../content/'; // Relative to this JS file's location in digital-magazine/js/
 
@@ -65,7 +65,7 @@ export async function loadSiteMeta() {
                 link.dataset.vib3InteractionPreset = "category-link-pulse";
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
-                    navigateWithTransition(categoryUrl);
+                    geometricWipeNavigate(categoryUrl); // Use geometric wipe for main nav
                 });
                 listItem.appendChild(link);
                 navListElement.appendChild(listItem);
@@ -104,7 +104,7 @@ export async function loadFeaturedArticle(articleSlug) {
             if (readMoreButton) {
                 readMoreButton.addEventListener('click', (e) => {
                     e.preventDefault();
-                    navigateWithTransition(articleUrl);
+                    navigateWithSimpleFade(articleUrl); // Keep simple fade for these
                 });
             }
             const titleElement = featuredArticlePlaceholder.querySelector('.article-title');
@@ -388,7 +388,7 @@ export async function loadCategoryPage(categoryId) {
             if (categoryArticles.length > 0) {
                 categoryArticles.forEach(article => {
                     const card = document.createElement('div');
-                    card.className = 'article-card-placeholder'; // Use existing class for styling
+                    card.className = 'article-card-placeholder glass-panel-shimmer'; // Add shimmer class
                     card.dataset.vib3Style = "glass-panel-primary";
                     card.dataset.vib3InteractionPreset = "glass-panel-hover";
 
@@ -403,7 +403,7 @@ export async function loadCategoryPage(categoryId) {
                     if (readMoreButton) {
                         readMoreButton.addEventListener('click', (e) => {
                             e.preventDefault();
-                            navigateWithTransition(articleUrl);
+                            navigateWithSimpleFade(articleUrl); // Corrected to use simple fade
                         });
                     }
                     const titleElement = card.querySelector('.article-title');

@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (pagePath === 'category.html') {
 import { VIB3StyleSystem } from './VIB3StyleSystem.js';
 import { loadSiteMeta, loadFeaturedArticle, loadFullArticle, loadCategoryPage } from './content-loader.js'; // Removed loadLatestArticles
-import { fadeInPage } from './article-transitions.js';
+import { initializePageLoadTransition } from './article-transitions.js'; // CORRECTED IMPORT
 import { setAllArticles, setupCategoryFilters, displayArticles } from './content-filter.js'; // Added imports
 
 // Define CONTENT_BASE_PATH for fetching all articles, consistent with content-loader.js
@@ -67,7 +67,7 @@ async function fetchAllArticleData() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOM fully loaded and parsed. Initializing Vib3code Digital Magazine Systems...");
 
-    fadeInPage();
+    initializePageLoadTransition(); // CORRECTED FUNCTION CALL
 
     const vib3System = new VIB3StyleSystem();
     window.Vib3codeApp = { vib3System, allArticles: [] }; // Initialize allArticles

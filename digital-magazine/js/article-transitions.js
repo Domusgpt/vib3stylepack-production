@@ -1,61 +1,79 @@
 // digital-magazine/js/article-transitions.js
 
-const FADE_DURATION = 300; // ms, should match CSS transition duration
+export const PAGE_TRANSITION_DURATION = 300; // ms, should match CSS --page-transition-duration
 
 /**
- * Fades out the page and then navigates to the given URL.
- * @param {string} url - The URL to navigate to after fade out.
+ * Initiates a simple fade-out transition and then navigates.
+ * @param {string} url - The URL to navigate to.
  */
-export function fadeOutPageAndNavigate(url) {
+export function navigateWithSimpleFade(url) {
     document.body.classList.add('page-fade-out');
     setTimeout(() => {
         window.location.href = url;
-        // Note: The new page will need to call fadeInPage or remove the class.
-        // For a true SPA, state management would handle this better.
-    }, FADE_DURATION);
+    }, PAGE_TRANSITION_DURATION);
 }
 
 /**
- * Fades in the page by removing the fade-out class.
- * Should be called when the new page content is ready.
+ * Initializes the page by triggering a fade-in.
+ * Assumes CSS sets body to opacity: 0 initially.
  */
 export function fadeInPage() {
-    // Ensure this is called after a slight delay if needed for rendering,
-    // or ensure body starts transparent and then fades in.
-    // For now, we assume the class is added before load by the previous page's fadeOut.
-    // Or, if not, we add a class that makes it initially transparent then fades in.
+    document.body.classList.remove('page-fade-out'); // Remove if present from bfcache
+    document.body.classList.add('page-fade-in'); // Add class to trigger CSS opacity transition to 1
+}
 
-    if (document.body.classList.contains('page-fade-out')) {
-        // If navigating from a page that faded out
-        document.body.classList.remove('page-fade-out'); // This will trigger CSS transition back to opacity 1
-    } else {
-        // If it's a direct load, ensure it starts transparent and fades in
-        document.body.style.opacity = '0'; // Start transparent
-        document.body.classList.add('page-fade-in-on-load'); // Add class for fade-in animation
-        // Force reflow if needed, though usually not for opacity
-        // void document.body.offsetWidth;
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => { // Double requestAnimationFrame for some browsers
-                 document.body.style.opacity = '1';
-            });
-        });
+
+/**
+ * Initiates a geometric wipe transition (covering the screen) and then navigates.
+ * @param {string} url - The URL to navigate to.
+ */
+export function geometricWipeNavigate(url) {
+    let wipeElement = document.getElementById('page-wipe-overlay');
+    if (!wipeElement) {
+        wipeElement = document.createElement('div');
+        wipeElement.id = 'page-wipe-overlay';
+        document.body.appendChild(wipeElement);
     }
+    wipeElement.className = 'page-wipe-overlay wipe-in'; // Start wipe-in animation
+
+    // Store that we are using wipe for the next page load (conceptual)
+    sessionStorage.setItem('Vib3PageTransitionType', 'wipe');
+
+    setTimeout(() => {
+        window.location.href = url;
+    }, PAGE_TRANSITION_DURATION + 100); // Allow wipe-in to mostly complete
 }
 
 /**
- * To be called from main.js on every page load to handle the fade-in.
+ * Initializes page by playing a wipe-out animation if needed, then fading in body.
  */
-export function initializePageFadeEffect() {
-    // If the page was navigated to via fadeOutPageAndNavigate,
-    // the 'page-fade-out' class would still be on the body from the *previous* page's state,
-    // which isn't how multi-page app transitions work.
-    // A better approach for multi-page:
-    // 1. Start every page with body opacity 0 (via CSS).
-    // 2. JS on load fades it in.
-    // 3. Link clicks fade out, then navigate.
+export function initializePageLoadTransition() {
+    const transitionType = sessionStorage.getItem('Vib3PageTransitionType');
 
-    // Let's simplify:
-    // CSS will set body to opacity 0 initially.
-    // This function will just trigger the fade-in.
-    document.body.classList.add('page-loaded'); // CSS will transition opacity to 1
+    if (transitionType === 'wipe') {
+        let wipeElement = document.getElementById('page-wipe-overlay');
+        if (!wipeElement) { // If navigating to a new page, wipe element needs to exist for wipe-out
+            wipeElement = document.createElement('div');
+            wipeElement.id = 'page-wipe-overlay';
+            document.body.appendChild(wipeElement);
+            wipeElement.classList.add('page-wipe-overlay'); // Ensure base style
+            wipeElement.classList.add('wipe-in'); // Assume it just finished wiping in
+        }
+
+        // Ensure body is hidden initially, then trigger wipe-out, then fade in body
+        document.body.classList.remove('page-fade-in'); // Ensure body is initially hidden by CSS (opacity 0)
+
+        requestAnimationFrame(() => { // Allow potential wipe-in to render if it's a fast back-nav
+            wipeElement.className = 'page-wipe-overlay wipe-out'; // Start wipe-out animation
+            setTimeout(() => {
+                if (wipeElement.parentNode) wipeElement.parentNode.removeChild(wipeElement);
+                fadeInPage(); // Now fade in the body content
+                sessionStorage.removeItem('Vib3PageTransitionType');
+            }, PAGE_TRANSITION_DURATION);
+        });
+    } else {
+        // Default to simple fade-in for direct loads or non-wipe transitions
+        fadeInPage();
+        sessionStorage.removeItem('Vib3PageTransitionType');
+    }
 }

@@ -128,10 +128,18 @@ export class InteractionCoordinator {
                 const handler = (event) => this.handleInteraction(event, presetName, preset, element);
                 element.addEventListener(eventType, handler);
                 // TODO: Store these listeners if we need to unbind them later (e.g., element removal)
+                // For now, check if a marker class exists to prevent re-binding, simplistic approach
+                if (!element.classList.contains('vib3-interaction-bound')) {
+                    element.addEventListener(eventType, handler);
+                    element.classList.add('vib3-interaction-bound'); // Mark as bound for this event type
+                    console.log(`InteractionCoordinator: Dynamically bound event "${eventType}" for preset "${presetName}" to element:`, element);
+                } else {
+                    // console.log(`InteractionCoordinator: Event "${eventType}" for preset "${presetName}" already bound or element marked for element:`, element);
+                }
             });
-            console.log(`InteractionCoordinator: Dynamically bound preset "${presetName}" to element:`, element);
         } else {
-            console.warn(`InteractionCoordinator: Preset "${presetName}" not found or misconfigured for dynamically added element:`, element);
+            if (presetName) console.warn(`InteractionCoordinator: Preset "${presetName}" not found or misconfigured for dynamically added element:`, element);
+            // If no presetName, element doesn't have the attribute, which is fine.
         }
     }
 }

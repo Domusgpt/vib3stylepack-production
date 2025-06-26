@@ -152,6 +152,30 @@ body.page-fade-out {
     opacity: 0 !important; /* Important to override initial or fade-in state */
 }
 
+/* --- Geometric Wipe Page Transition --- */
+#page-wipe-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--color-neon-cyan); /* Wipe color */
+    clip-path: circle(0% at 50% 50%); /* Start as a tiny circle in the center */
+    z-index: 9999; /* Highest z-index */
+    pointer-events: none; /* Allow clicks through if needed, though it covers screen */
+    transition: clip-path var(--page-transition-duration, 0.3s) cubic-bezier(0.65, 0, 0.35, 1); /* Smooth easing */
+}
+
+#page-wipe-overlay.wipe-in {
+    clip-path: circle(150% at 50% 50%); /* Expand to cover screen */
+}
+
+#page-wipe-overlay.wipe-out {
+    clip-path: circle(0% at 50% 50%); /* Shrink back to disappear */
+    /* Ensure transition happens on wipe-out too if not already covered by base transition */
+    transition-duration: calc(var(--page-transition-duration, 0.3s) * 1.2); /* Slightly longer wipe out */
+}
+
 /* --- Article Card Entry Animation --- */
 /* Apply .card-entry to article cards when they are added to the DOM,
    or use a staggered animation approach with JS if preferred.

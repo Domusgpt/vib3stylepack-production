@@ -137,19 +137,21 @@
   },
   "interactionPresets": {
     "glass-panel-hover": {
-      "description": "Hover effect for glassmorphic panels.",
+      "description": "Hover effect for glassmorphic panels, affects internal WebGL noise and conceptual edge.",
       "events": ["mouseover", "mouseout"],
       "targetActions": {
         "mouseover": {
           "duration": 200,
           "params": {
-            "intensity": 0.05, /* Slight increase in internal pattern intensity */
-            "edgeHighlightColor": [0.5, 0.8, 1.0, 0.7] /* Make edge glow visible */
+            "noiseIntensity": 0.05,  /* Increase noise intensity on hover */
+            "edgeBrightness": 1.0    /* Conceptual: Make edge fully bright */
+            /* Note: 'intensity' here was for a generic case, now we use specific 'noiseIntensity' */
+            /* 'edgeHighlightColor' is set in the base style; here we might just change its brightness/alpha */
           }
         },
         "mouseout": {
           "duration": 400,
-          "resetToBase": true
+          "resetToBase": true // Resets to base params of "glassPanelEffect" which has low noiseIntensity
         }
       },
       "ecosystemReactions": []
