@@ -1,4 +1,33 @@
 // digital-magazine/js/content-loader.js
+import { navigateWithSimpleFade, geometricWipeNavigate } from './article-transitions.js'; // Updated imports
+
+const CONTENT_BASE_PATH = '../content/'; // Relative to this JS file's location in digital-magazine/js/
+
+/**
+ * Fetches and populates site metadata like site title, tagline,
+ * and dynamically generates primary navigation.
+ */
+export async function loadSiteMeta() {
+    try {
+        const response = await fetch(`${CONTENT_BASE_PATH}site-meta.json`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const meta = await response.json();
+
+        // Populate site title and tagline
+        const siteTitleElement = document.querySelector('#site-header .site-title a');
+        const taglineElement = document.querySelector('#site-header .tagline');
+        if (siteTitleElement) siteTitleElement.textContent = meta.siteName;
+        if (taglineElement) taglineElement.textContent = meta.tagline;
+        document.title = `${meta.siteName} - ${meta.tagline}`;
+
+
+        // Populate primary navigation
+        const navListElement = document.getElementById('nav-list');
+        if (navListElement && meta.categories && Array.isArray(meta.categories)) {
+            navListElement.innerHTML = ''; // Clear existing placeholders
+            meta.categories.forEach(category => {
 import { navigateWithTransition } from './article-transitions.js';
 
 const CONTENT_BASE_PATH = '../content/'; // Relative to this JS file's location in digital-magazine/js/
@@ -36,7 +65,7 @@ export async function loadSiteMeta() {
                 link.dataset.vib3InteractionPreset = "category-link-pulse";
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
-                    navigateWithTransition(categoryUrl);
+                    geometricWipeNavigate(categoryUrl); // Use geometric wipe for main nav
                 });
                 listItem.appendChild(link);
                 navListElement.appendChild(listItem);
@@ -75,7 +104,7 @@ export async function loadFeaturedArticle(articleSlug) {
             if (readMoreButton) {
                 readMoreButton.addEventListener('click', (e) => {
                     e.preventDefault();
-                    navigateWithTransition(articleUrl);
+                    navigateWithSimpleFade(articleUrl); // Keep simple fade for these
                 });
             }
             const titleElement = featuredArticlePlaceholder.querySelector('.article-title');
@@ -161,7 +190,6 @@ export async function loadLatestArticles(limit = 3) {
     if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.scanAndInitializeNewElements) {
         window.Vib3codeApp.vib3System.scanAndInitializeNewElements(articlesGrid);
     }
-    }
 }
 
 
@@ -219,7 +247,15 @@ export async function loadFullArticle(articleSlug) {
         // Populate article body
         const articleBodyEl = document.getElementById('article-body');
         if (articleBodyEl) {
+            // Destroy existing VIB3 instances from embeds before clearing
+            if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.destroyVisualizerForElement) {
+                const existingEmbeds = articleBodyEl.querySelectorAll('[data-vib3-style]'); // More specific if embeds have a class
+                existingEmbeds.forEach(embed => {
+                     window.Vib3codeApp.vib3System.destroyVisualizerForElement(embed);
+                });
+            }
             articleBodyEl.innerHTML = ''; // Clear placeholder
+
             article.body.forEach(block => {
                 let element;
                 switch (block.type) {
@@ -356,11 +392,20 @@ export async function loadCategoryPage(categoryId) {
         // Populate articles grid
         const articlesGridEl = document.getElementById('category-articles-grid');
         if (articlesGridEl) {
+            // Destroy existing VIB3 instances before clearing
+            if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.destroyVisualizerForElement) {
+                Array.from(articlesGridEl.childNodes).forEach(child => {
+                    if (child.nodeType === 1 && (child.dataset.vib3Style || child.dataset.vib3InteractionPreset)) {
+                        window.Vib3codeApp.vib3System.destroyVisualizerForElement(child);
+                    }
+                });
+            }
             articlesGridEl.innerHTML = ''; // Clear placeholder
+
             if (categoryArticles.length > 0) {
                 categoryArticles.forEach(article => {
                     const card = document.createElement('div');
-                    card.className = 'article-card-placeholder'; // Use existing class for styling
+                    card.className = 'article-card-placeholder glass-panel-shimmer'; // Add shimmer class
                     card.dataset.vib3Style = "glass-panel-primary";
                     card.dataset.vib3InteractionPreset = "glass-panel-hover";
 
@@ -375,7 +420,7 @@ export async function loadCategoryPage(categoryId) {
                     if (readMoreButton) {
                         readMoreButton.addEventListener('click', (e) => {
                             e.preventDefault();
-                            navigateWithTransition(articleUrl);
+                            navigateWithSimpleFade(articleUrl); // Corrected to use simple fade
                         });
                     }
                     const titleElement = card.querySelector('.article-title');

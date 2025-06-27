@@ -56,76 +56,20 @@ export class VIB3StyleSystem {
      */
     createVisualizers() {
         const styledElements = document.querySelectorAll('[data-vib3-style]');
-        styledElements.forEach((element) => {
-            this.createVisualizerForElement(element);
-        });
-    }
+        styledElements.forEach((element, index) => {
+            const styleName = element.dataset.vib3Style;
+            const visualStylePreset = this.presetManager.getVisualStyle(styleName);
 
-    /**
-     * Creates a VIB34D visualizer instance for a single element if it has a valid style.
-     * @param {HTMLElement} element - The DOM element to create a visualizer for.
-     * @param {number} index - Optional index for unique ID generation (less critical now with element.id).
-     */
-    createVisualizerForElement(element, index = 0) {
-        if (this.visualizers.has(element)) {
-            // console.log("VIB3StyleSystem: Visualizer already exists for element:", element);
-            return this.visualizers.get(element);
-        }
-
-        const styleName = element.dataset.vib3Style;
-        if (!styleName) return null;
-
-        const visualStylePreset = this.presetManager.getVisualStyle(styleName);
-
-        if (visualStylePreset && visualStylePreset.parameters) {
-            const visualizerId = element.id || `vib3d-style-${styleName}-${Math.random().toString(16).slice(2)}`;
-            const instance = new VIB34D(element, visualStylePreset.parameters, visualizerId);
-            this.visualizers.set(element, instance);
-            console.log(`VIB3StyleSystem: Created visualizer ${visualizerId} for element:`, element);
-            return instance;
-        } else {
-            console.warn(`VIB3StyleSystem: Visual style preset "${styleName}" not found or misconfigured for element:`, element);
-            return null;
-        }
-    }
-
-
-    /**
-     * Scans a container (or the whole document) for new elements with VIB3 data attributes
-     * and initializes them.
-     * @param {HTMLElement} [containerElement=document.body] - The element to scan within.
-     */
-    scanAndInitializeNewElements(containerElement = document.body) {
-        if (!this.isInitialized || !this.presetManager.isLoaded) {
-            console.warn("VIB3StyleSystem: Cannot scan new elements, system not fully initialized.");
-            return;
-        }
-        console.log("VIB3StyleSystem: Scanning for new elements in", containerElement);
-
-        // Initialize new styled elements
-        const newStyledElements = containerElement.querySelectorAll('[data-vib3-style]');
-        newStyledElements.forEach(element => {
-            if (!this.visualizers.has(element)) { // Check if it's truly new or child of new
-                 this.createVisualizerForElement(element);
-            } else if (containerElement.contains(element) && element !== containerElement) {
-                 // If the container itself was previously styled, its children might be re-scanned
-                 // but are already known. This is fine.
+            if (visualStylePreset && visualStylePreset.parameters) {
+                // Assign a unique ID to the visualizer for easier debugging and tracking
+                const visualizerId = element.id || `vib3d-style-${styleName}-${index}`;
+                const instance = new VIB34D(element, visualStylePreset.parameters, visualizerId);
+                this.visualizers.set(element, instance);
+            } else {
+                console.warn(`VIB3StyleSystem: Visual style preset "${styleName}" not found or misconfigured for element:`, element);
             }
         });
-
-        // Initialize new interactive elements
-        const newInteractiveElements = containerElement.querySelectorAll('[data-vib3-interaction-preset]');
-        if (this.interactionCoordinator) {
-            newInteractiveElements.forEach(element => {
-                // InteractionCoordinator's bindInteractionsToElement should be idempotent
-                // or check if listeners are already attached if called multiple times on same element.
-                // For now, we assume it's safe to call, or it handles its own checks.
-                this.interactionCoordinator.bindInteractionsToElement(element);
-            });
-        }
-        console.log("VIB3StyleSystem: Finished scanning for new elements.");
     }
-
 
     /**
      * Retrieves a VIB34D instance associated with a given DOM element.

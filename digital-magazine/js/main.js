@@ -1,54 +1,78 @@
 import { VIB3StyleSystem } from './VIB3StyleSystem.js';
-import { loadSiteMeta, loadFeaturedArticle, loadFullArticle, loadCategoryPage } from './content-loader.js';
-import { fadeInPage } from './article-transitions.js';
-import { setAllArticles, setupCategoryFilters, displayArticles, setupSortControls } from './content-filter.js';
+import { loadSiteMeta, loadFeaturedArticle, loadLatestArticles, loadFullArticle } from './content-loader.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("DOM fully loaded and parsed. Initializing Vib3code Digital Magazine Systems...");
+
+    const vib3System = new VIB3StyleSystem();
+    // For potential future use if VIB3 system needs global access for re-scans
+    // window.Vib3codeApp = { vib3System };
+
+    try {
+        await vib3System.init('../presets.json');
+        console.log("Vib3code VIB3StyleSystem initialized successfully.");
+
+        // Common setup for all pages
+        await loadSiteMeta(); // Loads site title, tagline, navigation
+        updateFooterYear();
+
+        // Page-specific content loading
+        const pagePath = window.location.pathname.split("/").pop();
+
+        if (pagePath === 'index.html' || pagePath === '') { // Homepage
+            await loadFeaturedArticle('ema-report-monolith');
+            await loadLatestArticles(3);
+            console.log("Homepage dynamic content loaded.");
+        } else if (pagePath === 'article.html') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const articleSlug = urlParams.get('slug');
+            if (articleSlug) {
+                await loadFullArticle(articleSlug);
+                console.log(`Article page dynamic content for "${articleSlug}" loaded.`);
+            } else {
+                console.error("Article slug not found in URL for article.html");
+                // Optionally display an error message on the page
+                const articleBodyEl = document.getElementById('article-body');
+                if (articleBodyEl) articleBodyEl.innerHTML = "<p>Error: Article slug not provided in the URL.</p>";
+            }
+        } else if (pagePath === 'category.html') {
+import { VIB3StyleSystem } from './VIB3StyleSystem.js';
+import { loadSiteMeta, loadFeaturedArticle, loadFullArticle, loadCategoryPage } from './content-loader.js'; // Removed loadLatestArticles
+import { initializePageLoadTransition } from './article-transitions.js'; // CORRECTED IMPORT
+import { setAllArticles, setupCategoryFilters, displayArticles } from './content-filter.js'; // Added imports
 
 // Define CONTENT_BASE_PATH for fetching all articles, consistent with content-loader.js
 const CONTENT_BASE_PATH = '../content/';
 
 async function fetchAllArticleData() {
-    try {
-        // First fetch the article index
-        const indexResponse = await fetch(`${CONTENT_BASE_PATH}article-index.json`);
-        if (!indexResponse.ok) {
-            console.error('Could not fetch article index');
-            return [];
-        }
-        
-        const index = await indexResponse.json();
-        const articles = [];
-        
-        // Fetch each article based on the index
-        for (const articleInfo of index.articles) {
-            try {
-                const response = await fetch(`${CONTENT_BASE_PATH}articles/${articleInfo.slug}.json`);
-                if (response.ok) {
-                    const articleData = await response.json();
-                    // Merge index info with article data
-                    articles.push({
-                        ...articleData,
-                        ...articleInfo,
-                        categoryId: articleInfo.category
-                    });
-                } else {
-                    console.warn(`Could not fetch article data for slug: ${articleInfo.slug}`);
-                }
-            } catch (error) {
-                console.error(`Error fetching article ${articleInfo.slug}:`, error);
+    // For now, we only have one sample article. In a real scenario, this would fetch an index
+    // or iterate through a list of known article slugs.
+    const articleSlugs = [
+        'ema-report-monolith',
+        'ai-generative-patterns',
+        'open-source-data-export',
+        'decentralized-identity-future'
+    ];
+    const articles = [];
+    for (const slug of articleSlugs) {
+        try {
+            const response = await fetch(`${CONTENT_BASE_PATH}articles/${slug}.json`);
+            if (response.ok) {
+                articles.push(await response.json());
+            } else {
+                console.warn(`Could not fetch article data for slug: ${slug}`);
             }
+        } catch (error) {
+            console.error(`Error fetching article ${slug}:`, error);
         }
-        
-        return articles;
-    } catch (error) {
-        console.error('Error fetching article index:', error);
-        return [];
     }
+    return articles;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOM fully loaded and parsed. Initializing Vib3code Digital Magazine Systems...");
 
-    fadeInPage();
+    initializePageLoadTransition(); // CORRECTED FUNCTION CALL
 
     const vib3System = new VIB3StyleSystem();
     window.Vib3codeApp = { vib3System, allArticles: [] }; // Initialize allArticles
@@ -69,29 +93,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (pagePath === 'index.html' || pagePath === '') { // Homepage
             await loadFeaturedArticle('ema-report-monolith');
-            
-            // Track currently filtered articles
-            let currentFilteredArticles = allArticles;
-            
             // Setup filters, which will also handle initial display of articles
             if (siteMetaData && siteMetaData.categories) { // Ensure categories are loaded
-                setupCategoryFilters(allArticles, siteMetaData.categories, 'latest-articles-grid', 'filter-controls-container');
+                 setupCategoryFilters(allArticles, siteMetaData.categories, 'latest-articles-grid', 'filter-controls-container');
             } else { // Fallback if categories didn't load from siteMetaData, display all articles
                 displayArticles(allArticles, 'latest-articles-grid');
             }
-            
-            // Setup sorting controls
-            const { filterArticlesByCategory } = await import('./content-filter.js');
-            setupSortControls('sort-by-select', 'latest-articles-grid', () => {
-                // Get the current category filter
-                const activeFilterBtn = document.querySelector('.filter-button.active');
-                const categoryId = activeFilterBtn ? activeFilterBtn.dataset.categoryFilter : 'all';
-                
-                // Filter articles by category
-                return filterArticlesByCategory(categoryId, allArticles);
-            });
-            
-            console.log("Homepage dynamic content, filters, and sorting initialized.");
+            console.log("Homepage dynamic content and filters initialized.");
         } else if (pagePath === 'article.html') {
             const urlParams = new URLSearchParams(window.location.search);
             const articleSlug = urlParams.get('slug');

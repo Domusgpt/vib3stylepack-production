@@ -1,0 +1,197 @@
+{
+  "visualStyles": {
+    "holo-dark-background": {
+      "description": "Global holographic dark background for the magazine (WebGL).",
+      "parameters": {
+        "shader": "holoBackground", // Identifies this preset for WebGL path in VIB34D.js
+        "color": [0.02, 0.02, 0.05, 1.0], // u_baseColor
+        "timeScale": 0.1, // Multiplier for u_time (shader's internal 0.1 factor removed)
+        "intensity": 0.25, // u_intensity
+        "noiseAmount": 0.07, // u_noiseAmount
+        // Conceptual/unused by current simple shader, but kept for future ideas:
+        // "glitchFrequency": 0.02,
+        // "particleSystem": "subtle-stars",
+        // "shape": "hypercube", // Still useful conceptually or for other logic
+        "renderAsBackground": true // Still useful conceptually
+      }
+    },
+    "glass-panel-primary": {
+      "description": "Primary glassmorphic panel style with subtle WebGL noise.",
+      "parameters": {
+        "shader": "glassPanelEffect", // Use the new WebGL shader
+        "noiseScale": 25.0,
+        "noiseSpeed": 0.08,
+        "noiseIntensity": 0.025, // Very subtle base noise alpha
+        // "color" is not used by this shader directly, VIB3 canvas is transparent
+        // "edgeHighlightColor" / "edgeHighlightWidth" are conceptual for VIB3,
+        // actual edge might be CSS or a more complex VIB3 shader.
+        // For interaction, these might be temporarily overridden by JS.
+        "isGlassPanel": true // Flag for CSS or other logic if needed
+      }
+    },
+    "glass-panel-accent": {
+      "description": "Accent glassmorphic panel with slightly different WebGL noise.",
+      "parameters": {
+        "shader": "glassPanelEffect",
+        "noiseScale": 18.0, // Different scale for variety
+        "noiseSpeed": 0.06,
+        "noiseIntensity": 0.03,
+        "isGlassPanel": true
+      }
+    },
+    "category-ema-visual": {
+      "description": "Visual theme for EMA Reports category using holoBackground shader.",
+      "parameters": {
+        "shader": "holoBackground", // Use the existing global background shader
+        "color": [0.1, 0.2, 0.3, 1.0], // Different base color for EMA - more blue/cool
+        "timeScale": 0.05,
+        "intensity": 0.20,
+        "noiseAmount": 0.06
+        // "shape": "tetrahedron", // Conceptual, not used by holoBackground shader
+        // "particleDensity": 0.2
+      }
+    },
+    "category-ai-visual": {
+      "description": "Visual theme for AI Vibes category with particle system.",
+      "parameters": {
+        "shader": "aiCategoryShader",
+        "color": [0.7, 0.3, 0.9, 0.7], // u_particleColor (AI purple/magenta, slightly transparent)
+        "pointSize": 15.0,             // u_pointSize for particles
+        "numParticles": 250,           // Number of particles for this instance
+        "timeScale": 0.2               // Affects u_time, influencing particle movement speed in VS
+        // "shape": "sphere", // Conceptual, not directly used by this particle shader
+        // "flowFieldStrength": 0.3 // Conceptual
+      }
+    },
+    "category-code-visual": {
+      "description": "Visual theme for Code Liberation category using holoBackground shader.",
+      "parameters": {
+        "shader": "holoBackground",
+        "color": [0.1, 0.3, 0.2, 1.0], // More green for Code
+        "timeScale": 0.08,
+        "intensity": 0.22,
+        "noiseAmount": 0.05
+        // "shape": "torus",
+        // "lineThickness": 0.8
+      }
+    },
+    "category-future-visual": {
+      "description": "Visual theme for Future Forge category using holoBackground shader.",
+      "parameters": {
+        "shader": "holoBackground",
+        "color": [0.3, 0.25, 0.1, 1.0], // More orange/amber for Future
+        "timeScale": 0.12,
+        "intensity": 0.28,
+        "noiseAmount": 0.07
+        // "shape": "klein",
+        // "dimensionality": 4.0
+      }
+    },
+    "category-vault-visual": {
+      "description": "Visual theme for Visualizer Vault category using holoBackground shader.",
+      "parameters": {
+        "shader": "holoBackground",
+        "color": [0.2, 0.2, 0.4, 1.0], // Deeper blue for Vault
+        "timeScale": 0.03,
+        "intensity": 0.35, // Higher intensity for visual showcase
+        "noiseAmount": 0.09
+        // "shape": "crystal",
+        // "reflectivity": 0.7
+      }
+    },
+    "category-audio-visual": {
+      "description": "Visual theme for Audio Waves category using holoBackground shader.",
+      "parameters": {
+        "shader": "holoBackground",
+        "color": [0.15, 0.3, 0.15, 1.0], // Muted green/cyan for Audio
+        "timeScale": 0.20, // Faster, more active
+        "intensity": 0.26,
+        "noiseAmount": 0.06
+        // "shape": "wave",
+        // "amplitude": 0.6
+      }
+    },
+    "category-news-visual": {
+      "description": "Visual theme for Communiques (News) category using holoBackground shader.",
+      "parameters": {
+        "shader": "holoBackground",
+        "color": [0.22, 0.22, 0.22, 1.0], // Neutral grey for News
+        "timeScale": 0.07,
+        "intensity": 0.18,
+        "noiseAmount": 0.04
+        // "shape": "hypercube",
+        // "pulseFrequency": 0.5
+      }
+    },
+    "article-header-visual": {
+        "description": "Subtle WebGL visual for article headers.",
+        "parameters": {
+            "shader": "articleHeaderEffect",
+            "color": [0.3, 0.3, 0.45, 0.1], // Base color for the effect (RGBA) - subtle dark blue/purple
+            "pulseSpeed": 0.3,          // Speed of the vertical pulse/scanline
+            "pulseWidth": 0.15,         // Width of the pulse band (as a percentage of height)
+            "intensity": 0.6            // Overall visibility/alpha multiplier for the effect
+            // "heightPercentage" is not directly used by this shader, CSS/layout controls height
+        }
+    }
+  },
+  "interactionPresets": {
+    "glass-panel-hover": {
+      "description": "Hover effect for glassmorphic panels, affects internal WebGL noise and conceptual edge.",
+      "events": ["mouseover", "mouseout"],
+      "targetActions": {
+        "mouseover": {
+          "duration": 200,
+          "params": {
+            "noiseIntensity": 0.05,  /* Increase noise intensity on hover */
+            "edgeBrightness": 1.0    /* Conceptual: Make edge fully bright */
+            /* Note: 'intensity' here was for a generic case, now we use specific 'noiseIntensity' */
+            /* 'edgeHighlightColor' is set in the base style; here we might just change its brightness/alpha */
+          }
+        },
+        "mouseout": {
+          "duration": 400,
+          "resetToBase": true // Resets to base params of "glassPanelEffect" which has low noiseIntensity
+        }
+      },
+      "ecosystemReactions": []
+    },
+    "category-link-pulse": {
+        "description": "Pulse effect for category navigation links on hover.",
+        "events": ["mouseover", "mouseout"],
+        "targetActions": {
+            "mouseover": {
+                "duration": 150,
+                "params": {"intensity": 0.8, "scale": 1.1} /* Assuming VIB34D instance on link */
+            },
+            "mouseout": {
+                "duration": 300,
+                "resetToBase": true
+            }
+        },
+        "ecosystemReactions": []
+    },
+    "featured-article-focus": {
+        "description": "Interaction for focusing on a featured article.",
+        "events": ["click"], /* Could be scroll-based later */
+        "targetActions": {
+            "click": {
+                "duration": 500,
+                "params": {"intensity": 1.0, "speed": 0.01, "zoomFactor": 1.2} /* Conceptual zoom */
+            }
+        },
+        "ecosystemReactions": [
+            {
+                "selector": ".article-card:not(.featured)", /* Example for other cards */
+                "excludeTarget": true,
+                "actions": {
+                    "click": {
+                        "duration": 500,
+                        "params": { "intensity": 0.1, "speed": 0.3, "blurFactor": 0.5 } /* Conceptual blur */
+                    }
+                }
+            }
+        ]
+    }
+  }
+}
