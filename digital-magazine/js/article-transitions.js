@@ -69,7 +69,7 @@ export function initializePageLoadTransition() {
                 if (wipeElement.parentNode) wipeElement.parentNode.removeChild(wipeElement);
                 fadeInPage(); // Now fade in the body content
                 sessionStorage.removeItem('Vib3PageTransitionType');
-            }, PAGE_TRANSITION_DURATION);
+            }, PAGE_TRANSITION_DURATION * 1.2 + 50); // Match wipe-out CSS duration + small buffer
         });
     } else {
         // Default to simple fade-in for direct loads or non-wipe transitions
