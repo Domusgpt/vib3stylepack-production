@@ -139,8 +139,16 @@ class ShaderManager {
             if (uniformSetter) {
                 if (type.startsWith('Matrix')) {
                     uniformSetter.call(gl, location, transpose, value);
-                } else {
+                } else if (type.endsWith('v')) {
+                    // Vector types like '2fv', '3fv', '4fv' expect arrays
                     uniformSetter.call(gl, location, value);
+                } else {
+                    // Non-vector types like '2f', '3f', '4f' expect individual arguments
+                    if (Array.isArray(value)) {
+                        uniformSetter.call(gl, location, ...value);
+                    } else {
+                        uniformSetter.call(gl, location, value);
+                    }
                 }
             } else {
                 console.error(`ShaderManager: Invalid uniform type "${type}".`);
@@ -150,9 +158,9 @@ class ShaderManager {
 
     // Convenience methods for common uniform types
     setUniform1f(name, v0) { this.setUniform(name, '1f', v0); }
-    setUniform2f(name, v0, v1) { this.setUniform(name, '2f', [v0, v1]); } // Note: gl.uniform2f takes individual args
-    setUniform3f(name, v0, v1, v2) { this.setUniform(name, '3f', [v0, v1, v2]); } // Note: gl.uniform3f takes individual args
-    setUniform4f(name, v0, v1, v2, v3) { this.setUniform(name, '4f', [v0, v1, v2, v3]); } // Note: gl.uniform4f takes individual args
+    setUniform2f(name, v0, v1) { this.setUniform(name, '2f', [v0, v1]); }
+    setUniform3f(name, v0, v1, v2) { this.setUniform(name, '3f', [v0, v1, v2]); }
+    setUniform4f(name, v0, v1, v2, v3) { this.setUniform(name, '4f', [v0, v1, v2, v3]); }
 
     setUniform1i(name, v0) { this.setUniform(name, '1i', v0); }
     setUniform2i(name, v0, v1) { this.setUniform(name, '2i', [v0, v1]); }
