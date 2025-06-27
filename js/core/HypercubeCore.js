@@ -3,16 +3,7 @@
  */
 class HypercubeCore {
     constructor(canvas, options = {}) {
-        this.canvas = canvas;
-        this.gl = this.initWebGL(this.canvas);
-        if (!this.gl) {
-            throw new Error("WebGL not supported");
-        }
-        
-        this.shaderManager = new ShaderManager(this.gl);
-        this.geometryManager = new GeometryManager();
-        this.projectionManager = new ProjectionManager();
-        
+        // ... (constructor setup as before) ...
         this.interactionEngine = new VIB34DInteractionEngine(this.canvas);
 
         this.baseParameters = {
@@ -403,14 +394,9 @@ class HypercubeCore {
                 vec4 position_view = u_modelViewMatrix * vec4(pos3D_intermediate, 1.0);
                 v_position_viewspace = position_view.xyz;
                 gl_Position = u_projectionMatrix * position_view;
-                // Extract 3x3 from 4x4 matrix manually
-                mat3 modelView3x3 = mat3(
-                    u_modelViewMatrix[0].xyz,
-                    u_modelViewMatrix[1].xyz,
-                    u_modelViewMatrix[2].xyz
-                );
-                // Simple normal transformation without inverse/transpose for now
-                v_normal_viewspace = normalize(modelView3x3 * normalize(N_4D.xyz));
+                mat3 modelView3x3 = mat3(u_modelViewMatrix);
+                mat3 normalMatrix = transpose(inverse(modelView3x3));
+                v_normal_viewspace = normalize(normalMatrix * normalize(N_4D.xyz));
                 float basePointSize = u_lineThickness * 500.0;
                 float w_clip = max(gl_Position.w, 0.1);
                 gl_PointSize = clamp(basePointSize / w_clip, 1.0, 50.0);

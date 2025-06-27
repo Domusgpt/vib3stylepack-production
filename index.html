@@ -3,149 +3,397 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperAV - 4D Visualizer</title>
+    <title>VIB3STYLEPACK - Complete Implementation</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #111; color: #fff; font-family: Arial, sans-serif; }
-        canvas#hypercubeCanvas { display: block; width: 100vw; height: 100vh; }
-        /* Dashboard container will be positioned by its own CSS or JS from DashboardUIManager */
-    </style>
-    <!-- CRITICAL: Load gl-matrix library first -->
-    <script src="https://unpkg.com/gl-matrix@3.4.3/gl-matrix-min.js"></script>
-    <script>
-        // Make glMatrix components globally accessible as mat4, vec3 etc. for convenience
-        // This should be done after gl-matrix.js is loaded and before other project scripts.
-        if (typeof glMatrix !== 'undefined') {
-            window.mat4 = glMatrix.mat4;
-            window.vec3 = glMatrix.vec3;
-            window.vec4 = glMatrix.vec4;
-            window.quat = glMatrix.quat;
-            window.mat3 = glMatrix.mat3; // Important for normal matrix in shaders
-        } else {
-            console.error("CRITICAL ERROR: gl-matrix library was not loaded! Application will likely fail.");
-            // Fallback to basic mocks if glMatrix is missing, though shaders will likely still fail
-            // This is NOT a substitute for including the actual library.
-            if (typeof mat4 === 'undefined') {
-                console.warn('Using placeholder mat4 because glMatrix is missing.');
-                window.mat4 = {
-                    create: () => [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
-                    identity: (out) => { out.fill(0); out[0]=out[5]=out[10]=out[15]=1; return out; },
-                    lookAt: (out, eye, center, up) => out,
-                    perspective: (out, fovy, aspect, near, far) => out,
-                    ortho: (out, l, r, b, t, n, f) => out,
-                    multiply: (out, a, b) => out, // Simplified mock
-                    translate: (out, a, v) => out, 
-                    rotate: (out, a, rad, axis) => out,
-                    scale: (out, a, v) => out,
-                    invert: (out, a) => out, // Mock - does not actually invert
-                    transpose: (out, a) => out // Mock - does not actually transpose
-                };
-                window.mat3 = { // Basic mat3 mock if needed by JS, shaders need real glMatrix
-                     create: () => new Array(9).fill(0), identity: (out) => out, fromMat4:(out,a) => out, invert:(out,a)=>out, transpose:(out,a)=>out
-                };
-            }
+        :root {
+            --color-sovereignty: #1a1a2e;
+            --color-liberation: #16213e;
+            --color-bridge: #0f3460;
+            --color-accent: #e94560;
+            --color-wisdom: #f5f5f5;
+
+            --font-display: 'Playfair Display', serif;
+            --font-serif: 'Source Serif Pro', serif;
+            --font-sans: 'Inter', sans-serif;
         }
-    </script>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--color-sovereignty);
+            color: var(--color-wisdom);
+            font-family: var(--font-serif);
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Sections with portal scroll */
+        .section {
+            min-height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .section-content {
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            background: rgba(0,0,0,0.15);
+            padding: 3rem;
+            border-radius: 20px;
+            backdrop-filter: blur(15px) saturate(1.8);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow:
+                inset 0 0 40px rgba(255,255,255,0.05),
+                0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.5s ease;
+        }
+
+        .section-subtitle {
+            font-size: 1.3rem;
+            opacity: 0.8;
+            margin-bottom: 2rem;
+            transition: all 0.5s ease;
+        }
+
+        /* Navigation that uses geometry */
+        .nav-geometry {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .nav-item {
+            position: relative;
+            padding: 1rem;
+            background: rgba(0,0,0,0.25);
+            border-radius: 10px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px) saturate(1.2);
+            box-shadow:
+                inset 0 0 20px rgba(255,255,255,0.05),
+                0 4px 16px rgba(0,0,0,0.3);
+        }
+
+        .nav-item:hover {
+            transform: scale(1.05);
+            border-color: rgba(0,255,255,0.8);
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(15px) saturate(1.8);
+            box-shadow:
+                inset 0 0 30px rgba(0,255,255,0.1),
+                0 6px 24px rgba(0,0,0,0.4);
+        }
+
+        /* Content cards that use geometry */
+        .content-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .content-card {
+            position: relative;
+            padding: 2rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(12px) saturate(1.5);
+            transition: all 0.3s ease;
+            box-shadow:
+                inset 0 0 30px rgba(255,255,255,0.03),
+                0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .content-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,0,0.6);
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(16px) saturate(2.0);
+            box-shadow:
+                inset 0 0 40px rgba(255,255,255,0.08),
+                0 8px 30px rgba(0,0,0,0.4);
+        }
+
+        /* Accent elements that use geometry */
+        .accent-element {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(255,0,255,0.2);
+            border-radius: 5px;
+            margin: 0.5rem;
+            border: 1px solid rgba(255,0,255,0.4);
+        }
+
+        /* Status display */
+        .status-display {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            background: rgba(0,0,0,0.8);
+            padding: 1rem;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            border: 1px solid rgba(0,255,255,0.5);
+            z-index: 1000;
+        }
+
+        .status-row {
+            margin: 0.3rem 0;
+        }
+
+        /* VIB3 UI Component Animations */
+        @keyframes pulse {
+            0% { transform: scale(1.0); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1.0); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 60%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            80% { transform: translateY(-5px); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* VIB3 UI Component Styling */
+        .vib3-ui-component {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .vib3-ui-component:hover {
+            filter: brightness(1.1);
+        }
+
+        .vib3-nav-item:hover {
+            transform: translateX(5px);
+            background: rgba(0,255,255,0.1);
+            padding-left: 0.5rem;
+        }
+
+        .vib3-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,255,0,0.3);
+        }
+
+        .vib3-action-btn:active {
+            transform: translateY(0px);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Serif+Pro:wght@400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <canvas id="hypercubeCanvas"></canvas>
-    <div id="hyperAVDashboardContainer">
-        <!-- DashboardUIManager.js will populate this -->
+    <!-- Navigation using geometry -->
+    <nav class="nav-geometry">
+        <a href="#home" class="nav-item" data-vib3-element="navigation" data-vib3-geometry="hypercube">Home</a>
+        <a href="#articles" class="nav-item" data-vib3-element="navigation" data-vib3-geometry="tetrahedron">Articles</a>
+        <a href="#videos" class="nav-item" data-vib3-element="navigation" data-vib3-geometry="sphere">Videos</a>
+        <a href="#podcasts" class="nav-item" data-vib3-element="navigation" data-vib3-geometry="torus">Podcasts</a>
+        <a href="#ema" class="nav-item" data-vib3-element="navigation" data-vib3-geometry="wave">EMA</a>
+    </nav>
+
+    <!-- Home Section - Hypercube (Master Control) -->
+    <section id="home" class="section" data-vib3-section="home" data-vib3-geometry="hypercube" data-vib3-modifier="1.0">
+        <div class="section-content">
+            <h1 class="section-title" data-vib3-content="title">Multi-Dimensional Data Architecture</h1>
+            <p class="section-subtitle" data-vib3-content="subtitle">The foundational 4D framework for digital sovereignty</p>
+
+            <div class="content-cards">
+                <div class="content-card" data-vib3-element="content">
+                    <h3>Mathematical Foundation</h3>
+                    <p>4D polytopal projections creating unified visual language</p>
+                    <span class="accent-element" data-vib3-element="accent">Hypercube Core</span>
+                </div>
+                <div class="content-card" data-vib3-element="content">
+                    <h3>Parameter Control</h3>
+                    <p>Home section controls all other sections mathematically</p>
+                    <span class="accent-element" data-vib3-element="accent">Master System</span>
+                </div>
+                <div class="content-card" data-vib3-element="content">
+                    <h3>Portal Transitions</h3>
+                    <p>Smooth geometry morphing between sections</p>
+                    <span class="accent-element" data-vib3-element="accent">Infinite Flow</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Articles Section - Tetrahedron (home × 0.8) -->
+    <section id="articles" class="section" data-vib3-section="articles" data-vib3-geometry="tetrahedron" data-vib3-modifier="0.8">
+        <div class="section-content">
+            <h1 class="section-title" data-vib3-content="title">Structured Knowledge Systems</h1>
+            <p class="section-subtitle" data-vib3-content="subtitle">Technical documentation with stable geometric foundation</p>
+
+            <div class="content-cards">
+                <div class="content-card" data-vib3-element="content">
+                    <h3>Implementation Guides</h3>
+                    <p>Step-by-step technical integration</p>
+                    <span class="accent-element" data-vib3-element="accent">Structured</span>
+                </div>
+                <div class="content-card" data-vib3-element="content">
+                    <h3>Architecture Docs</h3>
+                    <p>System design and component relationships</p>
+                    <span class="accent-element" data-vib3-element="accent">Stable</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Videos Section - Sphere (home × 1.2) -->
+    <section id="videos" class="section" data-vib3-section="videos" data-vib3-geometry="sphere" data-vib3-modifier="1.2">
+        <div class="section-content">
+            <h1 class="section-title" data-vib3-content="title">Infinite Potential Media</h1>
+            <p class="section-subtitle" data-vib3-content="subtitle">Dynamic content with spherical flow patterns</p>
+
+            <div class="content-cards">
+                <div class="content-card" data-vib3-element="content">
+                    <h3>Demo Videos</h3>
+                    <p>Live system demonstrations</p>
+                    <span class="accent-element" data-vib3-element="accent">Dynamic</span>
+                </div>
+                <div class="content-card" data-vib3-element="content">
+                    <h3>Tutorials</h3>
+                    <p>Interactive learning experiences</p>
+                    <span class="accent-element" data-vib3-element="accent">Flowing</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Podcasts Section - Torus (home × 1.1) -->
+    <section id="podcasts" class="section" data-vib3-section="podcasts" data-vib3-geometry="torus" data-vib3-modifier="1.1">
+        <div class="section-content">
+            <h1 class="section-title" data-vib3-content="title">Continuous Flow Audio</h1>
+            <p class="section-subtitle" data-vib3-content="subtitle">Temporal content with toroidal geometry</p>
+
+            <div class="content-cards">
+                <div class="content-card" data-vib3-element="content">
+                    <h3>Tech Discussions</h3>
+                    <p>Deep conversations about digital architecture</p>
+                    <span class="accent-element" data-vib3-element="accent">Continuous</span>
+                </div>
+                <div class="content-card" data-vib3-element="content">
+                    <h3>Interview Series</h3>
+                    <p>Industry leaders and innovators</p>
+                    <span class="accent-element" data-vib3-element="accent">Flowing</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EMA Section - Wave (home × 0.9) -->
+    <section id="ema" class="section" data-vib3-section="ema" data-vib3-geometry="wave" data-vib3-modifier="0.9">
+        <div class="section-content">
+            <h1 class="section-title" data-vib3-content="title">Quantum Philosophy Spaces</h1>
+            <p class="section-subtitle" data-vib3-content="subtitle">Exoditical Moral Architecture principles</p>
+
+            <div class="content-cards">
+                <div class="content-card" data-vib3-element="content">
+                    <h3>EMA Principles</h3>
+                    <p>Digital sovereignty and liberation</p>
+                    <span class="accent-element" data-vib3-element="accent">Quantum</span>
+                </div>
+                <div class="content-card" data-vib3-element="content">
+                    <h3>Case Studies</h3>
+                    <p>Real-world ethical implementations</p>
+                    <span class="accent-element" data-vib3-element="accent">Probability</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Status Display -->
+    <div class="status-display">
+        <div class="status-row">System: <span id="system-status">Loading...</span></div>
+        <div class="status-row">Current Section: <span id="current-section">home</span></div>
+        <div class="status-row">Geometry: <span id="current-geometry">hypercube</span></div>
+        <div class="status-row">Modifier: <span id="current-modifier">1.0</span></div>
+        <div class="status-row">Contexts: <span id="context-count">0</span></div>
+        <div class="status-row">UI Components: <span id="ui-component-count">0</span></div>
+        <div class="status-row">Active Instances: <span id="active-instance-count">0</span></div>
     </div>
 
-    <!-- Core Architecture -->
-    <script src="js/core/BaseGeometry.js"></script>
-    <script src="js/core/BaseProjection.js"></script>
-    <script src="js/managers/ShaderManager.js"></script>
-    <script src="js/managers/GeometryManager.js"></script>
-    <script src="js/managers/ProjectionManager.js"></script>
-
-    <!-- Geometries -->
-    <script src="js/geometries/HypercubeGeometry.js"></script>
-    <script src="js/geometries/HypersphereGeometry.js"></script>
-    <script src="js/geometries/HypertetrahedronGeometry.js"></script>
-    <script src="js/geometries/TorusGeometry.js"></script>
-    <script src="js/geometries/KleinBottleGeometry.js"></script>
-    <script src="js/geometries/FractalGeometry.js"></script>
-    <script src="js/geometries/WaveGeometry.js"></script>
-    <script src="js/geometries/CrystalGeometry.js"></script>
-
-    <!-- Projections -->
-    <script src="js/projections/PerspectiveProjection.js"></script>
-    <script src="js/projections/OrthographicProjection.js"></script>
-    <script src="js/projections/StereographicProjection.js"></script>
-
-    <!-- Interaction System -->
-    <script src="js/interaction/VIB34DInteractionEngine.js"></script>
-    <script src="js/interaction/ParameterMappingSystem.js"></script>
-
-    <!-- Chromatic System -->
-    <script src="js/chromatic/VIB34DChromaticEngine.js"></script>
-
-    <!-- Bridge -->
-    <script src="js/bridge/VIB3HomeMasterBridge.js"></script>
-
-    <!-- Config (Presets & PresetManager) -->
-    <script src="js/config/presets.js"></script> 
-    
-    <!-- Main Core Logic -->
-    <script src="js/core/HypercubeCore.js"></script>
-
-    <!-- UI Manager -->
-    <script src="js/ui/DashboardUIManager.js"></script>
-
-    <!-- Main Application Instantiation Script -->
+    <!-- VIB3STYLEPACK Configuration -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.getElementById('hypercubeCanvas');
-            if (canvas) {
-                try {
-                    const core = new HypercubeCore(canvas, {
-                        onStateChangeCallback: (reason) => {
-                            if (window.hyperAVDashboard && typeof window.hyperAVDashboard.syncDashboardToCoreState === 'function') {
-                                // console.log(`HypercubeCore state changed: ${reason}. Syncing dashboard.`);
-                                window.hyperAVDashboard.syncDashboardToCoreState();
-                            }
-                        }
-                    });
-                    window.core = core; // Make core global for easy console access/debugging
+        window.VIB3Config = {
+            // Fixed section modifiers (home controls all)
+            sectionModifiers: {
+                home: 1.0,      // Master control
+                articles: 0.8,   // Calmer
+                videos: 1.2,     // More dynamic
+                podcasts: 1.1,   // Medium energy
+                ema: 0.9        // Thoughtful
+            },
 
-                    if (typeof DashboardUIManager !== 'undefined') {
-                        window.hyperAVDashboard = new DashboardUIManager(core, 'hyperAVDashboardContainer');
-                    } else {
-                        console.warn("DashboardUIManager class not found. Dashboard will not be initialized. Make sure js/ui/DashboardUIManager.js is created and loaded before this script.");
-                    }
+            // Geometry per section
+            sectionGeometries: {
+                home: 'hypercube',
+                articles: 'tetrahedron',
+                videos: 'sphere',
+                podcasts: 'torus',
+                ema: 'wave'
+            },
 
-                    // Register all known geometries and projections
-                    if (typeof HypercubeGeometry !== 'undefined') core.geometryManager.registerGeometry('hypercube', HypercubeGeometry);
-                    if (typeof HypersphereGeometry !== 'undefined') core.geometryManager.registerGeometry('hypersphere', HypersphereGeometry);
-                    if (typeof HypertetrahedronGeometry !== 'undefined') core.geometryManager.registerGeometry('hypertetrahedron', HypertetrahedronGeometry);
-                    if (typeof TorusGeometry !== 'undefined') core.geometryManager.registerGeometry('torus', TorusGeometry);
-                    if (typeof KleinBottleGeometry !== 'undefined') core.geometryManager.registerGeometry('kleinbottle', KleinBottleGeometry);
-                    if (typeof FractalGeometry !== 'undefined') core.geometryManager.registerGeometry('fractal', FractalGeometry);
-                    if (typeof WaveGeometry !== 'undefined') core.geometryManager.registerGeometry('wave', WaveGeometry);
-                    if (typeof CrystalGeometry !== 'undefined') core.geometryManager.registerGeometry('crystal', CrystalGeometry);
+            // Multi-element roles
+            elementRoles: {
+                background: { modifier: 0.7, color: [1,0,1], opacity: 0.8 }, // Magenta
+                content: { modifier: 1.0, color: [0,1,1], opacity: 0.6 },    // Cyan
+                accent: { modifier: 1.3, color: [1,1,0], opacity: 0.4 },     // Yellow
+                navigation: { modifier: 0.9, color: [0,1,0], opacity: 0.7 }  // Green
+            },
 
-                    if (typeof PerspectiveProjection !== 'undefined') core.projectionManager.registerProjection('perspective', PerspectiveProjection);
-                    if (typeof OrthographicProjection !== 'undefined') core.projectionManager.registerProjection('orthographic', OrthographicProjection);
-                    if (typeof StereographicProjection !== 'undefined') core.projectionManager.registerProjection('stereographic', StereographicProjection);
-                    
-                    if (core.presetManager && typeof VIB3_PRESETS_EXPANDED !== 'undefined' && VIB3_PRESETS_EXPANDED.length > 0) {
-                        core.presetManager.loadPresetByName(VIB3_PRESETS_EXPANDED[0].name);
-                    } else {
-                        core.setGeometry('hypercube'); 
-                        core.setProjection('perspective');
-                    }
-                    
-                    core.start();
+            // Canvas consolidation
+            enableCanvasConsolidation: true,
+            targetContexts: 6, // 5 sections + 1 crystal
 
-                } catch (error) {
-                    console.error("Failed to initialize HypercubeCore:", error);
-                    document.body.innerHTML = `<p>Error: ${error.message}. Please ensure your browser supports WebGL and all scripts are loaded correctly.</p>`;
-                }
-            } else {
-                console.error("Canvas element #hypercubeCanvas not found.");
-            }
-        });
+            // Portal scroll
+            enablePortalScroll: true,
+            transitionDuration: 800,
+            snapToSections: true,
+
+            // Content reaction
+            enableContentReaction: true,
+
+            // Debug
+            debugMode: true
+        };
     </script>
+
+    <!-- VIB3STYLEPACK Scripts -->
+    <script src="js/vib34d-core.js"></script>
+    <script src="js/vib3-multi-visualizer-system.js"></script>
+    <script src="js/vib3-home-master.js"></script>
+    <script src="js/vib3-portal-scroll.js"></script>
+    <script src="js/vib3-element-mapper.js"></script>
+    <script src="js/vib3-content-reactor.js"></script>
+    <script src="js/vib3-stylepack.js"></script>
 </body>
 </html>
