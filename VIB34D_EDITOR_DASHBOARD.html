@@ -5,6 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VIB34D Editor Dashboard - Reactive UI Builder</title>
     <script src="https://unpkg.com/gl-matrix@3.4.3/gl-matrix-min.js"></script>
+    <script>
+        // Make glMatrix components globally accessible for VIB34D system
+        window.addEventListener('load', () => {
+            if (typeof glMatrix !== 'undefined') {
+                window.mat4 = glMatrix.mat4;
+                window.vec3 = glMatrix.vec3;
+                window.vec4 = glMatrix.vec4;
+                window.quat = glMatrix.quat;
+                window.mat3 = glMatrix.mat3;
+                console.log('✅ gl-matrix components made globally accessible');
+            } else {
+                console.error('❌ CRITICAL: gl-matrix library not loaded!');
+                // Provide minimal fallbacks to prevent crashes
+                window.mat4 = {
+                    create: () => new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]),
+                    identity: (out) => { out.set([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]); return out; },
+                    perspective: (out, fovy, aspect, near, far) => out,
+                    lookAt: (out, eye, center, up) => out,
+                    multiply: (out, a, b) => out,
+                    translate: (out, a, v) => out,
+                    rotate: (out, a, rad, axis) => out,
+                    scale: (out, a, v) => out,
+                    invert: (out, a) => out,
+                    transpose: (out, a) => out
+                };
+                window.vec3 = {
+                    create: () => new Float32Array(3),
+                    set: (out, x, y, z) => { out[0]=x; out[1]=y; out[2]=z; return out; },
+                    normalize: (out, a) => out,
+                    cross: (out, a, b) => out,
+                    subtract: (out, a, b) => out
+                };
+                window.mat3 = {
+                    create: () => new Float32Array(9),
+                    identity: (out) => out,
+                    fromMat4: (out, a) => out,
+                    invert: (out, a) => out,
+                    transpose: (out, a) => out
+                };
+                console.warn('⚠️ Using fallback mat4 - 4D visualizations will not work properly');
+            }
+        });
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
