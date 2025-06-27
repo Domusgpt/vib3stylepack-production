@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.Vib3codeApp = { vib3System };
 
     try {
-        await vib3System.init('../presets.json');
+        await vib3System.init('./presets.json');
         console.log("Vib3code VIB3StyleSystem initialized successfully.");
 
         // Common setup for all pages

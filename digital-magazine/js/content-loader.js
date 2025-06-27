@@ -1,7 +1,7 @@
 // digital-magazine/js/content-loader.js
 import { navigateWithSimpleFade, geometricWipeNavigate } from './article-transitions.js'; // Updated imports
 
-const CONTENT_BASE_PATH = '../content/'; // Relative to this JS file's location in digital-magazine/js/
+const CONTENT_BASE_PATH = './content/'; // Relative to the HTML file in digital-magazine/
 
 /**
  * Fetches and populates site metadata like site title, tagline,
