@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Dashboard - WORKING</title>
+    <script src="https://unpkg.com/gl-matrix@3.4.3/gl-matrix-min.js"></script>
+    <script>
+        // Initialize gl-matrix
+        (function() {
+            let attempts = 0;
+            function initializeGLMatrix() {
+                attempts++;
+                if (typeof glMatrix !== 'undefined') {
+                    window.mat4 = glMatrix.mat4;
+                    window.vec3 = glMatrix.vec3;
+                    window.vec4 = glMatrix.vec4;
+                    window.quat = glMatrix.quat;
+                    window.mat3 = glMatrix.mat3;
+                    console.log('✅ gl-matrix ready');
+                    return true;
+                }
+                if (attempts < 50) setTimeout(initializeGLMatrix, 10);
+            }
+            initializeGLMatrix();
+        })();
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr 250px;
+            grid-template-rows: 50px 1fr;
+            height: 100vh;
+        }
+        
+        .header {
+            grid-column: 1 / -1;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .logo { font-weight: bold; color: #00ffff; }
+        
+        .toolbar { display: flex; gap: 10px; }
+        .btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn:hover { background: rgba(0, 255, 255, 0.2); }
+        
+        .sidebar {
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .component-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            cursor: grab;
+            transition: all 0.3s ease;
+        }
+        
+        .component-item:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .component-item:active { cursor: grabbing; }
+        
+        .component-icon {
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        .workspace {
+            position: relative;
+            background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%);
+            overflow: hidden;
+        }
+        
+        .workspace.drop-active {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px dashed #00ffff;
+        }
+        
+        .ui-element {
+            position: absolute;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            cursor: move;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .ui-element.selected {
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .ui-element canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .properties {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 1px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .property-item {
+            margin-bottom: 15px;
+        }
+        
+        .property-label {
+            display: block;
+            font-size: 12px;
+            color: #ccc;
+            margin-bottom: 5px;
+        }
+        
+        .property-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .geometry-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        
+        .geometry-option {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .geometry-option:hover,
+        .geometry-option.active {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: #00ffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <div class="logo">VIB34D Dashboard</div>
+            <div class="toolbar">
+                <button class="btn" onclick="clearAll()">Clear</button>
+                <button class="btn" onclick="exportHTML()">Export</button>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <h3>Components</h3>
+            
+            <!-- Draggable Items -->
+            <div class="component-item" draggable="true" data-geometry="hypercube">
+                <div class="component-icon">📦</div>
+                <div>Hypercube</div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-geometry="hypersphere">
+                <div class="component-icon">🔮</div>
+                <div>Hypersphere</div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-geometry="hypertetrahedron">
+                <div class="component-icon">🔺</div>
+                <div>Hypertetrahedron</div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-geometry="torus">
+                <div class="component-icon">🍩</div>
+                <div>Torus</div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-geometry="kleinbottle">
+                <div class="component-icon">🧪</div>
+                <div>Klein Bottle</div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-geometry="fractal">
+                <div class="component-icon">❄️</div>
+                <div>Fractal</div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-geometry="wave">
+                <div class="component-icon">🌊</div>
+                <div>Wave</div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-geometry="crystal">
+                <div class="component-icon">💎</div>
+                <div>Crystal</div>
+            </div>
+        </div>
+        
+        <div class="workspace" id="workspace">
+            <!-- Elements will be placed here -->
+        </div>
+        
+        <div class="properties">
+            <h3>Properties</h3>
+            <div id="propertyPanel">
+                <p style="color: #666; text-align: center; margin-top: 50px;">
+                    Select an element to edit properties
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple Dashboard Implementation
+        class SimpleDashboard {
+            constructor() {
+                this.elements = new Map();
+                this.selectedElement = null;
+                this.nextId = 1;
+                
+                this.setupDragDrop();
+                console.log('✅ Simple Dashboard ready');
+            }
+            
+            setupDragDrop() {
+                // Setup drag handlers
+                document.querySelectorAll('.component-item').forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        const geometry = e.target.dataset.geometry || e.target.closest('[data-geometry]').dataset.geometry;
+                        e.dataTransfer.setData('text/plain', geometry);
+                        console.log('🎯 Dragging:', geometry);
+                    });
+                });
+                
+                // Setup drop zone
+                const workspace = document.getElementById('workspace');
+                
+                workspace.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    workspace.classList.add('drop-active');
+                });
+                
+                workspace.addEventListener('dragleave', (e) => {
+                    if (!workspace.contains(e.relatedTarget)) {
+                        workspace.classList.remove('drop-active');
+                    }
+                });
+                
+                workspace.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    workspace.classList.remove('drop-active');
+                    
+                    const geometry = e.dataTransfer.getData('text/plain');
+                    const rect = workspace.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    this.createElement(x, y, geometry);
+                    console.log('✅ Dropped:', geometry, 'at', x, y);
+                });
+            }
+            
+            createElement(x, y, geometry) {
+                const id = `element_${this.nextId++}`;
+                
+                const element = document.createElement('div');
+                element.className = 'ui-element';
+                element.dataset.id = id;
+                element.style.left = x + 'px';
+                element.style.top = y + 'px';
+                element.style.width = '200px';
+                element.style.height = '150px';
+                
+                // Add content
+                element.innerHTML = `
+                    <div style="padding: 10px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">${this.getGeometryIcon(geometry)}</div>
+                        <div style="font-size: 14px; color: #00ffff;">${geometry}</div>
+                        <div style="font-size: 10px; color: #888; margin-top: 5px;">4D Visualization</div>
+                    </div>
+                `;
+                
+                // Make draggable
+                this.makeElementDraggable(element);
+                
+                // Add click handler
+                element.addEventListener('click', () => {
+                    this.selectElement(id);
+                });
+                
+                document.getElementById('workspace').appendChild(element);
+                
+                // Store element data
+                this.elements.set(id, {
+                    domElement: element,
+                    geometry: geometry,
+                    properties: {
+                        intensity: 0.8,
+                        speed: 1.0,
+                        density: 10
+                    }
+                });
+                
+                this.selectElement(id);
+                console.log(`✅ Created ${geometry} element:`, id);
+            }
+            
+            getGeometryIcon(geometry) {
+                const icons = {
+                    hypercube: '📦',
+                    hypersphere: '🔮',
+                    hypertetrahedron: '🔺',
+                    torus: '🍩',
+                    kleinbottle: '🧪',
+                    fractal: '❄️',
+                    wave: '🌊',
+                    crystal: '💎'
+                };
+                return icons[geometry] || '📦';
+            }
+            
+            makeElementDraggable(element) {
+                let isDragging = false;
+                let startX, startY, initialX, initialY;
+                
+                element.addEventListener('mousedown', (e) => {
+                    if (e.target === element || element.contains(e.target)) {
+                        isDragging = true;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        initialX = parseInt(element.style.left);
+                        initialY = parseInt(element.style.top);
+                        e.preventDefault();
+                    }
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        const deltaX = e.clientX - startX;
+                        const deltaY = e.clientY - startY;
+                        element.style.left = (initialX + deltaX) + 'px';
+                        element.style.top = (initialY + deltaY) + 'px';
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+            }
+            
+            selectElement(elementId) {
+                // Clear previous selection
+                document.querySelectorAll('.ui-element.selected').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                
+                this.selectedElement = elementId;
+                
+                if (elementId && this.elements.has(elementId)) {
+                    const element = this.elements.get(elementId);
+                    element.domElement.classList.add('selected');
+                    this.showProperties(elementId);
+                } else {
+                    this.showProperties(null);
+                }
+            }
+            
+            showProperties(elementId) {
+                const panel = document.getElementById('propertyPanel');
+                
+                if (!elementId || !this.elements.has(elementId)) {
+                    panel.innerHTML = `
+                        <p style="color: #666; text-align: center; margin-top: 50px;">
+                            Select an element to edit properties
+                        </p>
+                    `;
+                    return;
+                }
+                
+                const element = this.elements.get(elementId);
+                
+                panel.innerHTML = `
+                    <div class="property-item">
+                        <label class="property-label">Geometry Type</label>
+                        <div class="geometry-selector">
+                            ${['hypercube', 'hypersphere', 'hypertetrahedron', 'torus', 'kleinbottle', 'fractal', 'wave', 'crystal'].map(geo => `
+                                <div class="geometry-option ${element.geometry === geo ? 'active' : ''}" 
+                                     onclick="dashboard.changeGeometry('${elementId}', '${geo}')">
+                                    ${geo}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Intensity</label>
+                        <input type="range" class="property-input" min="0" max="2" step="0.01" 
+                               value="${element.properties.intensity}"
+                               onchange="dashboard.updateProperty('${elementId}', 'intensity', this.value)">
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Speed</label>
+                        <input type="range" class="property-input" min="0" max="3" step="0.01" 
+                               value="${element.properties.speed}"
+                               onchange="dashboard.updateProperty('${elementId}', 'speed', this.value)">
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Density</label>
+                        <input type="range" class="property-input" min="1" max="25" step="0.5" 
+                               value="${element.properties.density}"
+                               onchange="dashboard.updateProperty('${elementId}', 'density', this.value)">
+                    </div>
+                    
+                    <div class="property-item">
+                        <button class="btn" onclick="dashboard.deleteElement('${elementId}')" 
+                                style="width: 100%; background: rgba(255, 0, 0, 0.3);">
+                            Delete Element
+                        </button>
+                    </div>
+                `;
+            }
+            
+            changeGeometry(elementId, newGeometry) {
+                if (!this.elements.has(elementId)) return;
+                
+                const element = this.elements.get(elementId);
+                element.geometry = newGeometry;
+                
+                // Update visual
+                const icon = element.domElement.querySelector('div div');
+                if (icon) {
+                    icon.textContent = this.getGeometryIcon(newGeometry);
+                }
+                
+                const label = icon.nextElementSibling;
+                if (label) {
+                    label.textContent = newGeometry;
+                }
+                
+                this.showProperties(elementId);
+                console.log(`🔄 Changed geometry to: ${newGeometry}`);
+            }
+            
+            updateProperty(elementId, property, value) {
+                if (!this.elements.has(elementId)) return;
+                
+                const element = this.elements.get(elementId);
+                element.properties[property] = parseFloat(value);
+                
+                console.log(`⚙️ Updated ${property} to ${value}`);
+            }
+            
+            deleteElement(elementId) {
+                if (!this.elements.has(elementId)) return;
+                
+                const element = this.elements.get(elementId);
+                element.domElement.remove();
+                this.elements.delete(elementId);
+                
+                if (this.selectedElement === elementId) {
+                    this.selectElement(null);
+                }
+                
+                console.log(`🗑️ Deleted element: ${elementId}`);
+            }
+            
+            clearAll() {
+                this.elements.forEach((element, id) => {
+                    element.domElement.remove();
+                });
+                this.elements.clear();
+                this.selectedElement = null;
+                this.showProperties(null);
+                console.log('🧹 Cleared all elements');
+            }
+        }
+        
+        // Global functions
+        function clearAll() {
+            if (window.dashboard) {
+                window.dashboard.clearAll();
+            }
+        }
+        
+        function exportHTML() {
+            alert('Export functionality - elements count: ' + (window.dashboard ? window.dashboard.elements.size : 0));
+        }
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            window.dashboard = new SimpleDashboard();
+            console.log('🚀 Dashboard initialized and ready!');
+        });
+    </script>
+</body>
+</html>
