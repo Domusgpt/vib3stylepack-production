@@ -106,55 +106,65 @@ export class VIB3StyleSystem {
             console.warn("VIB3StyleSystem: Cannot scan new elements, system not fully initialized.");
             return;
         }
-        console.log("VIB3StyleSystem: Scanning for new elements in", containerElement.id || containerElement.tagName);
+        console.log(`VIB3StyleSystem: Scanning for new VIB3 elements within ${containerElement.id || containerElement.tagName || 'document body'}.`);
         let newVisualizersCount = 0;
-        let newInteractionsCount = 0;
+        // let newInteractionsBoundCount = 0; // Would require return value from bindInteractionsToElement
 
-        // Initialize new styled elements
+        // Find and initialize new styled elements ([data-vib3-style])
         const newStyledElements = containerElement.querySelectorAll('[data-vib3-style]');
         newStyledElements.forEach(element => {
-            // Check if element itself or its parent (if containerElement is a direct child) is new
-            if (!this.visualizers.has(element)) {
-                if(this.createVisualizerForElement(element)) {
+            // Ensure we only process elements not already managed or if the container itself is the element
+            if (!this.visualizers.has(element) || element === containerElement) {
+                if (this.createVisualizerForElement(element)) { // createVisualizerForElement now also checks if it exists
                     newVisualizersCount++;
                 }
             }
         });
-        if (newVisualizersCount > 0) console.log(`VIB3StyleSystem: Initialized ${newVisualizersCount} new VIB3 visualizers.`);
-
-        // Initialize new interactive elements
-        const newInteractiveElements = containerElement.querySelectorAll('[data-vib3-interaction-preset]');
-        if (this.interactionCoordinator) {
-            newInteractiveElements.forEach(element => {
-                // Assuming bindInteractionsToElement is idempotent or checks internally
-                // We pass element to count if it was newly bound.
-                // For now, InteractionCoordinator logs its own successful bindings.
-                this.interactionCoordinator.bindInteractionsToElement(element);
-            });
-             // Could count new bindings if bindInteractionsToElement returned a status
+        if (newVisualizersCount > 0) {
+            console.log(`VIB3StyleSystem: Initialized ${newVisualizersCount} new VIB3 visualizer(s) in ${containerElement.id || containerElement.tagName}.`);
         }
-        console.log("VIB3StyleSystem: Finished scanning for new elements in", containerElement.id || containerElement.tagName);
+
+        // Find and bind interactions for new/existing elements with [data-vib3-interaction-preset]
+        // This ensures interactions are bound even if the element was already styled but its content changed,
+        // or if an element only has interaction presets.
+        const interactiveElements = containerElement.querySelectorAll('[data-vib3-interaction-preset]');
+        if (this.interactionCoordinator) {
+            interactiveElements.forEach(element => {
+                // bindInteractionsToElement is designed to be somewhat idempotent (prevents duplicate event listeners for same type)
+                this.interactionCoordinator.bindInteractionsToElement(element);
+                // To count newly bound interactions, bindInteractionsToElement would need to return a status.
+            });
+        }
+        console.log(`VIB3StyleSystem: Finished scanning for new VIB3 elements in ${containerElement.id || containerElement.tagName}.`);
     }
 
     /**
-     * Conceptual: Removes a visualizer and cleans up its resources.
-     * This would be called if a dynamically added element with a VIB3 instance is removed from DOM.
-     * Full implementation requires tracking listeners in InteractionCoordinator too.
+     * Removes a visualizer and unbinds its interactions, cleaning up its resources.
+     * This should be called *before* the associated DOM element is removed or its innerHTML is cleared.
      * @param {HTMLElement} element - The DOM element whose visualizer should be destroyed.
      */
     destroyVisualizerForElement(element) {
+        if (!element) {
+            console.warn("VIB3StyleSystem: destroyVisualizerForElement called with null or undefined element.");
+            return;
+        }
         if (this.visualizers.has(element)) {
             const viz = this.visualizers.get(element);
+            console.log(`VIB3StyleSystem: Destroying visualizer for element:`, element.id || element.className);
 
-            // Unbind interactions first
+            // 1. Unbind interactions associated with this element
             if (this.interactionCoordinator && this.interactionCoordinator.unbindInteractionsFromElement) {
                 this.interactionCoordinator.unbindInteractionsFromElement(element);
             }
 
-            viz.destroy(); // Call VIB34D instance's destroy method
+            // 2. Call the VIB34D instance's destroy method (e.g., to clean up canvas, WebGL resources)
+            viz.destroy();
+
+            // 3. Remove from the managed visualizers map
             this.visualizers.delete(element);
-            console.log(`VIB3StyleSystem: Destroyed visualizer and unbound interactions for element:`, element.id || element.className, `. Total visualizers: ${this.visualizers.size}`);
+            console.log(`VIB3StyleSystem: Visualizer destroyed for ${element.id || element.className}. Total visualizers: ${this.visualizers.size}`);
         } else {
+            // It's common for this to be called on elements that might not have VIB3 instances (e.g. children of a cleared container)
             // console.log("VIB3StyleSystem: No visualizer found to destroy for element:", element.id || element.className);
         }
     }

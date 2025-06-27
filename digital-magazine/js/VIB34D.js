@@ -267,58 +267,71 @@ export class VIB34D {
         this.gl = gl;
 
         let vsSource, fsSource;
-        let specificUniformKeys = []; // To store keys for shader-specific uniforms
+        let specificUniformKeys = []; // Stores keys from currentParams that map to shader-specific uniforms
 
-        if (this.currentParams.shader === "holoBackground") {
-            vsSource = this.getHoloBackgroundVertexShader();
-            fsSource = this.getHoloBackgroundFragmentShader();
-            specificUniformKeys = ["baseColor", "noiseAmount", "intensity"];
-            console.log(`VIB34D ${this.id}: Initializing WebGL for holoBackground shader.`);
-        } else if (this.currentParams.shader === "glassPanelEffect") {
-            vsSource = this.getGlassPanelVertexShader();
-            fsSource = this.getGlassPanelFragmentShader();
-            specificUniformKeys = ["noiseScale", "noiseSpeed", "noiseIntensity"];
-            console.log(`VIB34D ${this.id}: Initializing WebGL for glassPanelEffect shader.`);
-        } else if (this.currentParams.shader === "articleHeaderEffect") {
-            vsSource = this.getArticleHeaderVertexShader();
-            fsSource = this.getArticleHeaderFragmentShader();
-            specificUniformKeys = ["baseColor", "pulseSpeed", "pulseWidth", "intensity"];
-            console.log(`VIB34D ${this.id}: Initializing WebGL for articleHeaderEffect shader.`);
-        } else if (this.currentParams.shader === "aiCategoryShader") {
-            vsSource = this.getAICategoryVertexShader();
-            fsSource = this.getAICategoryFragmentShader();
-            specificUniformKeys = ["particleColor", "pointSize"]; // u_time, u_resolution are common
-            console.log(`VIB34D ${this.id}: Initializing WebGL for aiCategoryShader.`);
-        } else {
-            console.log(`VIB34D ${this.id}: No specific WebGL shader defined in preset or preset shader not recognized. Defaulting to 2D/none.`);
-            this.gl = null;
-            return false;
+        // Shader selection logic based on 'shader' parameter in the preset.
+        // This determines which vertex/fragment shaders to load and which specific uniforms to look up.
+        switch (this.currentParams.shader) {
+            case "holoBackground":
+                vsSource = this.getHoloBackgroundVertexShader();
+                fsSource = this.getHoloBackgroundFragmentShader();
+                specificUniformKeys = ["baseColor", "noiseAmount", "intensity"];
+                console.log(`VIB34D ${this.id}: Initializing WebGL for 'holoBackground' shader.`);
+                break;
+            case "glassPanelEffect":
+                vsSource = this.getGlassPanelVertexShader();
+                fsSource = this.getGlassPanelFragmentShader();
+                specificUniformKeys = ["noiseScale", "noiseSpeed", "noiseIntensity"];
+                console.log(`VIB34D ${this.id}: Initializing WebGL for 'glassPanelEffect' shader.`);
+                break;
+            case "articleHeaderEffect":
+                vsSource = this.getArticleHeaderVertexShader();
+                fsSource = this.getArticleHeaderFragmentShader();
+                specificUniformKeys = ["baseColor", "pulseSpeed", "pulseWidth", "intensity"];
+                console.log(`VIB34D ${this.id}: Initializing WebGL for 'articleHeaderEffect' shader.`);
+                break;
+            case "aiCategoryShader":
+                vsSource = this.getAICategoryVertexShader();
+                fsSource = this.getAICategoryFragmentShader();
+                specificUniformKeys = ["particleColor", "pointSize"];
+                console.log(`VIB34D ${this.id}: Initializing WebGL for 'aiCategoryShader'.`);
+                break;
+            default:
+                console.log(`VIB34D ${this.id}: Shader name "${this.currentParams.shader}" in preset not recognized or not specified. Defaulting to 2D context if available.`);
+                this.gl = null; // Ensure WebGL is not used if shader is unknown
+                return false;
         }
 
+        // Compile shaders and link program
         const vertexShader = this.createShader(gl.VERTEX_SHADER, vsSource);
         const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, fsSource);
         if (!vertexShader || !fragmentShader) {
-            this.gl = null; return false; // Ensure gl is nulled if shader compilation fails
+            this.gl = null; return false;
         }
-
         this.shaderProgram = this.createProgram(vertexShader, fragmentShader);
         if (!this.shaderProgram) {
             this.gl = null; return false;
         }
 
-        // Common uniforms
+        // Get locations for common uniforms (present in all/most shaders)
         this.uniformLocations = {
             resolution: gl.getUniformLocation(this.shaderProgram, "u_resolution"),
             time: gl.getUniformLocation(this.shaderProgram, "u_time"),
         };
-        // Shader-specific uniforms
+        // Get locations for shader-specific uniforms
         specificUniformKeys.forEach(key => {
-            const uniformName = "u_" + key.charAt(0).toLowerCase() + key.slice(1); // e.g. baseColor -> u_baseColor
+            // Assumes uniform name is u_camelCasedKey (e.g., currentParams.baseColor -> u_baseColor)
+            const uniformName = "u_" + key.charAt(0).toLowerCase() + key.slice(1);
             this.uniformLocations[key] = gl.getUniformLocation(this.shaderProgram, uniformName);
+            if (!this.uniformLocations[key]) {
+                console.warn(`VIB34D ${this.id}: Uniform "${uniformName}" not found in shader "${this.currentParams.shader}".`);
+            }
         });
 
+        // Buffer and attribute setup based on shader type
         if (this.currentParams.shader === "aiCategoryShader") {
-            const numParticles = this.currentParams.numParticles || 200; // Get from preset or default
+            // Particle system specific setup
+            const numParticles = this.currentParams.numParticles || 200;
             this.numParticles = numParticles;
             const particleData = new Float32Array(numParticles * 3); // x, y, life per particle
             for (let i = 0; i < numParticles; i++) {
@@ -475,70 +488,69 @@ export class VIB34D {
             }
         }
 
+        }
+
+        // --- Main Render Path Selection ---
         if (this.gl && this.isWebGLActive && this.shaderProgram) {
-            // WebGL Rendering Path
+            // --- WebGL Rendering Path ---
             this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
-            this.gl.clearColor(0, 0, 0, 0); // Clear to transparent or a base debug color
+            // Clear canvas (e.g., transparent black for blending or specific debug color)
+            this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
             this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
+            // Use the compiled shader program for this instance
             this.gl.useProgram(this.shaderProgram);
 
-            if (this.vao) { // WebGL2
-                this.gl.bindVertexArray(this.vao);
-            } else { // WebGL1 - ensure attributes are set up if not using VAO
-                // This might need to re-bind buffer and set vertexAttribPointer if state is lost
-                // For this simple quad, it's often okay if done once at init.
-                 const positionAttributeLocation = this.gl.getAttribLocation(this.shaderProgram, "a_position");
-                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-                 this.gl.vertexAttribPointer(positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
-                 this.gl.enableVertexAttribArray(positionAttributeLocation); // Ensure it's enabled
-            }
-
-            // Update uniforms
-            const timeParam = (now - this.startTime) / 1000.0 * (this.currentParams.timeScale !== undefined ? this.currentParams.timeScale : 0.1); // Default timeScale
-
+            // Common uniforms updated for all WebGL shaders
+            const timeParam = (now - this.startTime) / 1000.0 * (this.currentParams.timeScale !== undefined ? this.currentParams.timeScale : 0.1);
             this.gl.uniform2f(this.uniformLocations.resolution, this.canvas.width, this.canvas.height);
             this.gl.uniform1f(this.uniformLocations.time, timeParam);
 
-            if (this.currentParams.shader === "holoBackground") {
-                this.gl.uniform4fv(this.uniformLocations.baseColor, this.currentParams.color || [0.02, 0.02, 0.05, 1.0]);
-                this.gl.uniform1f(this.uniformLocations.noiseAmount, this.currentParams.noiseAmount || 0.07);
-                this.gl.uniform1f(this.uniformLocations.intensity, this.currentParams.intensity || 0.25);
-            } else if (this.currentParams.shader === "glassPanelEffect") {
-                this.gl.uniform1f(this.uniformLocations.noiseScale, this.currentParams.noiseScale || 20.0);
-                this.gl.uniform1f(this.uniformLocations.noiseSpeed, this.currentParams.noiseSpeed || 0.1);
-                this.gl.uniform1f(this.uniformLocations.noiseIntensity, this.currentParams.noiseIntensity || 0.03);
-            } else if (this.currentParams.shader === "articleHeaderEffect") {
-                this.gl.uniform4fv(this.uniformLocations.baseColor, this.currentParams.color || [0.4, 0.4, 0.5, 0.05]);
-                this.gl.uniform1f(this.uniformLocations.pulseSpeed, this.currentParams.pulseSpeed || 0.5);
-                this.gl.uniform1f(this.uniformLocations.pulseWidth, this.currentParams.pulseWidth || 0.2);
-                this.gl.uniform1f(this.uniformLocations.intensity, this.currentParams.intensity || 0.5); // Default intensity for header effect
-            } else if (this.currentParams.shader === "aiCategoryShader") {
-                this.gl.uniform4fv(this.uniformLocations.particleColor, this.currentParams.color || [0.7, 0.3, 0.9, 1.0]);
-                this.gl.uniform1f(this.uniformLocations.pointSize, this.currentParams.pointSize || 10.0);
-                // The u_time uniform is already set above for all shaders
+            // Shader-specific uniform updates and drawing logic
+            switch (this.currentParams.shader) {
+                case "holoBackground":
+                    this.gl.uniform4fv(this.uniformLocations.baseColor, this.currentParams.color || [0.02, 0.02, 0.05, 1.0]);
+                    this.gl.uniform1f(this.uniformLocations.noiseAmount, this.currentParams.noiseAmount || 0.07);
+                    this.gl.uniform1f(this.uniformLocations.intensity, this.currentParams.intensity || 0.25);
+                    break;
+                case "glassPanelEffect":
+                    this.gl.uniform1f(this.uniformLocations.noiseScale, this.currentParams.noiseScale || 20.0);
+                    this.gl.uniform1f(this.uniformLocations.noiseSpeed, this.currentParams.noiseSpeed || 0.1);
+                    this.gl.uniform1f(this.uniformLocations.noiseIntensity, this.currentParams.noiseIntensity || 0.03);
+                    break;
+                case "articleHeaderEffect":
+                    this.gl.uniform4fv(this.uniformLocations.baseColor, this.currentParams.color || [0.4, 0.4, 0.5, 0.05]);
+                    this.gl.uniform1f(this.uniformLocations.pulseSpeed, this.currentParams.pulseSpeed || 0.5);
+                    this.gl.uniform1f(this.uniformLocations.pulseWidth, this.currentParams.pulseWidth || 0.2);
+                    this.gl.uniform1f(this.uniformLocations.intensity, this.currentParams.intensity || 0.5);
+                    break;
+                case "aiCategoryShader":
+                    this.gl.uniform4fv(this.uniformLocations.particleColor, this.currentParams.color || [0.7, 0.3, 0.9, 1.0]);
+                    this.gl.uniform1f(this.uniformLocations.pointSize, this.currentParams.pointSize || 10.0);
+                    break;
             }
-            // Add other shader uniform updates here if more shaders are introduced
 
+            // Drawing logic based on shader type
             if (this.currentParams.shader === "aiCategoryShader") {
-                // Setup attributes for particle system
+                // Bind particle buffer and set attributes
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.particleBuffer);
-                // Position
-                this.gl.enableVertexAttribArray(this.attributeLocations.particlePosition);
-                this.gl.vertexAttribPointer(this.attributeLocations.particlePosition, 2, this.gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0);
-                // Life
-                this.gl.enableVertexAttribArray(this.attributeLocations.particleLife);
-                this.gl.vertexAttribPointer(this.attributeLocations.particleLife, 1, this.gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
-
+                if(this.attributeLocations.particlePosition !== -1) {
+                    this.gl.enableVertexAttribArray(this.attributeLocations.particlePosition);
+                    this.gl.vertexAttribPointer(this.attributeLocations.particlePosition, 2, this.gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0);
+                }
+                if(this.attributeLocations.particleLife !== -1) {
+                    this.gl.enableVertexAttribArray(this.attributeLocations.particleLife);
+                    this.gl.vertexAttribPointer(this.attributeLocations.particleLife, 1, this.gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+                }
                 this.gl.drawArrays(this.gl.POINTS, 0, this.numParticles);
-
-            } else { // For quad-based shaders
-                if (this.vao) { // WebGL2
+            } else {
+                // For quad-based shaders (holoBackground, glassPanelEffect, articleHeaderEffect)
+                if (this.vao) { // WebGL2 path
                     this.gl.bindVertexArray(this.vao);
-                } else { // WebGL1 - ensure attributes are set up
+                } else { // WebGL1 path: ensure attributes for a_position are set
                     const positionAttributeLocation = this.gl.getAttribLocation(this.shaderProgram, "a_position");
-                    if (positionAttributeLocation !== -1) { // Check if shader uses a_position
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+                    if (positionAttributeLocation !== -1) {
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer); // Ensure correct buffer is bound
                         this.gl.vertexAttribPointer(positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
                         this.gl.enableVertexAttribArray(positionAttributeLocation);
                     }
@@ -546,13 +558,12 @@ export class VIB34D {
                 this.gl.drawArrays(this.gl.TRIANGLES, 0, 6); // Draw the quad
             }
 
-
-            if (this.vao) { // WebGL2
+            if (this.vao) { // Unbind VAO if used (WebGL2)
                 this.gl.bindVertexArray(null);
             }
 
         } else if (this.ctx) {
-            // 2D Fallback Rendering Path
+            // --- 2D Fallback Rendering Path ---
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             const color = this.currentParams.color || [0.2, 0.2, 0.2, 1.0];
             let r = Math.floor((color[0] || 0) * 255);

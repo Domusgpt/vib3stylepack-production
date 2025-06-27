@@ -188,6 +188,7 @@ export async function loadLatestArticles(limit = 3) {
 
     // After adding all cards, scan the container for new VIB3 elements
     if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.scanAndInitializeNewElements) {
+        // This call initializes VIB3 styles and interactions for the newly created cards.
         window.Vib3codeApp.vib3System.scanAndInitializeNewElements(articlesGrid);
     }
 }
@@ -208,7 +209,12 @@ export async function loadFullArticle(articleSlug) {
     try {
         const response = await fetch(`${CONTENT_BASE_PATH}articles/${articleSlug}.json`);
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status} for article ${articleSlug}`);
+            // If article not found, display a styled message
+            const articleBodyElNotFound = document.getElementById('article-body');
+            if(articleBodyElNotFound) articleBodyElNotFound.innerHTML = `<p class="error-message">Error: Article "${articleSlug}" not found.</p>`;
+            document.title = "Article Not Found - Vib3code";
+            console.error(`HTTP error! status: ${response.status} for article ${articleSlug}`);
+            return; // Stop further processing for this article
         }
         const article = await response.json();
 
@@ -320,6 +326,7 @@ export async function loadFullArticle(articleSlug) {
 
         // After adding all blocks, scan the article body for new VIB3 elements (like embeds)
         if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.scanAndInitializeNewElements && articleBodyEl) {
+            // This initializes VIB3 styles for any [data-vib3-style] elements (e.g., embeds) within the article body.
             window.Vib3codeApp.vib3System.scanAndInitializeNewElements(articleBodyEl);
         }
 
@@ -327,7 +334,7 @@ export async function loadFullArticle(articleSlug) {
         console.error(`Error loading full article "${articleSlug}":`, error);
         const articleBodyEl = document.getElementById('article-body');
         if (articleBodyEl) {
-            articleBodyEl.innerHTML = `<p>Error: Could not load article content. Please try again later.</p>`;
+            articleBodyEl.innerHTML = `<p class="error-message">Error: Could not load article content. Please try again later.</p>`;
         }
         document.title = "Error Loading Article - Vib3code";
     }
@@ -340,8 +347,7 @@ export async function loadFullArticle(articleSlug) {
 export async function loadCategoryPage(categoryId) {
     if (!categoryId) {
         console.error("No category ID provided to loadCategoryPage.");
-        // Handle error, e.g., display message on page
-        document.body.innerHTML = '<p class="page-error">Error: Category ID not specified.</p>';
+        document.body.innerHTML = '<p class="error-message">Error: Category ID not specified.</p>'; // Use new class
         return;
     }
 
@@ -355,7 +361,10 @@ export async function loadCategoryPage(categoryId) {
 
         if (!category) {
             console.error(`Category with ID "${categoryId}" not found.`);
-            document.body.innerHTML = `<p class="page-error">Error: Category "${categoryId}" not found.</p>`;
+            // Try to put error message in a more specific container if category.html structure allows
+            const categoryGridEl = document.getElementById('category-articles-grid');
+            if(categoryGridEl) categoryGridEl.innerHTML = `<p class="error-message">Error: Category "${categoryId}" not found.</p>`;
+            else document.body.innerHTML = `<p class="error-message">Error: Category "${categoryId}" not found.</p>`;
             document.title = "Category Not Found - Vib3code";
             return;
         }
@@ -392,15 +401,17 @@ export async function loadCategoryPage(categoryId) {
         // Populate articles grid
         const articlesGridEl = document.getElementById('category-articles-grid');
         if (articlesGridEl) {
-            // Destroy existing VIB3 instances before clearing
+            // Destroy existing VIB3 instances from the grid before clearing its content.
+            // This is crucial to prevent memory leaks and orphaned VIB3 canvases/listeners.
             if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.destroyVisualizerForElement) {
                 Array.from(articlesGridEl.childNodes).forEach(child => {
+                    // Check if it's an element node that might have a VIB3 instance
                     if (child.nodeType === 1 && (child.dataset.vib3Style || child.dataset.vib3InteractionPreset)) {
                         window.Vib3codeApp.vib3System.destroyVisualizerForElement(child);
                     }
                 });
             }
-            articlesGridEl.innerHTML = ''; // Clear placeholder
+            articlesGridEl.innerHTML = ''; // Clear placeholder after destroying VIB3 instances
 
             if (categoryArticles.length > 0) {
                 categoryArticles.forEach(article => {

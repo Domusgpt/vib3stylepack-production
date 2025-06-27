@@ -54,8 +54,8 @@
     --border-width-medium: 2px;
 
     /* Glassmorphism Properties */
-    --glass-panel-background: rgba(20, 20, 30, 0.65); /* Dark, slightly transparent */
-    --glass-panel-background-hover: rgba(30, 30, 45, 0.75);
+    --glass-panel-background: rgba(20, 20, 30, 0.7); /* Increased opacity */
+    --glass-panel-background-hover: rgba(30, 30, 45, 0.8); /* Increased opacity */
     --glass-blur-radius: 10px;
     --glass-border-color: rgba(var(--color-neon-cyan-rgb, 0, 255, 255), 0.3); /* Use RGB version for opacity */
 
@@ -79,6 +79,8 @@
     --color-dark-blue-base-rgb: 0, 0, 139;
     --color-medium-grey-rgb: 44, 44, 44;
     --color-white-rgb: 255, 255, 255;
+    --color-black-rgb: 0, 0, 0;
+
 
     /* Transitions */
     --page-transition-duration: 0.3s; /* Matches JS PAGE_TRANSITION_DURATION */

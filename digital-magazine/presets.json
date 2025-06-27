@@ -133,6 +133,17 @@
             "intensity": 0.6            // Overall visibility/alpha multiplier for the effect
             // "heightPercentage" is not directly used by this shader, CSS/layout controls height
         }
+    },
+    "ema-verdict-visualizer": {
+      "description": "Placeholder for a VIB3 embed in EMA report articles.",
+      "parameters": {
+        "shader": "glassPanelEffect", // Or a unique one later
+        "noiseScale": 30.0,
+        "noiseSpeed": 0.05,
+        "noiseIntensity": 0.02,
+        "baseColorOverride": [0.8, 0.2, 0.2, 0.1] // Example: slight red tint for emphasis
+        // Specific parameters for this embed would go here
+      }
     }
   },
   "interactionPresets": {

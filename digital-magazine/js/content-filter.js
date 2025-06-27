@@ -20,19 +20,20 @@ export function displayArticles(articles, containerId) {
         return;
     }
 
-    // Destroy existing VIB3 instances before clearing
+    // Destroy existing VIB3 instances from the container before clearing its content.
+    // This prevents memory leaks and orphaned VIB3 canvases/listeners.
     if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.destroyVisualizerForElement) {
         Array.from(containerElement.childNodes).forEach(child => {
-            // Check if it's an element node and might have a VIB3 instance
+            // Check if it's an element node that might have a VIB3 instance
             if (child.nodeType === 1 && (child.dataset.vib3Style || child.dataset.vib3InteractionPreset)) {
                 window.Vib3codeApp.vib3System.destroyVisualizerForElement(child);
             }
         });
     }
-    containerElement.innerHTML = ''; // Clear existing articles
+    containerElement.innerHTML = ''; // Clear existing articles after VIB3 instances are destroyed
 
     if (!articles || articles.length === 0) {
-        containerElement.innerHTML = '<p>No articles match the current filter.</p>';
+        containerElement.innerHTML = '<p class="info-message">No articles match the current filter.</p>';
         return;
     }
 
