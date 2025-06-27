@@ -8,7 +8,32 @@ class BaseProjection {
         if (this.constructor === BaseProjection) {
             throw new Error("Abstract classes can't be instantiated.");
         }
-        this.projectionMatrix = mat4.create(); // Assuming gl-matrix is used
+        
+        // Ensure mat4 is available before creating projection matrix
+        this.initializeProjectionMatrix();
+    }
+    
+    initializeProjectionMatrix() {
+        // Wait for mat4 to be available
+        let attempts = 0;
+        const maxAttempts = 100;
+        
+        const tryInit = () => {
+            attempts++;
+            
+            if (typeof mat4 !== 'undefined' && typeof mat4.create === 'function') {
+                this.projectionMatrix = mat4.create();
+                console.log('✅ BaseProjection matrix initialized');
+            } else if (attempts < maxAttempts) {
+                setTimeout(tryInit, 10);
+            } else {
+                console.error('❌ CRITICAL: mat4 not available for BaseProjection after max attempts');
+                // Fallback to identity matrix
+                this.projectionMatrix = new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+            }
+        };
+        
+        tryInit();
     }
 
     /**

@@ -19,8 +19,32 @@ class PerspectiveProjection extends BaseProjection {
             baseDistance: initialParams.baseDistance || 5.0, // Default distance of camera/eye from origin if not dynamic
             dynamicDistanceStrength: initialParams.dynamicDistanceStrength || 2.0, // How much morphFactor/audioMid affect distance
         };
-        this.viewMatrix = mat4.create(); // For camera positioning
+        
+        // Initialize view matrix with mat4 availability check
+        this.initializeViewMatrix();
         this.update(this.parameters); // Initial matrix calculation
+    }
+    
+    initializeViewMatrix() {
+        let attempts = 0;
+        const maxAttempts = 100;
+        
+        const tryInit = () => {
+            attempts++;
+            
+            if (typeof mat4 !== 'undefined' && typeof mat4.create === 'function') {
+                this.viewMatrix = mat4.create();
+                console.log('✅ PerspectiveProjection view matrix initialized');
+            } else if (attempts < maxAttempts) {
+                setTimeout(tryInit, 10);
+            } else {
+                console.error('❌ CRITICAL: mat4 not available for PerspectiveProjection after max attempts');
+                // Fallback to identity matrix
+                this.viewMatrix = new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+            }
+        };
+        
+        tryInit();
     }
 
     /**
@@ -52,14 +76,22 @@ class PerspectiveProjection extends BaseProjection {
         // This is a 3D camera setup. For 4D->3D projection, this view matrix transforms the already-3D-projected points.
         // Or, if projection from 4D happens in shader, this view matrix is for the 3D part of that.
         // Let's assume we are setting up a standard 3D view matrix here.
-        mat4.lookAt(this.viewMatrix,
-            [0, 0, effectiveDistance], // eye position
-            [0, 0, 0],                 // target (center)
-            [0, 1, 0]                  // up vector
-        );
+        if (typeof mat4 !== 'undefined' && typeof mat4.lookAt === 'function' && this.viewMatrix) {
+            mat4.lookAt(this.viewMatrix,
+                [0, 0, effectiveDistance], // eye position
+                [0, 0, 0],                 // target (center)
+                [0, 1, 0]                  // up vector
+            );
+        } else {
+            console.warn('⚠️ mat4.lookAt not available, using fallback view matrix');
+        }
 
         // 3. Set up the perspective projection matrix
-        mat4.perspective(this.projectionMatrix, fov, aspect, near, far);
+        if (typeof mat4 !== 'undefined' && typeof mat4.perspective === 'function' && this.projectionMatrix) {
+            mat4.perspective(this.projectionMatrix, fov, aspect, near, far);
+        } else {
+            console.warn('⚠️ mat4.perspective not available, using fallback projection matrix');
+        }
 
         // 4. Combine view and projection matrix if needed (often done in shader)
         // Some engines/shaders expect separate view and projection matrices, others a combined one.

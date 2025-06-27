@@ -25,11 +25,36 @@ class OrthographicProjection extends BaseProjection {
             // View matrix parameters (similar to perspective)
             distance: initialParams.distance || 5.0, // Distance for the view matrix
         };
-        this.orthoMatrix = mat4.create(); // Pure orthographic matrix
-        this.perspMatrixForBlend = mat4.create(); // Perspective matrix for blending
-        this.viewMatrix = mat4.create(); // Camera view matrix
-
+        
+        // Initialize matrices with mat4 availability check
+        this.initializeMatrices();
         this.update(this.parameters); // Initial matrix calculation
+    }
+    
+    initializeMatrices() {
+        let attempts = 0;
+        const maxAttempts = 100;
+        
+        const tryInit = () => {
+            attempts++;
+            
+            if (typeof mat4 !== 'undefined' && typeof mat4.create === 'function') {
+                this.orthoMatrix = mat4.create(); // Pure orthographic matrix
+                this.perspMatrixForBlend = mat4.create(); // Perspective matrix for blending
+                this.viewMatrix = mat4.create(); // Camera view matrix
+                console.log('✅ OrthographicProjection matrices initialized');
+            } else if (attempts < maxAttempts) {
+                setTimeout(tryInit, 10);
+            } else {
+                console.error('❌ CRITICAL: mat4 not available for OrthographicProjection after max attempts');
+                // Fallback to identity matrices
+                this.orthoMatrix = new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+                this.perspMatrixForBlend = new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+                this.viewMatrix = new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+            }
+        };
+        
+        tryInit();
     }
 
     /**
@@ -47,32 +72,48 @@ class OrthographicProjection extends BaseProjection {
         const { left, right, bottom, top, near, far, perspectiveBlendFactor, fovForBlend, aspectForBlend, distance } = this.parameters;
 
         // 1. Update the pure orthographic matrix
-        mat4.ortho(this.orthoMatrix, left, right, bottom, top, near, far);
+        if (typeof mat4 !== 'undefined' && typeof mat4.ortho === 'function' && this.orthoMatrix) {
+            mat4.ortho(this.orthoMatrix, left, right, bottom, top, near, far);
+        } else {
+            console.warn('⚠️ mat4.ortho not available, using fallback');
+        }
 
         // 2. Update the view matrix (camera position)
         // For orthographic, view matrix still positions/orients the scene.
         // A common setup is camera at (0,0,distance) looking at origin.
-        mat4.lookAt(this.viewMatrix, [0, 0, distance], [0, 0, 0], [0, 1, 0]);
+        if (typeof mat4 !== 'undefined' && typeof mat4.lookAt === 'function' && this.viewMatrix) {
+            mat4.lookAt(this.viewMatrix, [0, 0, distance], [0, 0, 0], [0, 1, 0]);
+        } else {
+            console.warn('⚠️ mat4.lookAt not available, using fallback');
+        }
 
         // 3. Handle orthographic-to-perspective blending
         if (perspectiveBlendFactor > 0) {
             // Calculate a perspective matrix to blend with
-            mat4.perspective(this.perspMatrixForBlend, fovForBlend, aspectForBlend, near, far); // Use current near/far for consistency
+            if (typeof mat4 !== 'undefined' && typeof mat4.perspective === 'function' && this.perspMatrixForBlend) {
+                mat4.perspective(this.perspMatrixForBlend, fovForBlend, aspectForBlend, near, far); // Use current near/far for consistency
+            } else {
+                console.warn('⚠️ mat4.perspective not available for blending');
+            }
         }
 
         // 4. Combine or select the final projection matrix
         // If blending, interpolate between orthoMatrix and perspMatrixForBlend.
         // mat4.lerp is not a standard gl-matrix function for matrices.
         // We need to interpolate component-wise or use a shader for smooth blending.
-        if (perspectiveBlendFactor <= 0.001) { // Fully orthographic
-            mat4.copy(this.projectionMatrix, this.orthoMatrix);
-        } else if (perspectiveBlendFactor >= 0.999) { // Fully perspective (using the blend settings)
-            mat4.copy(this.projectionMatrix, this.perspMatrixForBlend);
-        } else {
-            // Component-wise linear interpolation for the matrix
-            for (let i = 0; i < 16; i++) {
-                this.projectionMatrix[i] = (1 - perspectiveBlendFactor) * this.orthoMatrix[i] + perspectiveBlendFactor * this.perspMatrixForBlend[i];
+        if (typeof mat4 !== 'undefined' && typeof mat4.copy === 'function' && this.projectionMatrix) {
+            if (perspectiveBlendFactor <= 0.001) { // Fully orthographic
+                mat4.copy(this.projectionMatrix, this.orthoMatrix);
+            } else if (perspectiveBlendFactor >= 0.999) { // Fully perspective (using the blend settings)
+                mat4.copy(this.projectionMatrix, this.perspMatrixForBlend);
+            } else {
+                // Component-wise linear interpolation for the matrix
+                for (let i = 0; i < 16; i++) {
+                    this.projectionMatrix[i] = (1 - perspectiveBlendFactor) * this.orthoMatrix[i] + perspectiveBlendFactor * this.perspMatrixForBlend[i];
+                }
             }
+        } else {
+            console.warn('⚠️ mat4.copy not available, using fallback projection');
         }
         // BaseProjection.projectionMatrix will now hold the (potentially blended) result.
     }

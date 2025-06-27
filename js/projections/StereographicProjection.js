@@ -50,8 +50,30 @@ class StereographicProjection extends BaseProjection {
         // The main "projectionMatrix" from BaseProjection will be a standard 3D perspective matrix
         // for viewing the R^3 space that results from the stereographic mapping.
         // The stereographic mapping itself is a non-linear transformation usually done per-vertex in a shader.
-        this.viewMatrix = mat4.create();
+        this.initializeViewMatrix();
         this.update(this.parameters);
+    }
+    
+    initializeViewMatrix() {
+        let attempts = 0;
+        const maxAttempts = 100;
+        
+        const tryInit = () => {
+            attempts++;
+            
+            if (typeof mat4 !== 'undefined' && typeof mat4.create === 'function') {
+                this.viewMatrix = mat4.create();
+                console.log('✅ StereographicProjection view matrix initialized');
+            } else if (attempts < maxAttempts) {
+                setTimeout(tryInit, 10);
+            } else {
+                console.error('❌ CRITICAL: mat4 not available for StereographicProjection after max attempts');
+                // Fallback to identity matrix
+                this.viewMatrix = new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+            }
+        };
+        
+        tryInit();
     }
 
     update(params = {}) {
@@ -64,10 +86,18 @@ class StereographicProjection extends BaseProjection {
         const { fov, aspect, near, far, cameraDistance } = this.parameters;
 
         // 1. Update the standard 3D perspective matrix for viewing the R^3 result space.
-        mat4.perspective(this.projectionMatrix, fov, aspect, near, far);
+        if (typeof mat4 !== 'undefined' && typeof mat4.perspective === 'function' && this.projectionMatrix) {
+            mat4.perspective(this.projectionMatrix, fov, aspect, near, far);
+        } else {
+            console.warn('⚠️ mat4.perspective not available for StereographicProjection');
+        }
 
         // 2. Update the standard 3D view matrix.
-        mat4.lookAt(this.viewMatrix, [0, 0, cameraDistance], [0, 0, 0], [0, 1, 0]);
+        if (typeof mat4 !== 'undefined' && typeof mat4.lookAt === 'function' && this.viewMatrix) {
+            mat4.lookAt(this.viewMatrix, [0, 0, cameraDistance], [0, 0, 0], [0, 1, 0]);
+        } else {
+            console.warn('⚠️ mat4.lookAt not available for StereographicProjection');
+        }
 
         // The actual stereographic projection parameters (hypersphereRadius, poleSign, audioHigh)
         // will be passed as uniforms to the shader, which will perform the per-vertex calculation.
