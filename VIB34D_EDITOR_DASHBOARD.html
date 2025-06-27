@@ -342,9 +342,25 @@
         /* Drag and Drop Visual Feedback */
         .dragging {
             opacity: 0.7;
-            transform: rotate(5deg);
+            transform: rotate(5deg) scale(1.05);
             z-index: 1000;
             pointer-events: none;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            border-color: #00ffff !important;
+        }
+        
+        .drop-active {
+            background-color: rgba(0, 255, 255, 0.1) !important;
+            border: 2px dashed #00ffff !important;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        .geometry-item:hover {
+            cursor: grab;
+        }
+        
+        .geometry-item:active {
+            cursor: grabbing;
         }
         
         /* Export Modal */
@@ -413,6 +429,7 @@
                 <span style="font-size: 12px; color: #888;">Reactive UI Builder</span>
             </div>
             <div class="toolbar-right">
+                <button class="toolbar-button" onclick="testDragDrop()">🧪 Test D&D</button>
                 <button class="toolbar-button" onclick="clearCanvas()">Clear</button>
                 <button class="toolbar-button" onclick="saveProject()">Save</button>
                 <button class="toolbar-button" onclick="loadProject()">Load</button>

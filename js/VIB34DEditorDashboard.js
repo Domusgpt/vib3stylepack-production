@@ -27,48 +27,89 @@ class VIB34DEditorDashboard {
     }
     
     setupDragAndDrop() {
-        // Drag start from library
-        document.querySelectorAll('.geometry-item').forEach(item => {
-            item.addEventListener('dragstart', (e) => {
-                const draggedElement = e.currentTarget; // Use currentTarget instead of target
-                this.draggedItem = {
-                    geometry: draggedElement.dataset.geometry,
-                    element: draggedElement.dataset.element,
-                    type: draggedElement.dataset.geometry || draggedElement.dataset.element
-                };
-                draggedElement.classList.add('dragging');
-            });
+        // Wait for DOM to be ready, then setup drag handlers
+        setTimeout(() => {
+            // Drag start from library
+            const geometryItems = document.querySelectorAll('.geometry-item');
+            console.log(`🔧 Setting up drag-and-drop for ${geometryItems.length} geometry items`);
             
-            item.addEventListener('dragend', (e) => {
-                const draggedElement = e.currentTarget;
-                draggedElement.classList.remove('dragging');
-            });
-        });
-        
-        // Drop on canvas
-        const canvas = document.getElementById('canvasWorkspace');
-        canvas.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            canvas.classList.add('drop-active');
-        });
-        
-        canvas.addEventListener('dragleave', (e) => {
-            canvas.classList.remove('drop-active');
-        });
-        
-        canvas.addEventListener('drop', (e) => {
-            e.preventDefault();
-            canvas.classList.remove('drop-active');
-            
-            if (this.draggedItem) {
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+            geometryItems.forEach(item => {
+                // Make sure draggable attribute is set
+                item.setAttribute('draggable', 'true');
                 
-                this.createElement(x, y, this.draggedItem);
-                this.draggedItem = null;
+                item.addEventListener('dragstart', (e) => {
+                    console.log('🎯 Drag started:', e.currentTarget.dataset);
+                    const draggedElement = e.currentTarget;
+                    this.draggedItem = {
+                        geometry: draggedElement.dataset.geometry,
+                        element: draggedElement.dataset.element,
+                        type: draggedElement.dataset.geometry || draggedElement.dataset.element
+                    };
+                    draggedElement.classList.add('dragging');
+                    
+                    // Set drag effect
+                    e.dataTransfer.effectAllowed = 'copy';
+                    e.dataTransfer.setData('text/plain', JSON.stringify(this.draggedItem));
+                });
+                
+                item.addEventListener('dragend', (e) => {
+                    console.log('🎯 Drag ended');
+                    const draggedElement = e.currentTarget;
+                    draggedElement.classList.remove('dragging');
+                });
+            });
+        }, 100);
+        
+        // Setup drop zone
+        setTimeout(() => {
+            const canvas = document.getElementById('canvasWorkspace');
+            if (canvas) {
+                console.log('🎯 Setting up drop zone on canvas');
+                
+                canvas.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                    canvas.classList.add('drop-active');
+                    console.log('🎯 Drag over canvas');
+                });
+                
+                canvas.addEventListener('dragleave', (e) => {
+                    canvas.classList.remove('drop-active');
+                    console.log('🎯 Drag left canvas');
+                });
+                
+                canvas.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    canvas.classList.remove('drop-active');
+                    console.log('🎯 Drop on canvas!', e);
+                    
+                    const rect = canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    // Get drag data
+                    let dragData = this.draggedItem;
+                    if (!dragData) {
+                        try {
+                            dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                        } catch (error) {
+                            console.error('Failed to parse drag data:', error);
+                            return;
+                        }
+                    }
+                    
+                    if (dragData) {
+                        console.log('🎯 Creating element at:', x, y, dragData);
+                        this.createElement(x, y, dragData);
+                        this.draggedItem = null;
+                    } else {
+                        console.error('No drag data available');
+                    }
+                });
+            } else {
+                console.error('❌ Canvas workspace not found!');
             }
-        });
+        }, 150);
     }
     
     setupEventListeners() {
@@ -622,6 +663,42 @@ function downloadHTML() {
 
 function closeModal() {
     document.getElementById('exportModal').classList.remove('active');
+}
+
+function testDragDrop() {
+    if (!editorDashboard) {
+        console.error('Editor dashboard not initialized yet');
+        return;
+    }
+    
+    console.log('🧪 Testing drag-and-drop functionality...');
+    
+    // Check if geometry items exist
+    const geometryItems = document.querySelectorAll('.geometry-item');
+    console.log(`Found ${geometryItems.length} geometry items`);
+    
+    // Test programmatic element creation
+    const testData = { geometry: 'hypercube', type: 'hypercube' };
+    editorDashboard.createElement(300, 200, testData);
+    console.log('✅ Created test hypercube at 300, 200');
+    
+    // Add another element
+    setTimeout(() => {
+        editorDashboard.createElement(500, 300, { geometry: 'hypersphere', type: 'hypersphere' });
+        console.log('✅ Created test hypersphere at 500, 300');
+    }, 1000);
+    
+    // Check drag handlers
+    geometryItems.forEach((item, index) => {
+        if (item.getAttribute('draggable') === 'true') {
+            console.log(`✅ Item ${index} is draggable`);
+        } else {
+            console.log(`❌ Item ${index} is NOT draggable`);
+            item.setAttribute('draggable', 'true');
+        }
+    });
+    
+    alert('Check console for drag-drop test results. Try dragging geometry items to canvas!');
 }
 
 // Initialize the editor dashboard when DOM is ready
