@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB3STYLEPACK - ACTUAL WORKING MULTI-VISUALIZER DEMO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+        
+        /* Section styling with proper height for scroll transitions */
+        .section {
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Canvas positioning for multiple instances */
+        .multi-visualizer-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .visualizer-instance {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Different instance positioning */
+        .instance-background { 
+            z-index: 1; 
+            opacity: 0.4;
+        }
+        
+        .instance-left { 
+            z-index: 3; 
+            opacity: 0.8;
+            clip-path: polygon(0% 0%, 50% 0%, 30% 100%, 0% 100%);
+        }
+        
+        .instance-right { 
+            z-index: 3; 
+            opacity: 0.7;
+            clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 70% 100%);
+        }
+        
+        .instance-accent { 
+            z-index: 4; 
+            opacity: 0.9;
+            clip-path: circle(20% at 80% 20%);
+        }
+        
+        /* Content overlay */
+        .section-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            background: rgba(0,0,0,0.3);
+            padding: 3rem;
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .section-title {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+        
+        /* Portal scroll indicator */
+        .scroll-indicator {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
+        
+        .scroll-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.5);
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .scroll-dot.active {
+            background: #0ff;
+            border-color: #0ff;
+            box-shadow: 0 0 20px #0ff;
+        }
+        
+        /* Debug panel */
+        .debug-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #0ff;
+            font-family: monospace;
+            font-size: 0.8rem;
+            z-index: 9999;
+            max-width: 300px;
+        }
+        
+        .debug-row {
+            margin: 5px 0;
+            color: #0ff;
+        }
+        
+        .debug-value {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Debug Panel -->
+    <div class="debug-panel">
+        <div class="debug-row">System: <span class="debug-value" id="debug-system">Loading...</span></div>
+        <div class="debug-row">Section: <span class="debug-value" id="debug-section">home</span></div>
+        <div class="debug-row">Geometry: <span class="debug-value" id="debug-geometry">hypercube</span></div>
+        <div class="debug-row">Instances: <span class="debug-value" id="debug-instances">0</span></div>
+        <div class="debug-row">Active: <span class="debug-value" id="debug-active">0</span></div>
+        <div class="debug-row">FPS: <span class="debug-value" id="debug-fps">0</span></div>
+    </div>
+    
+    <!-- Portal Scroll Indicator -->
+    <div class="scroll-indicator">
+        <div class="scroll-dot active" data-section="home"></div>
+        <div class="scroll-dot" data-section="articles"></div>
+        <div class="scroll-dot" data-section="videos"></div>
+        <div class="scroll-dot" data-section="podcasts"></div>
+        <div class="scroll-dot" data-section="ema"></div>
+    </div>
+
+    <!-- Section 1: Home - Hypercube (Master) -->
+    <section class="section" id="home" data-section="home" data-geometry="hypercube">
+        <div class="multi-visualizer-container" id="container-home">
+            <!-- Multiple canvas instances will be created here -->
+        </div>
+        <div class="section-content">
+            <h1 class="section-title">🏠 Multi-Dimensional Home</h1>
+            <p>Master section with 4 hypercube visualizer instances</p>
+            <p>Background + Left UI + Right UI + Accent</p>
+        </div>
+    </section>
+
+    <!-- Section 2: Articles - Tetrahedron -->
+    <section class="section" id="articles" data-section="articles" data-geometry="tetrahedron">
+        <div class="multi-visualizer-container" id="container-articles">
+            <!-- Multiple canvas instances will be created here -->
+        </div>
+        <div class="section-content">
+            <h1 class="section-title">📖 Structured Articles</h1>
+            <p>4 tetrahedron instances with technical precision</p>
+            <p>Modifier: 0.8x (calmer than home)</p>
+        </div>
+    </section>
+
+    <!-- Section 3: Videos - Sphere -->
+    <section class="section" id="videos" data-section="videos" data-geometry="sphere">
+        <div class="multi-visualizer-container" id="container-videos">
+            <!-- Multiple canvas instances will be created here -->
+        </div>
+        <div class="section-content">
+            <h1 class="section-title">🎥 Infinite Potential</h1>
+            <p>4 sphere instances with flowing dynamics</p>
+            <p>Modifier: 1.2x (more dynamic than home)</p>
+        </div>
+    </section>
+
+    <!-- Section 4: Podcasts - Torus -->
+    <section class="section" id="podcasts" data-section="podcasts" data-geometry="torus">
+        <div class="multi-visualizer-container" id="container-podcasts">
+            <!-- Multiple canvas instances will be created here -->
+        </div>
+        <div class="section-content">
+            <h1 class="section-title">🎧 Continuous Flow</h1>
+            <p>4 torus instances with temporal patterns</p>
+            <p>Modifier: 1.1x (medium energy)</p>
+        </div>
+    </section>
+
+    <!-- Section 5: EMA - Wave -->
+    <section class="section" id="ema" data-section="ema" data-geometry="wave">
+        <div class="multi-visualizer-container" id="container-ema">
+            <!-- Multiple canvas instances will be created here -->
+        </div>
+        <div class="section-content">
+            <h1 class="section-title">⚡ Quantum Philosophy</h1>
+            <p>4 wave instances with probability spaces</p>
+            <p>Modifier: 0.9x (thoughtful)</p>
+        </div>
+    </section>
+
+    <script>
+        console.log('🌌 VIB3STYLEPACK Multi-Visualizer Demo Starting...');
+        
+        // ACTUAL VIB34D RENDERER CLASS (SIMPLIFIED)
+        class VIB34DRenderer {
+            constructor(canvas, options = {}) {
+                this.canvas = canvas;
+                this.gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                this.geometry = options.geometry || 'hypercube';
+                this.modifier = options.modifier || 1.0;
+                this.role = options.role || 'background';
+                this.isActive = false;
+                this.startTime = Date.now();
+                
+                if (!this.gl) {
+                    console.error('WebGL not supported');
+                    return;
+                }
+                
+                this.initShaders();
+                this.initBuffers();
+                this.resize();
+                
+                console.log(`✅ VIB34D Renderer created: ${this.geometry} (${this.role}) modifier: ${this.modifier}`);
+            }
+            
+            initShaders() {
+                const vertexShaderSource = `
+                    attribute vec2 a_position;
+                    void main() {
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `
+                    precision mediump float;
+                    uniform vec2 u_resolution;
+                    uniform float u_time;
+                    uniform float u_modifier;
+                    uniform float u_geometry;
+                    
+                    void main() {
+                        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                        float time = u_time * 0.001;
+                        
+                        // Simple geometry variations
+                        float pattern = 0.0;
+                        if (u_geometry < 0.5) {
+                            // Hypercube
+                            pattern = sin(uv.x * 20.0 * u_modifier + time) * sin(uv.y * 20.0 * u_modifier + time);
+                        } else if (u_geometry < 1.5) {
+                            // Tetrahedron
+                            pattern = sin(uv.x * 15.0 * u_modifier + time * 0.5) * cos(uv.y * 15.0 * u_modifier + time * 0.5);
+                        } else if (u_geometry < 2.5) {
+                            // Sphere
+                            float r = length(uv - 0.5);
+                            pattern = sin(r * 30.0 * u_modifier + time * 2.0);
+                        } else if (u_geometry < 3.5) {
+                            // Torus
+                            float r1 = length(uv - 0.5);
+                            pattern = sin((r1 - 0.2) * 50.0 * u_modifier + time);
+                        } else {
+                            // Wave
+                            pattern = sin(uv.x * 10.0 * u_modifier + time) + sin(uv.y * 10.0 * u_modifier + time * 1.5);
+                        }
+                        
+                        vec3 color = vec3(0.5 + 0.5 * pattern);
+                        
+                        // Geometry-specific colors
+                        if (u_geometry < 0.5) color *= vec3(1.0, 0.0, 1.0); // Magenta hypercube
+                        else if (u_geometry < 1.5) color *= vec3(0.0, 1.0, 1.0); // Cyan tetrahedron
+                        else if (u_geometry < 2.5) color *= vec3(1.0, 1.0, 0.0); // Yellow sphere
+                        else if (u_geometry < 3.5) color *= vec3(0.0, 1.0, 0.0); // Green torus
+                        else color *= vec3(1.0, 0.5, 0.0); // Orange wave
+                        
+                        gl_FragColor = vec4(color, 0.8);
+                    }
+                `;
+                
+                this.program = this.createProgram(vertexShaderSource, fragmentShaderSource);
+                this.uniforms = {
+                    resolution: this.gl.getUniformLocation(this.program, 'u_resolution'),
+                    time: this.gl.getUniformLocation(this.program, 'u_time'),
+                    modifier: this.gl.getUniformLocation(this.program, 'u_modifier'),
+                    geometry: this.gl.getUniformLocation(this.program, 'u_geometry')
+                };
+            }
+            
+            createProgram(vertexSource, fragmentSource) {
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = this.gl.createProgram();
+                this.gl.attachShader(program, vertexShader);
+                this.gl.attachShader(program, fragmentShader);
+                this.gl.linkProgram(program);
+                
+                if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+                    console.error('Program linking failed:', this.gl.getProgramInfoLog(program));
+                    return null;
+                }
+                
+                return program;
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    console.error('Shader compilation failed:', this.gl.getShaderInfoLog(shader));
+                    return null;
+                }
+                
+                return shader;
+            }
+            
+            initBuffers() {
+                const positions = new Float32Array([
+                    -1, -1, 1, -1, -1, 1, 1, 1
+                ]);
+                
+                this.buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+            
+            resize() {
+                this.canvas.width = this.canvas.clientWidth;
+                this.canvas.height = this.canvas.clientHeight;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            render() {
+                if (!this.isActive || !this.program) return;
+                
+                this.resize();
+                this.gl.useProgram(this.program);
+                
+                const time = Date.now() - this.startTime;
+                const geometryMap = { hypercube: 0, tetrahedron: 1, sphere: 2, torus: 3, wave: 4 };
+                
+                this.gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+                this.gl.uniform1f(this.uniforms.time, time);
+                this.gl.uniform1f(this.uniforms.modifier, this.modifier);
+                this.gl.uniform1f(this.uniforms.geometry, geometryMap[this.geometry] || 0);
+                
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+            }
+            
+            start() { this.isActive = true; }
+            stop() { this.isActive = false; }
+        }
+        
+        // MULTI-VISUALIZER SYSTEM
+        class MultiVisualizerSystem {
+            constructor() {
+                this.sections = new Map();
+                this.renderers = [];
+                this.currentSection = 'home';
+                
+                this.sectionConfigs = {
+                    home: { geometry: 'hypercube', modifier: 1.0 },
+                    articles: { geometry: 'tetrahedron', modifier: 0.8 },
+                    videos: { geometry: 'sphere', modifier: 1.2 },
+                    podcasts: { geometry: 'torus', modifier: 1.1 },
+                    ema: { geometry: 'wave', modifier: 0.9 }
+                };
+                
+                this.instanceRoles = ['background', 'left', 'right', 'accent'];
+                this.instanceModifiers = [0.7, 1.3, 0.9, 1.5]; // Different parameter variations
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                console.log('🎨 Initializing Multi-Visualizer System...');
+                
+                // Create multiple instances for each section
+                Object.keys(this.sectionConfigs).forEach(sectionKey => {
+                    this.createSectionInstances(sectionKey);
+                });
+                
+                // Start with home section
+                this.activateSection('home');
+                
+                // Setup portal scroll
+                this.setupPortalScroll();
+                
+                // Start render loop
+                this.startRenderLoop();
+                
+                console.log(`✅ Multi-Visualizer System created ${this.renderers.length} total instances`);
+            }
+            
+            createSectionInstances(sectionKey) {
+                const container = document.getElementById(`container-${sectionKey}`);
+                if (!container) return;
+                
+                const config = this.sectionConfigs[sectionKey];
+                const instances = [];
+                
+                // Create 4 instances per section
+                this.instanceRoles.forEach((role, index) => {
+                    const canvas = document.createElement('canvas');
+                    canvas.className = `visualizer-instance instance-${role}`;
+                    canvas.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                    `;
+                    
+                    // Apply role-specific styling
+                    const roleStyles = {
+                        'background': 'z-index: 1; opacity: 0.4;',
+                        'left': 'z-index: 3; opacity: 0.8; clip-path: polygon(0% 0%, 50% 0%, 30% 100%, 0% 100%);',
+                        'right': 'z-index: 3; opacity: 0.7; clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 70% 100%);',
+                        'accent': 'z-index: 4; opacity: 0.9; clip-path: circle(20% at 80% 20%);'
+                    };
+                    
+                    canvas.style.cssText += roleStyles[role] || '';
+                    
+                    container.appendChild(canvas);
+                    
+                    const renderer = new VIB34DRenderer(canvas, {
+                        geometry: config.geometry,
+                        modifier: config.modifier * this.instanceModifiers[index],
+                        role: role
+                    });
+                    
+                    instances.push({ renderer, canvas, role });
+                    this.renderers.push(renderer);
+                });
+                
+                this.sections.set(sectionKey, instances);
+                console.log(`🎨 Created ${instances.length} instances for section: ${sectionKey}`);
+            }
+            
+            activateSection(sectionKey) {
+                console.log(`🔄 Activating section: ${sectionKey}`);
+                
+                // Deactivate all renderers
+                this.renderers.forEach(renderer => renderer.stop());
+                
+                // Activate current section renderers
+                const instances = this.sections.get(sectionKey);
+                if (instances) {
+                    instances.forEach(({ renderer }) => renderer.start());
+                }
+                
+                this.currentSection = sectionKey;
+                this.updateScrollIndicator();
+                this.updateDebugDisplay();
+            }
+            
+            setupPortalScroll() {
+                let isScrolling = false;
+                
+                // Intersection Observer for section detection
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                            const sectionKey = entry.target.dataset.section;
+                            if (sectionKey !== this.currentSection) {
+                                this.activateSection(sectionKey);
+                            }
+                        }
+                    });
+                }, { threshold: 0.5 });
+                
+                // Observe all sections
+                document.querySelectorAll('.section').forEach(section => {
+                    observer.observe(section);
+                });
+                
+                // Scroll indicator clicks
+                document.querySelectorAll('.scroll-dot').forEach(dot => {
+                    dot.addEventListener('click', () => {
+                        const sectionKey = dot.dataset.section;
+                        const section = document.getElementById(sectionKey);
+                        if (section) {
+                            section.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    });
+                });
+                
+                console.log('🌀 Portal scroll system configured');
+            }
+            
+            updateScrollIndicator() {
+                document.querySelectorAll('.scroll-dot').forEach(dot => {
+                    dot.classList.toggle('active', dot.dataset.section === this.currentSection);
+                });
+            }
+            
+            updateDebugDisplay() {
+                const config = this.sectionConfigs[this.currentSection];
+                const instances = this.sections.get(this.currentSection);
+                const activeCount = instances ? instances.length : 0;
+                
+                document.getElementById('debug-system').textContent = 'Active';
+                document.getElementById('debug-section').textContent = this.currentSection;
+                document.getElementById('debug-geometry').textContent = config ? config.geometry : 'unknown';
+                document.getElementById('debug-instances').textContent = this.renderers.length;
+                document.getElementById('debug-active').textContent = activeCount;
+            }
+            
+            startRenderLoop() {
+                let lastTime = 0;
+                let frameCount = 0;
+                let fpsCounter = 0;
+                
+                const render = (currentTime) => {
+                    // FPS calculation
+                    frameCount++;
+                    if (currentTime - lastTime >= 1000) {
+                        fpsCounter = frameCount;
+                        frameCount = 0;
+                        lastTime = currentTime;
+                        document.getElementById('debug-fps').textContent = fpsCounter;
+                    }
+                    
+                    // Render active instances
+                    this.renderers.forEach(renderer => {
+                        if (renderer.isActive) {
+                            renderer.render();
+                        }
+                    });
+                    
+                    requestAnimationFrame(render);
+                };
+                
+                render(0);
+                console.log('🎬 Render loop started');
+            }
+        }
+        
+        // Initialize system when page loads
+        window.addEventListener('load', () => {
+            console.log('🚀 Page loaded, starting Multi-Visualizer System...');
+            const system = new MultiVisualizerSystem();
+            window.multiVisualizerSystem = system; // For debugging
+        });
+        
+    </script>
+</body>
+</html>
