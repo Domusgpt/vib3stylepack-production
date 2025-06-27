@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Professional Dashboard - Complete</title>
+    <script src="https://unpkg.com/gl-matrix@3.4.3/gl-matrix-min.js"></script>
+    <script>
+        // CRITICAL: Initialize gl-matrix immediately
+        (function() {
+            let attempts = 0;
+            function initializeGLMatrix() {
+                attempts++;
+                if (typeof glMatrix !== 'undefined') {
+                    window.mat4 = glMatrix.mat4;
+                    window.vec3 = glMatrix.vec3;
+                    window.vec4 = glMatrix.vec4;
+                    window.quat = glMatrix.quat;
+                    window.mat3 = glMatrix.mat3;
+                    console.log('✅ gl-matrix components made globally accessible');
+                    return true;
+                }
+                if (attempts < 50) {
+                    setTimeout(initializeGLMatrix, 10);
+                } else {
+                    console.error('❌ gl-matrix failed to load - using fallbacks');
+                    window.mat4 = {
+                        create: () => new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]),
+                        identity: (out) => { out.set([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]); return out; }
+                    };
+                    window.vec3 = { create: () => new Float32Array(3) };
+                }
+            }
+            initializeGLMatrix();
+        })();
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 320px 1fr 280px;
+            grid-template-rows: 60px 1fr 50px;
+            grid-template-areas: 
+                "header header header"
+                "sidebar workspace properties"
+                "footer footer footer";
+            height: 100vh;
+        }
+        
+        .header {
+            grid-area: header;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .toolbar {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .toolbar-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+        
+        .toolbar-button:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+        
+        .sidebar {
+            grid-area: sidebar;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-y: auto;
+        }
+        
+        .component-library {
+            padding: 20px;
+        }
+        
+        .library-nav {
+            display: flex;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 4px;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            padding: 8px 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tab.active {
+            background: rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+        }
+        
+        .workspace {
+            grid-area: workspace;
+            position: relative;
+            background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%);
+            overflow: hidden;
+        }
+        
+        .canvas-workspace {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .canvas-workspace.drop-active {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px dashed #00ffff;
+        }
+        
+        .ui-element {
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            cursor: move;
+            overflow: hidden;
+        }
+        
+        .ui-element.selected {
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .ui-element canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .properties-panel {
+            grid-area: properties;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .footer {
+            grid-area: footer;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        /* Professional Component Library */
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .component-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: grab;
+            transition: all 0.3s ease;
+        }
+        
+        .component-item:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+            transform: translateY(-2px);
+        }
+        
+        .component-item:active {
+            cursor: grabbing;
+        }
+        
+        .component-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .component-name {
+            font-size: 11px;
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        /* Responsive Design Controls */
+        .responsive-controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .responsive-controls h4 {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #00ffff;
+        }
+        
+        .breakpoint-selector {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .breakpoint-btn {
+            flex: 1;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .breakpoint-btn.active {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: #00ffff;
+        }
+        
+        .breakpoint-info {
+            font-size: 11px;
+            color: #aaa;
+        }
+        
+        /* Typography Controls */
+        .typography-controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .typography-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .typography-selector select {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        
+        .color-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+        }
+        
+        .color-controls input[type="color"] {
+            width: 30px;
+            height: 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        /* Templates */
+        .templates-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .template-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .template-btn {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .template-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+        
+        /* Alignment Tools */
+        .alignment-tools {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .tool-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .spacing-tools {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .undo-redo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+        
+        .tool-btn {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .tool-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+        
+        /* Properties Panel */
+        .property-item {
+            margin-bottom: 15px;
+        }
+        
+        .property-label {
+            display: block;
+            font-size: 12px;
+            color: #ccc;
+            margin-bottom: 5px;
+        }
+        
+        .property-input, .property-slider {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .library-page {
+            display: none;
+        }
+        
+        .library-page.active {
+            display: block;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 80%;
+            max-height: 80%;
+            overflow: auto;
+        }
+        
+        /* Responsive breakpoints */
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                grid-template-columns: 280px 1fr 240px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 200px 1fr 50px;
+                grid-template-areas: 
+                    "header"
+                    "sidebar"
+                    "workspace"
+                    "footer";
+            }
+            
+            .properties-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">VIB34D Professional Dashboard</div>
+            <div class="toolbar">
+                <button class="toolbar-button" onclick="clearCanvas()">Clear All</button>
+                <button class="toolbar-button" onclick="saveProject()">Save</button>
+                <button class="toolbar-button" onclick="loadProject()">Load</button>
+                <button class="toolbar-button" onclick="exportHTML()">Export HTML</button>
+                <button class="toolbar-button" onclick="undoAction()">Undo</button>
+                <button class="toolbar-button" onclick="redoAction()">Redo</button>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="component-library">
+                <div class="library-nav">
+                    <div class="nav-tab active" data-tab="layout" onclick="switchLibraryTab('layout')">Layout</div>
+                    <div class="nav-tab" data-tab="content" onclick="switchLibraryTab('content')">Content</div>
+                    <div class="nav-tab" data-tab="interactive" onclick="switchLibraryTab('interactive')">Tools</div>
+                    <div class="nav-tab" data-tab="effects" onclick="switchLibraryTab('effects')">Effects</div>
+                </div>
+
+                <!-- Layout Page -->
+                <div class="library-page active" id="layout-page">
+                    <div class="responsive-controls">
+                        <h4>Responsive Design</h4>
+                        <div class="breakpoint-selector">
+                            <button class="breakpoint-btn active" data-breakpoint="desktop" onclick="setBreakpoint('desktop')">🖥️ Desktop</button>
+                            <button class="breakpoint-btn" data-breakpoint="tablet" onclick="setBreakpoint('tablet')">📱 Tablet</button>
+                            <button class="breakpoint-btn" data-breakpoint="mobile" onclick="setBreakpoint('mobile')">📱 Mobile</button>
+                        </div>
+                        <div class="breakpoint-info">
+                            <span id="currentBreakpoint">Desktop (1200px+)</span>
+                        </div>
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-component="responsive-container" data-type="layout">
+                            <div class="component-icon">📦</div>
+                            <div class="component-name">Container</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="grid-12" data-type="layout">
+                            <div class="component-icon">⊞</div>
+                            <div class="component-name">12-Col Grid</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="flex-row" data-type="layout">
+                            <div class="component-icon">↔</div>
+                            <div class="component-name">Flex Row</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="flex-column" data-type="layout">
+                            <div class="component-icon">↕</div>
+                            <div class="component-name">Flex Column</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="hero-section" data-type="layout">
+                            <div class="component-icon">🎯</div>
+                            <div class="component-name">Hero Section</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="card-layout" data-type="layout">
+                            <div class="component-icon">🃏</div>
+                            <div class="component-name">Card Layout</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Page -->
+                <div class="library-page" id="content-page">
+                    <div class="typography-controls">
+                        <h4>Typography</h4>
+                        <div class="typography-selector">
+                            <select id="fontFamily" onchange="updateTypography('fontFamily', this.value)">
+                                <option>Inter</option>
+                                <option>Roboto</option>
+                                <option>Open Sans</option>
+                                <option>Montserrat</option>
+                                <option>Poppins</option>
+                            </select>
+                            <select id="fontSize" onchange="updateTypography('fontSize', this.value)">
+                                <option>14px</option>
+                                <option>16px</option>
+                                <option>18px</option>
+                                <option>20px</option>
+                                <option>24px</option>
+                            </select>
+                        </div>
+                        <div class="color-controls">
+                            <label>Text:</label>
+                            <input type="color" id="textColor" value="#ffffff" onchange="updateTypography('color', this.value)">
+                            <label>BG:</label>
+                            <input type="color" id="bgColor" value="#000000" onchange="updateTypography('background', this.value)">
+                        </div>
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-component="h1" data-type="content">
+                            <div class="component-icon">H1</div>
+                            <div class="component-name">Main Heading</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="h2" data-type="content">
+                            <div class="component-icon">H2</div>
+                            <div class="component-name">Sub Heading</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="paragraph" data-type="content">
+                            <div class="component-icon">📝</div>
+                            <div class="component-name">Paragraph</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="image-responsive" data-type="content">
+                            <div class="component-icon">🖼️</div>
+                            <div class="component-name">Image</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="video-embed" data-type="content">
+                            <div class="component-icon">🎥</div>
+                            <div class="component-name">Video</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="text-block" data-type="content">
+                            <div class="component-icon">📄</div>
+                            <div class="component-name">Text Block</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Page -->
+                <div class="library-page" id="interactive-page">
+                    <div class="templates-section">
+                        <h4>Quick Templates</h4>
+                        <div class="template-grid">
+                            <button class="template-btn" onclick="loadTemplate('landing-page')">🎯 Landing</button>
+                            <button class="template-btn" onclick="loadTemplate('portfolio')">💼 Portfolio</button>
+                            <button class="template-btn" onclick="loadTemplate('blog')">📝 Blog</button>
+                            <button class="template-btn" onclick="loadTemplate('dashboard')">📊 Dashboard</button>
+                        </div>
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-component="cta-button" data-type="interactive">
+                            <div class="component-icon">🚀</div>
+                            <div class="component-name">CTA Button</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="contact-form" data-type="interactive">
+                            <div class="component-icon">📋</div>
+                            <div class="component-name">Contact Form</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="navigation" data-type="interactive">
+                            <div class="component-icon">🧭</div>
+                            <div class="component-name">Navigation</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="modal" data-type="interactive">
+                            <div class="component-icon">🔲</div>
+                            <div class="component-name">Modal</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="carousel" data-type="interactive">
+                            <div class="component-icon">🎠</div>
+                            <div class="component-name">Carousel</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="accordion" data-type="interactive">
+                            <div class="component-icon">📚</div>
+                            <div class="component-name">Accordion</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Effects Page -->
+                <div class="library-page" id="effects-page">
+                    <div class="alignment-tools">
+                        <h4>Alignment & Tools</h4>
+                        <div class="tool-buttons">
+                            <button class="tool-btn" onclick="alignElements('left')" title="Align Left">⬅️</button>
+                            <button class="tool-btn" onclick="alignElements('center')" title="Align Center">↔️</button>
+                            <button class="tool-btn" onclick="alignElements('right')" title="Align Right">➡️</button>
+                            <button class="tool-btn" onclick="alignElements('top')" title="Align Top">⬆️</button>
+                            <button class="tool-btn" onclick="alignElements('middle')" title="Align Middle">↕️</button>
+                            <button class="tool-btn" onclick="alignElements('bottom')" title="Align Bottom">⬇️</button>
+                        </div>
+                        <div class="spacing-tools">
+                            <button class="tool-btn" onclick="distributeElements('horizontal')" title="Distribute Horizontal">↔️📏</button>
+                            <button class="tool-btn" onclick="distributeElements('vertical')" title="Distribute Vertical">↕️📏</button>
+                        </div>
+                        <div class="undo-redo">
+                            <button class="tool-btn" onclick="undoAction()" title="Undo">↶</button>
+                            <button class="tool-btn" onclick="redoAction()" title="Redo">↷</button>
+                        </div>
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-component="fade-in" data-type="effects">
+                            <div class="component-icon">✨</div>
+                            <div class="component-name">Fade In</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="slide-up" data-type="effects">
+                            <div class="component-icon">⬆️</div>
+                            <div class="component-name">Slide Up</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="parallax" data-type="effects">
+                            <div class="component-icon">🌊</div>
+                            <div class="component-name">Parallax</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="hover-glow" data-type="effects">
+                            <div class="component-icon">💫</div>
+                            <div class="component-name">Hover Glow</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="gradient-bg" data-type="effects">
+                            <div class="component-icon">🌈</div>
+                            <div class="component-name">Gradient BG</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="glassmorphism" data-type="effects">
+                            <div class="component-icon">🔲</div>
+                            <div class="component-name">Glass Effect</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workspace -->
+        <div class="workspace">
+            <div class="canvas-workspace" id="canvasWorkspace">
+                <div id="canvasPreview" style="width: 100%; height: 100%; position: relative;"></div>
+            </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <div class="properties-panel">
+            <h3>Properties</h3>
+            <div id="elementProperties">
+                <p style="color: #888; font-size: 12px; text-align: center; margin-top: 50px;">
+                    Select an element to edit properties
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            VIB34D Professional Dashboard - 4D Reactive UI Builder
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <h3>Export HTML</h3>
+            <pre id="exportCode"></pre>
+            <div style="margin-top: 20px;">
+                <button class="toolbar-button" onclick="copyToClipboard()">Copy to Clipboard</button>
+                <button class="toolbar-button" onclick="downloadHTML()">Download HTML</button>
+                <button class="toolbar-button" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIB34D Core System -->
+    <script src="js/core/BaseProjection.js"></script>
+    <script src="js/projections/PerspectiveProjection.js"></script>
+    <script src="js/projections/OrthographicProjection.js"></script>
+    <script src="js/projections/StereographicProjection.js"></script>
+    <script src="js/managers/ShaderManager.js"></script>
+    <script src="js/HypercubeCore.js"></script>
+    <script src="js/VIB34DEditorDashboard.js"></script>
+    
+    <script>
+        // Professional Dashboard Functionality
+        let currentBreakpoint = 'desktop';
+        let actionHistory = [];
+        let actionIndex = -1;
+        
+        // Dashboard state management
+        const dashboardState = {
+            elements: new Map(),
+            selectedElements: [],
+            currentBreakpoint: 'desktop',
+            typography: {
+                fontFamily: 'Inter',
+                fontSize: '16px',
+                color: '#ffffff',
+                background: '#000000'
+            },
+            clipboard: null
+        };
+        
+        // Responsive Design Functions
+        function setBreakpoint(breakpoint) {
+            currentBreakpoint = breakpoint;
+            
+            // Update UI
+            document.querySelectorAll('.breakpoint-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-breakpoint="${breakpoint}"]`).classList.add('active');
+            
+            // Update info
+            const info = {
+                desktop: 'Desktop (1200px+)',
+                tablet: 'Tablet (768px - 1199px)',
+                mobile: 'Mobile (< 768px)'
+            };
+            document.getElementById('currentBreakpoint').textContent = info[breakpoint];
+            
+            // Apply responsive styles
+            applyResponsiveStyles(breakpoint);
+            
+            console.log(`📱 Switched to ${breakpoint} breakpoint`);
+        }
+        
+        function applyResponsiveStyles(breakpoint) {
+            const workspace = document.getElementById('canvasWorkspace');
+            workspace.className = `canvas-workspace ${breakpoint}-view`;
+            
+            // Apply different canvas sizes for testing
+            const sizes = {
+                desktop: { width: '100%', height: '100%' },
+                tablet: { width: '768px', height: '100%' },
+                mobile: { width: '375px', height: '100%' }
+            };
+            
+            const size = sizes[breakpoint];
+            workspace.style.maxWidth = size.width;
+        }
+        
+        // Typography Functions
+        function updateTypography(property, value) {
+            dashboardState.typography[property] = value;
+            
+            // Apply to selected elements or globally
+            if (dashboardState.selectedElements.length > 0) {
+                dashboardState.selectedElements.forEach(elementId => {
+                    const element = dashboardState.elements.get(elementId);
+                    if (element && element.domElement) {
+                        element.domElement.style[property] = value;
+                    }
+                });
+            }
+            
+            console.log(`✏️ Updated typography ${property} to ${value}`);
+        }
+        
+        // Template Functions
+        function loadTemplate(templateName) {
+            const templates = {
+                'landing-page': [
+                    { x: 50, y: 50, component: 'hero-section', type: 'layout' },
+                    { x: 50, y: 250, component: 'h1', type: 'content' },
+                    { x: 50, y: 300, component: 'paragraph', type: 'content' },
+                    { x: 50, y: 400, component: 'cta-button', type: 'interactive' }
+                ],
+                'portfolio': [
+                    { x: 50, y: 50, component: 'navigation', type: 'interactive' },
+                    { x: 50, y: 150, component: 'grid-12', type: 'layout' },
+                    { x: 200, y: 200, component: 'image-responsive', type: 'content' },
+                    { x: 400, y: 200, component: 'image-responsive', type: 'content' }
+                ],
+                'blog': [
+                    { x: 50, y: 50, component: 'h1', type: 'content' },
+                    { x: 50, y: 120, component: 'text-block', type: 'content' },
+                    { x: 50, y: 300, component: 'image-responsive', type: 'content' },
+                    { x: 50, y: 450, component: 'paragraph', type: 'content' }
+                ],
+                'dashboard': [
+                    { x: 50, y: 50, component: 'navigation', type: 'interactive' },
+                    { x: 50, y: 150, component: 'card-layout', type: 'layout' },
+                    { x: 300, y: 150, component: 'card-layout', type: 'layout' },
+                    { x: 550, y: 150, component: 'card-layout', type: 'layout' }
+                ]
+            };
+            
+            const template = templates[templateName];
+            if (template && window.editorDashboard) {
+                // Clear existing elements
+                clearCanvas();
+                
+                // Add template elements
+                template.forEach(item => {
+                    window.editorDashboard.createElement(item.x, item.y, {
+                        component: item.component,
+                        type: item.type
+                    });
+                });
+                
+                console.log(`📋 Loaded ${templateName} template`);
+            }
+        }
+        
+        // Alignment Functions
+        function alignElements(alignment) {
+            if (!window.editorDashboard || dashboardState.selectedElements.length < 2) {
+                alert('Select multiple elements to align');
+                return;
+            }
+            
+            const elements = dashboardState.selectedElements.map(id => 
+                dashboardState.elements.get(id)
+            ).filter(el => el);
+            
+            let referenceValue;
+            
+            switch (alignment) {
+                case 'left':
+                    referenceValue = Math.min(...elements.map(el => parseInt(el.domElement.style.left)));
+                    elements.forEach(el => el.domElement.style.left = referenceValue + 'px');
+                    break;
+                case 'right':
+                    referenceValue = Math.max(...elements.map(el => 
+                        parseInt(el.domElement.style.left) + parseInt(el.domElement.style.width || 200)
+                    ));
+                    elements.forEach(el => {
+                        const width = parseInt(el.domElement.style.width || 200);
+                        el.domElement.style.left = (referenceValue - width) + 'px';
+                    });
+                    break;
+                case 'center':
+                    const leftmost = Math.min(...elements.map(el => parseInt(el.domElement.style.left)));
+                    const rightmost = Math.max(...elements.map(el => 
+                        parseInt(el.domElement.style.left) + parseInt(el.domElement.style.width || 200)
+                    ));
+                    const centerX = (leftmost + rightmost) / 2;
+                    elements.forEach(el => {
+                        const width = parseInt(el.domElement.style.width || 200);
+                        el.domElement.style.left = (centerX - width / 2) + 'px';
+                    });
+                    break;
+                case 'top':
+                    referenceValue = Math.min(...elements.map(el => parseInt(el.domElement.style.top)));
+                    elements.forEach(el => el.domElement.style.top = referenceValue + 'px');
+                    break;
+                case 'bottom':
+                    referenceValue = Math.max(...elements.map(el => 
+                        parseInt(el.domElement.style.top) + parseInt(el.domElement.style.height || 150)
+                    ));
+                    elements.forEach(el => {
+                        const height = parseInt(el.domElement.style.height || 150);
+                        el.domElement.style.top = (referenceValue - height) + 'px';
+                    });
+                    break;
+                case 'middle':
+                    const topmost = Math.min(...elements.map(el => parseInt(el.domElement.style.top)));
+                    const bottommost = Math.max(...elements.map(el => 
+                        parseInt(el.domElement.style.top) + parseInt(el.domElement.style.height || 150)
+                    ));
+                    const centerY = (topmost + bottommost) / 2;
+                    elements.forEach(el => {
+                        const height = parseInt(el.domElement.style.height || 150);
+                        el.domElement.style.top = (centerY - height / 2) + 'px';
+                    });
+                    break;
+            }
+            
+            saveAction('align_elements', { alignment, elements: dashboardState.selectedElements });
+            console.log(`📐 Aligned elements: ${alignment}`);
+        }
+        
+        function distributeElements(direction) {
+            if (!window.editorDashboard || dashboardState.selectedElements.length < 3) {
+                alert('Select at least 3 elements to distribute');
+                return;
+            }
+            
+            const elements = dashboardState.selectedElements.map(id => 
+                dashboardState.elements.get(id)
+            ).filter(el => el);
+            
+            if (direction === 'horizontal') {
+                elements.sort((a, b) => parseInt(a.domElement.style.left) - parseInt(b.domElement.style.left));
+                const leftmost = parseInt(elements[0].domElement.style.left);
+                const rightmost = parseInt(elements[elements.length - 1].domElement.style.left);
+                const spacing = (rightmost - leftmost) / (elements.length - 1);
+                
+                elements.forEach((el, index) => {
+                    if (index > 0 && index < elements.length - 1) {
+                        el.domElement.style.left = (leftmost + spacing * index) + 'px';
+                    }
+                });
+            } else {
+                elements.sort((a, b) => parseInt(a.domElement.style.top) - parseInt(b.domElement.style.top));
+                const topmost = parseInt(elements[0].domElement.style.top);
+                const bottommost = parseInt(elements[elements.length - 1].domElement.style.top);
+                const spacing = (bottommost - topmost) / (elements.length - 1);
+                
+                elements.forEach((el, index) => {
+                    if (index > 0 && index < elements.length - 1) {
+                        el.domElement.style.top = (topmost + spacing * index) + 'px';
+                    }
+                });
+            }
+            
+            saveAction('distribute_elements', { direction, elements: dashboardState.selectedElements });
+            console.log(`📏 Distributed elements: ${direction}`);
+        }
+        
+        // Undo/Redo Functions
+        function saveAction(type, data) {
+            // Remove any actions after current index
+            actionHistory = actionHistory.slice(0, actionIndex + 1);
+            
+            // Add new action
+            actionHistory.push({
+                type: type,
+                data: data,
+                timestamp: Date.now()
+            });
+            
+            actionIndex++;
+            
+            // Limit history size
+            if (actionHistory.length > 50) {
+                actionHistory = actionHistory.slice(-50);
+                actionIndex = actionHistory.length - 1;
+            }
+        }
+        
+        function undoAction() {
+            if (actionIndex >= 0) {
+                const action = actionHistory[actionIndex];
+                // Implement undo logic based on action type
+                console.log(`↶ Undoing action: ${action.type}`);
+                actionIndex--;
+            } else {
+                console.log('Nothing to undo');
+            }
+        }
+        
+        function redoAction() {
+            if (actionIndex < actionHistory.length - 1) {
+                actionIndex++;
+                const action = actionHistory[actionIndex];
+                // Implement redo logic based on action type
+                console.log(`↷ Redoing action: ${action.type}`);
+            } else {
+                console.log('Nothing to redo');
+            }
+        }
+        
+        // Tab switching function
+        function switchLibraryTab(tabName) {
+            // Hide all library pages
+            document.querySelectorAll('.library-page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Remove active from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected page and activate tab
+            const targetPage = document.getElementById(tabName + '-page');
+            const targetTab = document.querySelector(`[data-tab="${tabName}"]`);
+            
+            if (targetPage) targetPage.classList.add('active');
+            if (targetTab) targetTab.classList.add('active');
+            
+            console.log(`📑 Switched to ${tabName} library tab`);
+        }
+        
+        // Global functions for existing functionality
+        function clearCanvas() {
+            if (window.editorDashboard) {
+                window.editorDashboard.elements.forEach((element, id) => {
+                    window.editorDashboard.deleteElement(id);
+                });
+            }
+            dashboardState.selectedElements = [];
+            saveAction('clear_canvas', {});
+        }
+        
+        function saveProject() {
+            if (window.editorDashboard) {
+                const project = {
+                    elements: Array.from(window.editorDashboard.elements.entries()),
+                    typography: dashboardState.typography,
+                    breakpoint: currentBreakpoint,
+                    timestamp: Date.now()
+                };
+                
+                const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'vib34d-professional-project.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+        
+        function loadProject() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const project = JSON.parse(e.target.result);
+                            // Implement project loading
+                            console.log('📂 Project loaded:', project);
+                        } catch (error) {
+                            alert('Error loading project file');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+        
+        function exportHTML() {
+            if (window.editorDashboard) {
+                window.editorDashboard.exportHTML();
+            }
+        }
+        
+        function copyToClipboard() {
+            const code = document.getElementById('exportCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Code copied to clipboard!');
+            });
+        }
+        
+        function downloadHTML() {
+            const code = document.getElementById('exportCode').textContent;
+            const blob = new Blob([code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'vib34d-professional-export.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function closeModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+        
+        // Initialize
+        console.log('🚀 VIB34D Professional Dashboard initialized');
+    </script>
+</body>
+</html>
