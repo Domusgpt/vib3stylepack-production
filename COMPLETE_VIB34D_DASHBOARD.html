@@ -720,6 +720,455 @@
     <script src="js/VIB34DEditorDashboard.js"></script>
     
     <script>
+        // CRITICAL FIX: Initialize dashboard with proper drag-drop
+        let editorDashboard;
+        
+        class VIB34DEditorDashboard {
+            constructor() {
+                this.elements = new Map();
+                this.selectedElement = null;
+                this.draggedItem = null;
+                this.nextId = 1;
+                
+                setTimeout(() => this.setupDragAndDrop(), 100);
+                console.log('🎨 VIB34D Editor Dashboard initialized');
+            }
+            
+            setupDragAndDrop() {
+                // Setup draggable items
+                document.querySelectorAll('.component-item').forEach(item => {
+                    item.setAttribute('draggable', 'true');
+                    
+                    item.addEventListener('dragstart', (e) => {
+                        const component = e.currentTarget.dataset.component;
+                        const type = e.currentTarget.dataset.type;
+                        
+                        this.draggedItem = { component, type };
+                        e.dataTransfer.effectAllowed = 'copy';
+                        e.dataTransfer.setData('text/plain', JSON.stringify(this.draggedItem));
+                        console.log('🎯 Drag started:', this.draggedItem);
+                    });
+                });
+                
+                // Setup drop zone
+                const workspace = document.getElementById('canvasWorkspace');
+                if (workspace) {
+                    workspace.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'copy';
+                        workspace.classList.add('drop-active');
+                    });
+                    
+                    workspace.addEventListener('dragleave', (e) => {
+                        if (!workspace.contains(e.relatedTarget)) {
+                            workspace.classList.remove('drop-active');
+                        }
+                    });
+                    
+                    workspace.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        workspace.classList.remove('drop-active');
+                        
+                        const rect = workspace.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        
+                        if (this.draggedItem) {
+                            this.createElement(x, y, this.draggedItem);
+                            this.draggedItem = null;
+                        }
+                        
+                        console.log('✅ Drop successful at:', x, y);
+                    });
+                }
+            }
+            
+            createElement(x, y, itemData) {
+                const id = 'element_' + this.nextId++;
+                const element = document.createElement('div');
+                element.className = 'ui-element';
+                element.dataset.id = id;
+                element.style.left = x + 'px';
+                element.style.top = y + 'px';
+                element.style.width = '200px';
+                element.style.height = '150px';
+                
+                // Create canvas for 4D visualization
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 150;
+                element.appendChild(canvas);
+                
+                // Initialize HyperAV core for this element
+                try {
+                    if (typeof HypercubeCore !== 'undefined') {
+                        const core = new HypercubeCore(canvas, {
+                            onStateChangeCallback: (reason) => {
+                                console.log(`Element ${id} state changed: ${reason}`);
+                            }
+                        });
+                        
+                        // Set geometry based on component type
+                        const geometryMap = {
+                            'responsive-container': 'hypercube',
+                            'grid-12': 'hypercube',
+                            'flex-row': 'hypertetrahedron',
+                            'flex-column': 'hypertetrahedron',
+                            'hero-section': 'hypersphere',
+                            'card-layout': 'torus',
+                            'h1': 'wave',
+                            'h2': 'wave',
+                            'paragraph': 'wave',
+                            'image-responsive': 'crystal',
+                            'video-embed': 'kleinbottle',
+                            'text-block': 'wave',
+                            'cta-button': 'hypercube',
+                            'contact-form': 'torus',
+                            'navigation': 'hypertetrahedron',
+                            'modal': 'hypersphere',
+                            'carousel': 'torus',
+                            'accordion': 'hypertetrahedron',
+                            'fade-in': 'fractal',
+                            'slide-up': 'fractal',
+                            'parallax': 'wave',
+                            'hover-glow': 'fractal',
+                            'gradient-bg': 'fractal',
+                            'glassmorphism': 'crystal'
+                        };
+                        
+                        const geometry = geometryMap[itemData.component] || 'hypercube';
+                        core.setGeometry(geometry);
+                        core.setProjection('perspective');
+                        core.start();
+                        
+                        // Store element data
+                        this.elements.set(id, {
+                            domElement: element,
+                            canvas: canvas,
+                            core: core,
+                            type: itemData.type,
+                            component: itemData.component,
+                            geometry: geometry,
+                            properties: {
+                                intensity: 0.8,
+                                speed: 1.0,
+                                density: 10,
+                                colorShift: 0.0,
+                                morphFactor: 0.0
+                            }
+                        });
+                        
+                        console.log(`✅ Created 4D visualization: ${geometry} for ${itemData.component}`);
+                        
+                    } else {
+                        throw new Error('HypercubeCore not available');
+                    }
+                    
+                } catch (error) {
+                    console.error('Failed to create 4D visualization:', error);
+                    // Fallback display
+                    element.innerHTML = `
+                        <div style="padding: 10px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; background: rgba(0,255,255,0.1);">
+                            <div style="font-size: 20px; margin-bottom: 8px;">${this.getComponentIcon(itemData.component)}</div>
+                            <div style="font-size: 12px; color: #00ffff; font-weight: bold;">${itemData.component}</div>
+                            <div style="font-size: 10px; color: #888; margin-top: 4px;">${itemData.type}</div>
+                        </div>
+                    `;
+                    
+                    this.elements.set(id, {
+                        domElement: element,
+                        type: itemData.type,
+                        component: itemData.component,
+                        properties: {
+                            intensity: 0.8,
+                            speed: 1.0,
+                            density: 10
+                        }
+                    });
+                }
+                
+                // Make element draggable
+                this.makeElementDraggable(element);
+                
+                // Add to workspace
+                document.getElementById('canvasPreview').appendChild(element);
+                this.selectElement(id);
+                
+                console.log(`✅ Created element: ${id} (${itemData.component})`);
+            }
+            
+            getComponentIcon(component) {
+                const icons = {
+                    'responsive-container': '📦',
+                    'grid-12': '⊞',
+                    'flex-row': '↔',
+                    'flex-column': '↕',
+                    'hero-section': '🎯',
+                    'card-layout': '🃏',
+                    'h1': 'H1',
+                    'h2': 'H2',
+                    'paragraph': '📝',
+                    'image-responsive': '🖼️',
+                    'video-embed': '🎥',
+                    'text-block': '📄',
+                    'cta-button': '🚀',
+                    'contact-form': '📋',
+                    'navigation': '🧭',
+                    'modal': '🔲',
+                    'carousel': '🎠',
+                    'accordion': '📚',
+                    'fade-in': '✨',
+                    'slide-up': '⬆️',
+                    'parallax': '🌊',
+                    'hover-glow': '💫',
+                    'gradient-bg': '🌈',
+                    'glassmorphism': '🔲'
+                };
+                return icons[component] || '📦';
+            }
+            
+            makeElementDraggable(element) {
+                let isDragging = false;
+                let startX, startY, initialX, initialY;
+                
+                element.addEventListener('mousedown', (e) => {
+                    if (e.target === element || e.target.tagName === 'CANVAS') {
+                        isDragging = true;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        initialX = parseInt(element.style.left);
+                        initialY = parseInt(element.style.top);
+                        e.preventDefault();
+                    }
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        const deltaX = e.clientX - startX;
+                        const deltaY = e.clientY - startY;
+                        element.style.left = (initialX + deltaX) + 'px';
+                        element.style.top = (initialY + deltaY) + 'px';
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+            }
+            
+            selectElement(elementId) {
+                document.querySelectorAll('.ui-element.selected').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                
+                this.selectedElement = elementId;
+                
+                if (elementId && this.elements.has(elementId)) {
+                    const element = this.elements.get(elementId);
+                    element.domElement.classList.add('selected');
+                    this.showElementProperties(elementId);
+                } else {
+                    this.showElementProperties(null);
+                }
+            }
+            
+            showElementProperties(elementId) {
+                const propertiesContainer = document.getElementById('elementProperties');
+                
+                if (!elementId || !this.elements.has(elementId)) {
+                    propertiesContainer.innerHTML = `
+                        <p style="color: #888; font-size: 12px; text-align: center; margin-top: 50px;">
+                            Select an element to edit properties
+                        </p>
+                    `;
+                    return;
+                }
+                
+                const element = this.elements.get(elementId);
+                
+                propertiesContainer.innerHTML = `
+                    <div class="property-item">
+                        <label class="property-label">Component</label>
+                        <input type="text" class="property-input" value="${element.component}" readonly>
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Type</label>
+                        <input type="text" class="property-input" value="${element.type}" readonly>
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Intensity</label>
+                        <input type="range" class="property-input" min="0" max="2" step="0.01" 
+                               value="${element.properties.intensity}"
+                               onchange="editorDashboard.updateElementProperty('${elementId}', 'intensity', this.value)">
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Animation Speed</label>
+                        <input type="range" class="property-input" min="0" max="3" step="0.01" 
+                               value="${element.properties.speed}"
+                               onchange="editorDashboard.updateElementProperty('${elementId}', 'speed', this.value)">
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Grid Density</label>
+                        <input type="range" class="property-input" min="1" max="25" step="0.5" 
+                               value="${element.properties.density}"
+                               onchange="editorDashboard.updateElementProperty('${elementId}', 'density', this.value)">
+                    </div>
+                    
+                    <div class="property-item" style="margin-top: 20px;">
+                        <button class="toolbar-button" onclick="editorDashboard.deleteElement('${elementId}')" 
+                                style="width: 100%; background: rgba(255, 0, 0, 0.3); border-color: #ff0000; color: #ff0000;">
+                            Delete Element
+                        </button>
+                    </div>
+                `;
+            }
+            
+            updateElementProperty(elementId, property, value) {
+                if (!this.elements.has(elementId)) return;
+                
+                const element = this.elements.get(elementId);
+                element.properties[property] = parseFloat(value);
+                
+                // Update the core system with new parameters
+                if (element.core) {
+                    const params = {};
+                    
+                    switch(property) {
+                        case 'intensity':
+                            params.u_patternIntensity = value;
+                            break;
+                        case 'speed':
+                            params.u_rotationSpeed = value;
+                            break;
+                        case 'density':
+                            params.u_gridDensity = value;
+                            break;
+                    }
+                    
+                    // Apply parameters to the core
+                    Object.assign(element.core.baseParameters, params);
+                }
+                
+                console.log(`Updated element ${elementId} ${property} to ${value}`);
+            }
+            
+            deleteElement(elementId) {
+                if (!this.elements.has(elementId)) return;
+                
+                const element = this.elements.get(elementId);
+                
+                // Stop the core system
+                if (element.core) {
+                    element.core.stop();
+                    if (typeof element.core.destroy === 'function') {
+                        element.core.destroy();
+                    }
+                }
+                
+                // Remove from DOM
+                element.domElement.remove();
+                
+                // Remove from data structures
+                this.elements.delete(elementId);
+                
+                // Clear selection if this was selected
+                if (this.selectedElement === elementId) {
+                    this.selectElement(null);
+                }
+                
+                console.log(`Deleted element ${elementId}`);
+            }
+            
+            exportHTML() {
+                const html = this.generateStandaloneHTML();
+                document.getElementById('exportCode').textContent = html;
+                document.getElementById('exportModal').classList.add('active');
+            }
+            
+            generateStandaloneHTML() {
+                const elementsConfig = [];
+                
+                this.elements.forEach((element, id) => {
+                    elementsConfig.push({
+                        id: id,
+                        component: element.component,
+                        type: element.type,
+                        geometry: element.geometry,
+                        position: {
+                            x: parseInt(element.domElement.style.left),
+                            y: parseInt(element.domElement.style.top),
+                            width: parseInt(element.domElement.style.width) || 200,
+                            height: parseInt(element.domElement.style.height) || 150
+                        },
+                        properties: element.properties
+                    });
+                });
+                
+                return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Generated Layout</title>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: Inter, sans-serif; }
+        .vib34d-container { position: relative; width: 100vw; height: 100vh; background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%); }
+        .vib34d-element { position: absolute; border-radius: 5px; overflow: hidden; }
+        .vib34d-element canvas { width: 100%; height: 100%; display: block; }
+    </style>
+</head>
+<body>
+    <div class="vib34d-container">
+        ${elementsConfig.map(config => `
+        <div class="vib34d-element" 
+             style="left: ${config.position.x}px; top: ${config.position.y}px; width: ${config.position.width}px; height: ${config.position.height}px;"
+             data-component="${config.component}" 
+             data-geometry="${config.geometry}">
+            <canvas width="${config.position.width}" height="${config.position.height}"></canvas>
+        </div>`).join('')}
+    </div>
+    
+    <script src="https://unpkg.com/gl-matrix@3.4.3/gl-matrix-min.js"></script>
+    <script>
+        // VIB34D Configuration
+        const VIB34D_CONFIG = ${JSON.stringify(elementsConfig, null, 2)};
+        
+        // Initialize all 4D visualizations
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Initializing VIB34D generated layout with', VIB34D_CONFIG.length, 'elements');
+            
+            // Initialize each element with its 4D visualization
+            document.querySelectorAll('.vib34d-element').forEach(element => {
+                const canvas = element.querySelector('canvas');
+                const component = element.dataset.component;
+                const geometry = element.dataset.geometry;
+                
+                if (canvas) {
+                    // Initialize 4D visualization here
+                    console.log('Initializing', geometry, 'visualization for', component);
+                }
+            });
+        });
+    </script>
+</body>
+</html>`;
+            }
+        }
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                window.editorDashboard = new VIB34DEditorDashboard();
+                console.log('✅ VIB34D Professional Dashboard with 4D visualizations ready');
+            }, 200);
+        });
+    </script>
+    
+    <script>
         // Professional Dashboard Functionality
         let currentBreakpoint = 'desktop';
         let actionHistory = [];
