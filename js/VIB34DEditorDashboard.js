@@ -30,16 +30,18 @@ class VIB34DEditorDashboard {
         // Drag start from library
         document.querySelectorAll('.geometry-item').forEach(item => {
             item.addEventListener('dragstart', (e) => {
+                const draggedElement = e.currentTarget; // Use currentTarget instead of target
                 this.draggedItem = {
-                    geometry: e.target.dataset.geometry,
-                    element: e.target.dataset.element,
-                    type: e.target.dataset.geometry || e.target.dataset.element
+                    geometry: draggedElement.dataset.geometry,
+                    element: draggedElement.dataset.element,
+                    type: draggedElement.dataset.geometry || draggedElement.dataset.element
                 };
-                e.target.classList.add('dragging');
+                draggedElement.classList.add('dragging');
             });
             
             item.addEventListener('dragend', (e) => {
-                e.target.classList.remove('dragging');
+                const draggedElement = e.currentTarget;
+                draggedElement.classList.remove('dragging');
             });
         });
         

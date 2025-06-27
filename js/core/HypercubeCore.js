@@ -10,8 +10,8 @@ class HypercubeCore {
         }
         
         this.shaderManager = new ShaderManager(this.gl);
-        this.geometryManager = new GeometryManager();
-        this.projectionManager = new ProjectionManager();
+        this.geometryManager = window.globalGeometryManager || new GeometryManager();
+        this.projectionManager = window.globalProjectionManager || new ProjectionManager();
         
         this.interactionEngine = new VIB34DInteractionEngine(this.canvas);
 

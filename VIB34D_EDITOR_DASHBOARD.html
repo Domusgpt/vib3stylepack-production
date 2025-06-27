@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VIB34D Editor Dashboard - Reactive UI Builder</title>
+    <script src="https://unpkg.com/gl-matrix@3.4.3/gl-matrix-min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -575,6 +576,64 @@
     <script src="js/bridge/VIB3HomeMasterBridge.js"></script>
     <script src="js/config/presets.js"></script>
     <script src="js/core/HypercubeCore.js"></script>
+
+    <!-- Register Geometries and Projections -->
+    <script>
+        // Initialize geometry and projection registrations when DOM loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Register geometries
+            if (typeof GeometryManager !== 'undefined') {
+                const geometryManager = new GeometryManager();
+                
+                // Register available geometry classes
+                if (typeof HypercubeGeometry !== 'undefined') {
+                    geometryManager.registerGeometry('hypercube', HypercubeGeometry);
+                }
+                if (typeof HypersphereGeometry !== 'undefined') {
+                    geometryManager.registerGeometry('hypersphere', HypersphereGeometry);
+                }
+                if (typeof HypertetrahedronGeometry !== 'undefined') {
+                    geometryManager.registerGeometry('hypertetrahedron', HypertetrahedronGeometry);
+                }
+                if (typeof TorusGeometry !== 'undefined') {
+                    geometryManager.registerGeometry('torus', TorusGeometry);
+                }
+                if (typeof KleinBottleGeometry !== 'undefined') {
+                    geometryManager.registerGeometry('kleinbottle', KleinBottleGeometry);
+                }
+                if (typeof FractalGeometry !== 'undefined') {
+                    geometryManager.registerGeometry('fractal', FractalGeometry);
+                }
+                if (typeof WaveGeometry !== 'undefined') {
+                    geometryManager.registerGeometry('wave', WaveGeometry);
+                }
+                if (typeof CrystalGeometry !== 'undefined') {
+                    geometryManager.registerGeometry('crystal', CrystalGeometry);
+                }
+                
+                // Make global for HypercubeCore access
+                window.globalGeometryManager = geometryManager;
+            }
+            
+            // Register projections
+            if (typeof ProjectionManager !== 'undefined') {
+                const projectionManager = new ProjectionManager();
+                
+                if (typeof PerspectiveProjection !== 'undefined') {
+                    projectionManager.registerProjection('perspective', PerspectiveProjection);
+                }
+                if (typeof OrthographicProjection !== 'undefined') {
+                    projectionManager.registerProjection('orthographic', OrthographicProjection);
+                }
+                if (typeof StereographicProjection !== 'undefined') {
+                    projectionManager.registerProjection('stereographic', StereographicProjection);
+                }
+                
+                // Make global for HypercubeCore access
+                window.globalProjectionManager = projectionManager;
+            }
+        });
+    </script>
 
     <!-- VIB34D Editor Dashboard External JavaScript -->
     <script src="js/VIB34DEditorDashboard.js"></script>
