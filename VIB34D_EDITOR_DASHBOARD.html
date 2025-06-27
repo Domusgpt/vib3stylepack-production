@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Editor Dashboard - Reactive UI Builder</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .editor-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            gap: 2px;
+        }
+        
+        /* Top Toolbar */
+        .editor-toolbar {
+            grid-column: 1 / -1;
+            background: rgba(255, 0, 255, 0.1);
+            border-bottom: 2px solid #ff00ff;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+        }
+        
+        .toolbar-left {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .toolbar-title {
+            font-size: 18px;
+            color: #00ffff;
+            font-weight: bold;
+        }
+        
+        .toolbar-right {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .toolbar-button {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .toolbar-button:hover {
+            background: rgba(0, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        .toolbar-button.primary {
+            background: rgba(255, 0, 255, 0.3);
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+        
+        .toolbar-button.primary:hover {
+            background: rgba(255, 0, 255, 0.6);
+        }
+        
+        /* Left Panel - Element Library */
+        .element-library {
+            background: rgba(0, 0, 0, 0.9);
+            border-right: 2px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .library-section {
+            margin-bottom: 25px;
+        }
+        
+        .library-title {
+            color: #ff00ff;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        
+        .geometry-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            cursor: grab;
+            transition: all 0.3s ease;
+        }
+        
+        .geometry-item:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+            transform: translateX(5px);
+        }
+        
+        .geometry-item:active {
+            cursor: grabbing;
+        }
+        
+        .geometry-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        .geometry-name {
+            font-size: 12px;
+            color: #fff;
+        }
+        
+        /* Center Panel - Canvas Workspace */
+        .canvas-workspace {
+            background: rgba(20, 20, 40, 0.8);
+            border: 2px solid #333;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .canvas-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+        }
+        
+        .canvas-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+        
+        .drop-zone {
+            position: absolute;
+            border: 2px dashed transparent;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            min-height: 100px;
+        }
+        
+        .drop-zone.active {
+            border-color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        .ui-element {
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            cursor: move;
+            min-width: 80px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            user-select: none;
+        }
+        
+        .ui-element.selected {
+            border-color: #ff00ff;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        }
+        
+        .ui-element canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+        }
+        
+        /* Right Panel - Properties Panel */
+        .properties-panel {
+            background: rgba(0, 0, 0, 0.9);
+            border-left: 2px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .property-group {
+            margin-bottom: 25px;
+        }
+        
+        .property-title {
+            color: #ff00ff;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        
+        .property-item {
+            margin-bottom: 15px;
+        }
+        
+        .property-label {
+            display: block;
+            color: #ccc;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .property-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 8px;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 12px;
+        }
+        
+        .property-input:focus {
+            outline: none;
+            border-color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        .property-slider {
+            width: 100%;
+            background: transparent;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .property-slider::-webkit-slider-track {
+            background: rgba(255, 255, 255, 0.2);
+            height: 6px;
+            border-radius: 3px;
+        }
+        
+        .property-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #00ffff;
+            cursor: pointer;
+            border: 2px solid #000;
+        }
+        
+        .geometry-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .geometry-option {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .geometry-option:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+        
+        .geometry-option.active {
+            background: rgba(255, 0, 255, 0.3);
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+        
+        .relationship-manager {
+            margin-top: 20px;
+        }
+        
+        .relationship-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        
+        .relationship-type {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 4px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        
+        .delete-relationship {
+            background: rgba(255, 0, 0, 0.3);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        
+        /* Drag and Drop Visual Feedback */
+        .dragging {
+            opacity: 0.7;
+            transform: rotate(5deg);
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        /* Export Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #111;
+            border: 2px solid #ff00ff;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        
+        .modal-title {
+            color: #ff00ff;
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .export-code {
+            background: #000;
+            border: 1px solid #333;
+            padding: 20px;
+            border-radius: 5px;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            white-space: pre;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <!-- Top Toolbar -->
+        <div class="editor-toolbar">
+            <div class="toolbar-left">
+                <div class="toolbar-title">VIB34D Editor Dashboard</div>
+                <span style="font-size: 12px; color: #888;">Reactive UI Builder</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="toolbar-button" onclick="clearCanvas()">Clear</button>
+                <button class="toolbar-button" onclick="saveProject()">Save</button>
+                <button class="toolbar-button" onclick="loadProject()">Load</button>
+                <button class="toolbar-button primary" onclick="exportHTML()">Export HTML</button>
+            </div>
+        </div>
+        
+        <!-- Left Panel - Element Library -->
+        <div class="element-library">
+            <div class="library-section">
+                <div class="library-title">🔮 Geometry Types</div>
+                <div class="geometry-item" draggable="true" data-geometry="hypercube">
+                    <div class="geometry-icon">🔮</div>
+                    <div class="geometry-name">Hypercube</div>
+                </div>
+                <div class="geometry-item" draggable="true" data-geometry="hypersphere">
+                    <div class="geometry-icon">🌐</div>
+                    <div class="geometry-name">Hypersphere</div>
+                </div>
+                <div class="geometry-item" draggable="true" data-geometry="hypertetrahedron">
+                    <div class="geometry-icon">🔺</div>
+                    <div class="geometry-name">Tetrahedron</div>
+                </div>
+                <div class="geometry-item" draggable="true" data-geometry="torus">
+                    <div class="geometry-icon">🍩</div>
+                    <div class="geometry-name">Torus</div>
+                </div>
+                <div class="geometry-item" draggable="true" data-geometry="kleinbottle">
+                    <div class="geometry-icon">🎭</div>
+                    <div class="geometry-name">Klein Bottle</div>
+                </div>
+                <div class="geometry-item" draggable="true" data-geometry="fractal">
+                    <div class="geometry-icon">🌿</div>
+                    <div class="geometry-name">Fractal</div>
+                </div>
+                <div class="geometry-item" draggable="true" data-geometry="wave">
+                    <div class="geometry-icon">🌊</div>
+                    <div class="geometry-name">Wave Function</div>
+                </div>
+                <div class="geometry-item" draggable="true" data-geometry="crystal">
+                    <div class="geometry-icon">💎</div>
+                    <div class="geometry-name">Crystal</div>
+                </div>
+            </div>
+            
+            <div class="library-section">
+                <div class="library-title">🎨 UI Elements</div>
+                <div class="geometry-item" draggable="true" data-element="background">
+                    <div class="geometry-icon">📄</div>
+                    <div class="geometry-name">Background</div>
+                </div>
+                <div class="geometry-item" draggable="true" data-element="card">
+                    <div class="geometry-icon">🃏</div>
+                    <div class="geometry-name">Content Card</div>
+                </div>
+                <div class="geometry-item" draggable="true" data-element="navigation">
+                    <div class="geometry-icon">🧭</div>
+                    <div class="geometry-name">Navigation</div>
+                </div>
+                <div class="geometry-item" draggable="true" data-element="button">
+                    <div class="geometry-icon">🔲</div>
+                    <div class="geometry-name">Button</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Center Panel - Canvas Workspace -->
+        <div class="canvas-workspace" id="canvasWorkspace">
+            <div class="canvas-grid"></div>
+            <div class="canvas-preview" id="canvasPreview">
+                <!-- Dynamic UI elements will be placed here -->
+            </div>
+        </div>
+        
+        <!-- Right Panel - Properties Panel -->
+        <div class="properties-panel">
+            <div class="property-group">
+                <div class="property-title">Element Properties</div>
+                <div id="elementProperties">
+                    <p style="color: #888; font-size: 12px; text-align: center; margin-top: 50px;">
+                        Select an element to edit properties
+                    </p>
+                </div>
+            </div>
+            
+            <div class="property-group">
+                <div class="property-title">Global Parameters</div>
+                <div class="property-item">
+                    <label class="property-label">Master Intensity</label>
+                    <input type="range" class="property-slider" min="0" max="2" step="0.01" value="0.8" 
+                           onchange="updateGlobalParameter('intensity', this.value)">
+                    <span id="intensityValue">0.8</span>
+                </div>
+                <div class="property-item">
+                    <label class="property-label">Animation Speed</label>
+                    <input type="range" class="property-slider" min="0" max="3" step="0.01" value="1.0"
+                           onchange="updateGlobalParameter('speed', this.value)">
+                    <span id="speedValue">1.0</span>
+                </div>
+                <div class="property-item">
+                    <label class="property-label">Grid Density</label>
+                    <input type="range" class="property-slider" min="1" max="25" step="0.5" value="10"
+                           onchange="updateGlobalParameter('density', this.value)">
+                    <span id="densityValue">10</span>
+                </div>
+                <div class="property-item">
+                    <label class="property-label">Color Saturation</label>
+                    <input type="range" class="property-slider" min="0" max="2" step="0.01" value="0.9"
+                           onchange="updateGlobalParameter('saturation', this.value)">
+                    <span id="saturationValue">0.9</span>
+                </div>
+            </div>
+            
+            <div class="property-group">
+                <div class="property-title">Relationships</div>
+                <div class="relationship-manager" id="relationshipManager">
+                    <p style="color: #888; font-size: 12px; text-align: center;">
+                        Select elements to create relationships
+                    </p>
+                </div>
+                <button class="toolbar-button" onclick="addRelationship()" style="width: 100%; margin-top: 10px;">
+                    Add Relationship
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-title">Export Complete HTML</div>
+            <div class="export-code" id="exportCode"></div>
+            <div class="modal-buttons">
+                <button class="toolbar-button" onclick="copyToClipboard()">Copy Code</button>
+                <button class="toolbar-button" onclick="downloadHTML()">Download File</button>
+                <button class="toolbar-button primary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core VIB34D System Integration -->
+    <script src="js/core/BaseGeometry.js"></script>
+    <script src="js/core/BaseProjection.js"></script>
+    <script src="js/managers/ShaderManager.js"></script>
+    <script src="js/managers/GeometryManager.js"></script>
+    <script src="js/managers/ProjectionManager.js"></script>
+    <script src="js/geometries/HypercubeGeometry.js"></script>
+    <script src="js/geometries/HypersphereGeometry.js"></script>
+    <script src="js/geometries/HypertetrahedronGeometry.js"></script>
+    <script src="js/geometries/TorusGeometry.js"></script>
+    <script src="js/geometries/KleinBottleGeometry.js"></script>
+    <script src="js/geometries/FractalGeometry.js"></script>
+    <script src="js/geometries/WaveGeometry.js"></script>
+    <script src="js/geometries/CrystalGeometry.js"></script>
+    <script src="js/projections/PerspectiveProjection.js"></script>
+    <script src="js/projections/OrthographicProjection.js"></script>
+    <script src="js/projections/StereographicProjection.js"></script>
+    <script src="js/interaction/VIB34DInteractionEngine.js"></script>
+    <script src="js/interaction/ParameterMappingSystem.js"></script>
+    <script src="js/chromatic/VIB34DChromaticEngine.js"></script>
+    <script src="js/bridge/VIB3HomeMasterBridge.js"></script>
+    <script src="js/config/presets.js"></script>
+    <script src="js/core/HypercubeCore.js"></script>
+
+    <!-- VIB34D Editor Dashboard External JavaScript -->
+    <script src="js/VIB34DEditorDashboard.js"></script>
+</body>
+</html>

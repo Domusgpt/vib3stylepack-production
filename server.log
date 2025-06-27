@@ -1,3 +1,8 @@
-127.0.0.1 - - [22/Jun/2025 02:12:13] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [22/Jun/2025 02:12:57] "GET /debug-check.html HTTP/1.1" 200 -
-127.0.0.1 - - [22/Jun/2025 02:16:43] "GET /working-demo.html HTTP/1.1" 200 -
+127.0.0.1 - - [26/Jun/2025 21:29:32] code 404, message File not found
+127.0.0.1 - - [26/Jun/2025 21:29:32] "HEAD /vib3stylehyperavjules/ HTTP/1.1" 404 -
+127.0.0.1 - - [26/Jun/2025 21:29:36] code 404, message File not found
+127.0.0.1 - - [26/Jun/2025 21:29:36] "GET /vib3stylehyperavjules/ HTTP/1.1" 404 -
+127.0.0.1 - - [26/Jun/2025 21:29:36] code 404, message File not found
+127.0.0.1 - - [26/Jun/2025 21:29:36] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [26/Jun/2025 21:29:38] code 404, message File not found
+127.0.0.1 - - [26/Jun/2025 21:29:38] "GET /flutter_service_worker.js?v=3500589462 HTTP/1.1" 404 -
