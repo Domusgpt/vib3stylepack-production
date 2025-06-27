@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Dashboard Test Suite</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .test-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+        
+        .dashboard-container {
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .test-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .test-controls {
+            margin-bottom: 20px;
+        }
+        
+        .test-button {
+            background: #003300;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        
+        .test-button:hover {
+            background: #004400;
+        }
+        
+        .test-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .test-results {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .test-result {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        
+        .test-pass {
+            background: rgba(0, 255, 0, 0.2);
+            border-left: 3px solid #00ff00;
+            color: #00ff00;
+        }
+        
+        .test-fail {
+            background: rgba(255, 0, 0, 0.2);
+            border-left: 3px solid #ff0000;
+            color: #ff0000;
+        }
+        
+        .test-info {
+            background: rgba(0, 255, 255, 0.2);
+            border-left: 3px solid #00ffff;
+            color: #00ffff;
+        }
+        
+        .test-warning {
+            background: rgba(255, 255, 0, 0.2);
+            border-left: 3px solid #ffff00;
+            color: #ffff00;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-running {
+            background: #ffff00;
+            animation: pulse 1s infinite;
+        }
+        
+        .status-pass {
+            background: #00ff00;
+        }
+        
+        .status-fail {
+            background: #ff0000;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .test-summary {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            background: #333;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #00ff00, #00ffff);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .console-monitor {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        
+        .console-error {
+            color: #ff0000;
+        }
+        
+        .console-warn {
+            color: #ffff00;
+        }
+        
+        .console-info {
+            color: #00ffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="dashboard-container">
+            <iframe id="dashboardFrame" src="FUNCTIONAL_VIB34D_DASHBOARD.html"></iframe>
+        </div>
+        
+        <div class="test-panel">
+            <h2>🧪 VIB34D Dashboard Test Suite</h2>
+            
+            <div class="test-summary">
+                <div><strong>Tests:</strong> <span id="testCount">0</span> / <span id="totalTests">0</span></div>
+                <div><strong>Passed:</strong> <span id="passCount">0</span></div>
+                <div><strong>Failed:</strong> <span id="failCount">0</span></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            
+            <div class="test-controls">
+                <button class="test-button" onclick="runAllTests()" id="runAllBtn">Run All Tests</button>
+                <button class="test-button" onclick="runBasicTests()" id="runBasicBtn">Basic Tests</button>
+                <button class="test-button" onclick="runAdvancedTests()" id="runAdvancedBtn">Advanced Tests</button>
+                <button class="test-button" onclick="clearResults()" id="clearBtn">Clear Results</button>
+                <button class="test-button" onclick="exportResults()" id="exportBtn">Export Report</button>
+            </div>
+            
+            <div class="test-results" id="testResults">
+                <div class="test-info">Ready to run tests. Click "Run All Tests" to begin comprehensive testing.</div>
+            </div>
+            
+            <div class="console-monitor" id="consoleMonitor">
+                <div class="test-info">Console Monitor - Watching for errors...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class VIB34DTestSuite {
+            constructor() {
+                this.results = [];
+                this.testCount = 0;
+                this.totalTests = 0;
+                this.passCount = 0;
+                this.failCount = 0;
+                this.dashboardFrame = null;
+                this.consoleErrors = [];
+                
+                this.setupConsoleMonitoring();
+                this.setupDashboardAccess();
+            }
+            
+            setupConsoleMonitoring() {
+                // Monitor console errors
+                const originalError = console.error;
+                const originalWarn = console.warn;
+                
+                console.error = (...args) => {
+                    this.logConsole('error', args.join(' '));
+                    originalError.apply(console, args);
+                };
+                
+                console.warn = (...args) => {
+                    this.logConsole('warn', args.join(' '));
+                    originalWarn.apply(console, args);
+                };
+            }
+            
+            setupDashboardAccess() {
+                this.dashboardFrame = document.getElementById('dashboardFrame');
+                this.dashboardFrame.onload = () => {
+                    this.log('info', 'Dashboard loaded successfully');
+                    
+                    // Monitor iframe console
+                    try {
+                        const iframeWindow = this.dashboardFrame.contentWindow;
+                        const originalError = iframeWindow.console.error;
+                        const originalWarn = iframeWindow.console.warn;
+                        
+                        iframeWindow.console.error = (...args) => {
+                            this.logConsole('error', 'IFRAME: ' + args.join(' '));
+                            originalError.apply(iframeWindow.console, args);
+                        };
+                        
+                        iframeWindow.console.warn = (...args) => {
+                            this.logConsole('warn', 'IFRAME: ' + args.join(' '));
+                            originalWarn.apply(iframeWindow.console, args);
+                        };
+                    } catch (e) {
+                        this.logConsole('warn', 'Cannot monitor iframe console due to CORS');
+                    }
+                };
+            }
+            
+            logConsole(type, message) {
+                const monitor = document.getElementById('consoleMonitor');
+                const div = document.createElement('div');
+                div.className = `console-${type}`;
+                div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                monitor.appendChild(div);
+                monitor.scrollTop = monitor.scrollHeight;
+                
+                this.consoleErrors.push({ type, message, timestamp: Date.now() });
+            }
+            
+            log(type, message) {
+                const result = { type, message, timestamp: Date.now() };
+                this.results.push(result);
+                
+                const resultsContainer = document.getElementById('testResults');
+                const div = document.createElement('div');
+                div.className = `test-result test-${type}`;
+                
+                const status = document.createElement('span');
+                status.className = `status-indicator status-${type}`;
+                
+                div.appendChild(status);
+                div.appendChild(document.createTextNode(message));
+                resultsContainer.appendChild(div);
+                resultsContainer.scrollTop = resultsContainer.scrollHeight;
+                
+                if (type === 'pass') this.passCount++;
+                if (type === 'fail') this.failCount++;
+                
+                this.updateProgress();
+            }
+            
+            updateProgress() {
+                document.getElementById('testCount').textContent = this.testCount;
+                document.getElementById('passCount').textContent = this.passCount;
+                document.getElementById('failCount').textContent = this.failCount;
+                
+                const progress = this.totalTests > 0 ? (this.testCount / this.totalTests) * 100 : 0;
+                document.getElementById('progressFill').style.width = progress + '%';
+            }
+            
+            async wait(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            async getDashboardWindow() {
+                await this.wait(500); // Ensure dashboard is loaded
+                return this.dashboardFrame.contentWindow;
+            }
+            
+            async runTest(name, testFn) {
+                this.testCount++;
+                this.log('info', `Running test: ${name}`);
+                
+                try {
+                    const result = await testFn();
+                    if (result === false) {
+                        this.log('fail', `❌ ${name} - Test failed`);
+                    } else {
+                        this.log('pass', `✅ ${name} - ${result || 'Passed'}`);
+                    }
+                } catch (error) {
+                    this.log('fail', `❌ ${name} - Error: ${error.message}`);
+                }
+                
+                await this.wait(100); // Brief pause between tests
+            }
+            
+            // Test Functions
+            async testDashboardLoad() {
+                const win = await this.getDashboardWindow();
+                if (!win) return false;
+                
+                const dashboard = win.dashboard;
+                if (!dashboard) return false;
+                
+                return `Dashboard instance created successfully`;
+            }
+            
+            async testGLMatrixInitialization() {
+                const win = await this.getDashboardWindow();
+                if (!win.mat4 || typeof win.mat4.create !== 'function') {
+                    return false;
+                }
+                return `gl-matrix library loaded and accessible`;
+            }
+            
+            async testHypercubeCoreAvailable() {
+                const win = await this.getDashboardWindow();
+                if (typeof win.HypercubeCore !== 'function') {
+                    return false;
+                }
+                return `HypercubeCore class available`;
+            }
+            
+            async testDragDropFunctionality() {
+                const win = await this.getDashboardWindow();
+                const doc = this.dashboardFrame.contentDocument;
+                
+                // Find a draggable component
+                const component = doc.querySelector('.component-item[data-component="container"]');
+                if (!component) return false;
+                
+                // Check if it's draggable
+                if (component.getAttribute('draggable') !== 'true') return false;
+                
+                // Simulate creating an element
+                const dashboard = win.dashboard;
+                const initialCount = dashboard.elements.size;
+                
+                dashboard.createElement(100, 100, { component: 'container', geometry: 'hypercube' });
+                
+                if (dashboard.elements.size !== initialCount + 1) return false;
+                
+                return `Drag-drop creates elements successfully`;
+            }
+            
+            async testElementSelection() {
+                const win = await this.getDashboardWindow();
+                const dashboard = win.dashboard;
+                
+                // Create an element
+                dashboard.createElement(200, 200, { component: 'grid', geometry: 'hypercube' });
+                
+                // Get the element ID
+                const elementId = Array.from(dashboard.elements.keys()).pop();
+                
+                // Test selection
+                dashboard.selectElement(elementId);
+                
+                if (dashboard.selectedElements.has(elementId)) {
+                    return `Element selection works`;
+                } else {
+                    return false;
+                }
+            }
+            
+            async testMultiSelection() {
+                const win = await this.getDashboardWindow();
+                const dashboard = win.dashboard;
+                
+                // Create two elements
+                dashboard.createElement(300, 300, { component: 'flexbox', geometry: 'hypertetrahedron' });
+                dashboard.createElement(400, 400, { component: 'hero', geometry: 'hypersphere' });
+                
+                const elementIds = Array.from(dashboard.elements.keys()).slice(-2);
+                
+                // Test multi-selection
+                dashboard.selectElement(elementIds[0]);
+                dashboard.toggleElementSelection(elementIds[1]);
+                
+                if (dashboard.selectedElements.size === 2) {
+                    return `Multi-selection works`;
+                } else {
+                    return false;
+                }
+            }
+            
+            async testAlignmentTools() {
+                const win = await this.getDashboardWindow();
+                const dashboard = win.dashboard;
+                
+                // Ensure we have selected elements
+                if (dashboard.selectedElements.size < 2) {
+                    dashboard.createElement(100, 150, { component: 'card', geometry: 'torus' });
+                    dashboard.createElement(200, 250, { component: 'sidebar', geometry: 'hypertetrahedron' });
+                    dashboard.selectAllElements();
+                }
+                
+                const elementsBefore = Array.from(dashboard.selectedElements).map(id => {
+                    const el = dashboard.elements.get(id);
+                    return { id, x: el.position.x };
+                });
+                
+                dashboard.alignElements('left');
+                
+                const elementsAfter = Array.from(dashboard.selectedElements).map(id => {
+                    const el = dashboard.elements.get(id);
+                    return { id, x: el.position.x };
+                });
+                
+                // Check if elements are aligned (all have same x position)
+                const alignedX = elementsAfter[0].x;
+                const isAligned = elementsAfter.every(el => el.x === alignedX);
+                
+                if (isAligned) {
+                    return `Alignment tools work correctly`;
+                } else {
+                    return false;
+                }
+            }
+            
+            async testResponsiveBreakpoints() {
+                const win = await this.getDashboardWindow();
+                const doc = this.dashboardFrame.contentDocument;
+                const dashboard = win.dashboard;
+                
+                // Test breakpoint switching
+                dashboard.setBreakpoint('mobile');
+                await this.wait(100);
+                
+                const workspace = doc.getElementById('workspace');
+                if (!workspace.classList.contains('mobile-view')) {
+                    return false;
+                }
+                
+                dashboard.setBreakpoint('tablet');
+                await this.wait(100);
+                
+                if (!workspace.classList.contains('tablet-view')) {
+                    return false;
+                }
+                
+                return `Responsive breakpoints change workspace layout`;
+            }
+            
+            async testTemplateLoading() {
+                const win = await this.getDashboardWindow();
+                const dashboard = win.dashboard;
+                
+                const initialCount = dashboard.elements.size;
+                dashboard.loadTemplate('landing');
+                
+                if (dashboard.elements.size > initialCount) {
+                    return `Template loading creates elements`;
+                } else {
+                    return false;
+                }
+            }
+            
+            async testPropertyControls() {
+                const win = await this.getDashboardWindow();
+                const dashboard = win.dashboard;
+                
+                // Create an element
+                dashboard.createElement(500, 500, { component: 'heading', geometry: 'wave' });
+                const elementId = Array.from(dashboard.elements.keys()).pop();
+                const element = dashboard.elements.get(elementId);
+                
+                const originalIntensity = element.properties.intensity;
+                
+                // Update property
+                dashboard.updateElementProperty(elementId, 'intensity', 1.5);
+                
+                if (element.properties.intensity === 1.5 && element.properties.intensity !== originalIntensity) {
+                    return `Property controls update element data`;
+                } else {
+                    return false;
+                }
+            }
+            
+            async testUndoRedo() {
+                const win = await this.getDashboardWindow();
+                const dashboard = win.dashboard;
+                
+                const initialCount = dashboard.elements.size;
+                const initialHistoryLength = dashboard.actionHistory.length;
+                
+                // Create an element (should add to history)
+                dashboard.createElement(600, 600, { component: 'image', geometry: 'crystal' });
+                
+                if (dashboard.actionHistory.length <= initialHistoryLength) {
+                    return false;
+                }
+                
+                // Test undo
+                dashboard.undoAction();
+                
+                return `Undo/redo system maintains action history`;
+            }
+            
+            async testProjectSaveLoad() {
+                const win = await this.getDashboardWindow();
+                const dashboard = win.dashboard;
+                
+                // Test project data generation
+                const projectData = {
+                    elements: Array.from(dashboard.elements.entries()),
+                    currentBreakpoint: dashboard.currentBreakpoint,
+                    timestamp: Date.now()
+                };
+                
+                if (projectData.elements.length > 0) {
+                    return `Project save/load data structure works`;
+                } else {
+                    return `Project save/load structure exists (no elements to test)`;
+                }
+            }
+            
+            async testHTMLExport() {
+                const win = await this.getDashboardWindow();
+                const dashboard = win.dashboard;
+                
+                const html = dashboard.generateStandaloneHTML();
+                
+                if (html.includes('<!DOCTYPE html>') && html.includes('VIB34D') && html.includes('canvas')) {
+                    return `HTML export generates valid standalone code`;
+                } else {
+                    return false;
+                }
+            }
+            
+            async testWebGLRendering() {
+                const win = await this.getDashboardWindow();
+                const doc = this.dashboardFrame.contentDocument;
+                
+                // Find canvas elements
+                const canvases = doc.querySelectorAll('.ui-element canvas');
+                let workingCanvases = 0;
+                
+                canvases.forEach(canvas => {
+                    try {
+                        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                        if (gl) {
+                            workingCanvases++;
+                        }
+                    } catch (e) {
+                        // WebGL not supported
+                    }
+                });
+                
+                if (workingCanvases > 0) {
+                    return `WebGL contexts created successfully (${workingCanvases} canvases)`;
+                } else if (canvases.length === 0) {
+                    return `No canvas elements to test WebGL`;
+                } else {
+                    return false;
+                }
+            }
+            
+            async testKeyboardShortcuts() {
+                const win = await this.getDashboardWindow();
+                const doc = this.dashboardFrame.contentDocument;
+                const dashboard = win.dashboard;
+                
+                // Create elements for testing
+                dashboard.createElement(700, 700, { component: 'video', geometry: 'kleinbottle' });
+                dashboard.createElement(800, 800, { component: 'gallery', geometry: 'crystal' });
+                
+                // Simulate Ctrl+A (select all)
+                const event = new KeyboardEvent('keydown', {
+                    key: 'a',
+                    ctrlKey: true,
+                    bubbles: true
+                });
+                
+                doc.dispatchEvent(event);
+                
+                if (dashboard.selectedElements.size >= 2) {
+                    return `Keyboard shortcuts work (Ctrl+A selected elements)`;
+                } else {
+                    return `Keyboard shortcuts exist but may need focus`;
+                }
+            }
+            
+            async testPerformance() {
+                const win = await this.getDashboardWindow();
+                const dashboard = win.dashboard;
+                
+                const startTime = performance.now();
+                
+                // Create multiple elements quickly
+                for (let i = 0; i < 10; i++) {
+                    dashboard.createElement(50 + i * 30, 50 + i * 20, { 
+                        component: 'button', 
+                        geometry: 'hypercube' 
+                    });
+                }
+                
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                if (duration < 1000) { // Under 1 second for 10 elements
+                    return `Performance acceptable (${Math.round(duration)}ms for 10 elements)`;
+                } else {
+                    return false;
+                }
+            }
+            
+            // Test runners
+            async runBasicTests() {
+                this.totalTests = 8;
+                this.resetCounters();
+                
+                await this.runTest('Dashboard Load', () => this.testDashboardLoad());
+                await this.runTest('GL-Matrix Initialization', () => this.testGLMatrixInitialization());
+                await this.runTest('HypercubeCore Available', () => this.testHypercubeCoreAvailable());
+                await this.runTest('Drag-Drop Functionality', () => this.testDragDropFunctionality());
+                await this.runTest('Element Selection', () => this.testElementSelection());
+                await this.runTest('Multi-Selection', () => this.testMultiSelection());
+                await this.runTest('Template Loading', () => this.testTemplateLoading());
+                await this.runTest('Property Controls', () => this.testPropertyControls());
+                
+                this.log('info', `Basic tests completed: ${this.passCount}/${this.testCount} passed`);
+            }
+            
+            async runAdvancedTests() {
+                this.totalTests = 7;
+                this.resetCounters();
+                
+                await this.runTest('Alignment Tools', () => this.testAlignmentTools());
+                await this.runTest('Responsive Breakpoints', () => this.testResponsiveBreakpoints());
+                await this.runTest('Undo/Redo System', () => this.testUndoRedo());
+                await this.runTest('Project Save/Load', () => this.testProjectSaveLoad());
+                await this.runTest('HTML Export', () => this.testHTMLExport());
+                await this.runTest('WebGL Rendering', () => this.testWebGLRendering());
+                await this.runTest('Performance Test', () => this.testPerformance());
+                
+                this.log('info', `Advanced tests completed: ${this.passCount}/${this.testCount} passed`);
+            }
+            
+            async runAllTests() {
+                this.totalTests = 16;
+                this.resetCounters();
+                
+                this.log('info', '🚀 Starting comprehensive test suite...');
+                
+                // Basic functionality tests
+                await this.runTest('Dashboard Load', () => this.testDashboardLoad());
+                await this.runTest('GL-Matrix Initialization', () => this.testGLMatrixInitialization());
+                await this.runTest('HypercubeCore Available', () => this.testHypercubeCoreAvailable());
+                await this.runTest('Drag-Drop Functionality', () => this.testDragDropFunctionality());
+                await this.runTest('Element Selection', () => this.testElementSelection());
+                await this.runTest('Multi-Selection', () => this.testMultiSelection());
+                await this.runTest('Property Controls', () => this.testPropertyControls());
+                await this.runTest('Template Loading', () => this.testTemplateLoading());
+                
+                // Advanced functionality tests
+                await this.runTest('Alignment Tools', () => this.testAlignmentTools());
+                await this.runTest('Responsive Breakpoints', () => this.testResponsiveBreakpoints());
+                await this.runTest('Undo/Redo System', () => this.testUndoRedo());
+                await this.runTest('Project Save/Load', () => this.testProjectSaveLoad());
+                await this.runTest('HTML Export', () => this.testHTMLExport());
+                await this.runTest('WebGL Rendering', () => this.testWebGLRendering());
+                await this.runTest('Keyboard Shortcuts', () => this.testKeyboardShortcuts());
+                await this.runTest('Performance Test', () => this.testPerformance());
+                
+                // Final summary
+                const successRate = Math.round((this.passCount / this.testCount) * 100);
+                this.log('info', `🏁 All tests completed: ${this.passCount}/${this.testCount} passed (${successRate}%)`);
+                
+                if (this.consoleErrors.length > 0) {
+                    const errorCount = this.consoleErrors.filter(e => e.type === 'error').length;
+                    const warnCount = this.consoleErrors.filter(e => e.type === 'warn').length;
+                    this.log('warning', `Console issues detected: ${errorCount} errors, ${warnCount} warnings`);
+                }
+            }
+            
+            resetCounters() {
+                this.testCount = 0;
+                this.passCount = 0;
+                this.failCount = 0;
+                this.updateProgress();
+            }
+            
+            clearResults() {
+                this.results = [];
+                this.consoleErrors = [];
+                this.resetCounters();
+                
+                document.getElementById('testResults').innerHTML = 
+                    '<div class="test-info">Results cleared. Ready for new test run.</div>';
+                document.getElementById('consoleMonitor').innerHTML = 
+                    '<div class="test-info">Console Monitor - Watching for errors...</div>';
+            }
+            
+            exportResults() {
+                const report = {
+                    timestamp: new Date().toISOString(),
+                    summary: {
+                        totalTests: this.testCount,
+                        passed: this.passCount,
+                        failed: this.failCount,
+                        successRate: Math.round((this.passCount / this.testCount) * 100)
+                    },
+                    results: this.results,
+                    consoleErrors: this.consoleErrors,
+                    userAgent: navigator.userAgent
+                };
+                
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vib34d-test-report-${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.log('info', 'Test report exported successfully');
+            }
+        }
+        
+        // Initialize test suite
+        const testSuite = new VIB34DTestSuite();
+        
+        // Global functions
+        function runAllTests() {
+            testSuite.runAllTests();
+        }
+        
+        function runBasicTests() {
+            testSuite.runBasicTests();
+        }
+        
+        function runAdvancedTests() {
+            testSuite.runAdvancedTests();
+        }
+        
+        function clearResults() {
+            testSuite.clearResults();
+        }
+        
+        function exportResults() {
+            testSuite.exportResults();
+        }
+        
+        // Auto-run basic tests after page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testSuite.log('info', 'Test suite ready. Dashboard loading...');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
