@@ -224,6 +224,104 @@
             padding-bottom: 5px;
         }
         
+        /* Professional Component Library Styles */
+        .library-nav {
+            display: flex;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid #333;
+            margin: -20px -20px 20px -20px;
+            padding: 0;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+            cursor: pointer;
+            border-right: 1px solid #333;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .nav-tab:last-child {
+            border-right: none;
+        }
+        
+        .nav-tab:hover {
+            background: rgba(0, 255, 255, 0.1);
+            color: #00ffff;
+        }
+        
+        .nav-tab.active {
+            background: rgba(255, 0, 255, 0.2);
+            color: #ff00ff;
+            border-bottom: 2px solid #ff00ff;
+        }
+        
+        .library-page {
+            display: none;
+        }
+        
+        .library-page.active {
+            display: block;
+        }
+        
+        .component-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            min-height: 60px;
+        }
+        
+        .component-item:hover {
+            background: rgba(0, 255, 255, 0.15);
+            border-color: #00ffff;
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
+        }
+        
+        .component-item:active {
+            cursor: grabbing;
+            transform: translateX(1px) scale(0.98);
+        }
+        
+        .component-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .component-info {
+            flex: 1;
+        }
+        
+        .component-name {
+            font-size: 13px;
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        
+        .component-desc {
+            font-size: 10px;
+            color: #aaa;
+            line-height: 1.2;
+        }
+        
+        /* Legacy support for old geometry items */
         .geometry-item {
             display: flex;
             align-items: center;
@@ -463,6 +561,129 @@
             font-size: 10px;
         }
         
+        /* Smart Linking System Styles */
+        .linking-controls {
+            margin-bottom: 20px;
+        }
+        
+        .link-mode-selector {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .link-mode {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .link-mode:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #00ffff;
+        }
+        
+        .link-mode.active {
+            background: rgba(255, 0, 255, 0.2);
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+        
+        .mode-icon {
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+        
+        .mode-label {
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .reaction-controls {
+            margin-bottom: 15px;
+        }
+        
+        .reaction-type, .reaction-strength, .reaction-delay {
+            margin-bottom: 12px;
+        }
+        
+        .visual-guidance-controls {
+            margin-bottom: 15px;
+        }
+        
+        .guidance-toggle {
+            margin-bottom: 8px;
+        }
+        
+        .guidance-toggle label {
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+            color: #ccc;
+            cursor: pointer;
+        }
+        
+        .guidance-toggle input[type="checkbox"] {
+            margin-right: 8px;
+            accent-color: #00ffff;
+        }
+        
+        .active-links {
+            min-height: 80px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        
+        .link-actions {
+            display: flex;
+            gap: 2%;
+        }
+        
+        .link-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        
+        .link-info {
+            flex: 1;
+        }
+        
+        .link-elements {
+            color: #00ffff;
+            font-weight: bold;
+        }
+        
+        .link-type {
+            color: #888;
+            font-size: 9px;
+        }
+        
+        .link-remove {
+            background: rgba(255, 0, 0, 0.3);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        
         /* Drag and Drop Visual Feedback */
         .dragging {
             opacity: 0.7;
@@ -561,61 +782,199 @@
             </div>
         </div>
         
-        <!-- Left Panel - Element Library -->
+        <!-- Left Panel - Professional Component Library -->
         <div class="element-library">
-            <div class="library-section">
-                <div class="library-title">🔮 Geometry Types</div>
-                <div class="geometry-item" draggable="true" data-geometry="hypercube">
-                    <div class="geometry-icon">🔮</div>
-                    <div class="geometry-name">Hypercube</div>
+            <!-- Sub-page Navigation -->
+            <div class="library-nav">
+                <div class="nav-tab active" data-tab="layout" onclick="switchLibraryTab('layout')">Layout</div>
+                <div class="nav-tab" data-tab="content" onclick="switchLibraryTab('content')">Content</div>
+                <div class="nav-tab" data-tab="interactive" onclick="switchLibraryTab('interactive')">Interactive</div>
+                <div class="nav-tab" data-tab="effects" onclick="switchLibraryTab('effects')">Effects</div>
+            </div>
+            
+            <!-- Layout Components -->
+            <div class="library-page active" id="layout-page">
+                <div class="library-section">
+                    <div class="library-title">📐 Layout Structure</div>
+                    <div class="component-item" draggable="true" data-component="header" data-type="layout">
+                        <div class="component-icon">🎯</div>
+                        <div class="component-info">
+                            <div class="component-name">Header</div>
+                            <div class="component-desc">Site header with nav</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="hero" data-type="layout">
+                        <div class="component-icon">🌟</div>
+                        <div class="component-info">
+                            <div class="component-name">Hero Section</div>
+                            <div class="component-desc">Main landing area</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="grid" data-type="layout">
+                        <div class="component-icon">🔲</div>
+                        <div class="component-info">
+                            <div class="component-name">Grid Container</div>
+                            <div class="component-desc">Responsive grid layout</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="sidebar" data-type="layout">
+                        <div class="component-icon">📱</div>
+                        <div class="component-info">
+                            <div class="component-name">Sidebar</div>
+                            <div class="component-desc">Side navigation panel</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="footer" data-type="layout">
+                        <div class="component-icon">🏁</div>
+                        <div class="component-info">
+                            <div class="component-name">Footer</div>
+                            <div class="component-desc">Site footer with links</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="geometry-item" draggable="true" data-geometry="hypersphere">
-                    <div class="geometry-icon">🌐</div>
-                    <div class="geometry-name">Hypersphere</div>
-                </div>
-                <div class="geometry-item" draggable="true" data-geometry="hypertetrahedron">
-                    <div class="geometry-icon">🔺</div>
-                    <div class="geometry-name">Tetrahedron</div>
-                </div>
-                <div class="geometry-item" draggable="true" data-geometry="torus">
-                    <div class="geometry-icon">🍩</div>
-                    <div class="geometry-name">Torus</div>
-                </div>
-                <div class="geometry-item" draggable="true" data-geometry="kleinbottle">
-                    <div class="geometry-icon">🎭</div>
-                    <div class="geometry-name">Klein Bottle</div>
-                </div>
-                <div class="geometry-item" draggable="true" data-geometry="fractal">
-                    <div class="geometry-icon">🌿</div>
-                    <div class="geometry-name">Fractal</div>
-                </div>
-                <div class="geometry-item" draggable="true" data-geometry="wave">
-                    <div class="geometry-icon">🌊</div>
-                    <div class="geometry-name">Wave Function</div>
-                </div>
-                <div class="geometry-item" draggable="true" data-geometry="crystal">
-                    <div class="geometry-icon">💎</div>
-                    <div class="geometry-name">Crystal</div>
+                
+                <div class="library-section">
+                    <div class="library-title">🔮 4D Backgrounds</div>
+                    <div class="component-item" draggable="true" data-component="hypercube-bg" data-geometry="hypercube" data-type="background">
+                        <div class="component-icon">🔮</div>
+                        <div class="component-info">
+                            <div class="component-name">Hypercube BG</div>
+                            <div class="component-desc">4D cube visualization</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="hypersphere-bg" data-geometry="hypersphere" data-type="background">
+                        <div class="component-icon">🌐</div>
+                        <div class="component-info">
+                            <div class="component-name">Hypersphere BG</div>
+                            <div class="component-desc">4D sphere visualization</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="wave-bg" data-geometry="wave" data-type="background">
+                        <div class="component-icon">🌊</div>
+                        <div class="component-info">
+                            <div class="component-name">Wave BG</div>
+                            <div class="component-desc">Flowing wave patterns</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="library-section">
-                <div class="library-title">🎨 UI Elements</div>
-                <div class="geometry-item" draggable="true" data-element="background">
-                    <div class="geometry-icon">📄</div>
-                    <div class="geometry-name">Background</div>
+            <!-- Content Components -->
+            <div class="library-page" id="content-page">
+                <div class="library-section">
+                    <div class="library-title">📝 Content Elements</div>
+                    <div class="component-item" draggable="true" data-component="text-block" data-type="content">
+                        <div class="component-icon">📄</div>
+                        <div class="component-info">
+                            <div class="component-name">Text Block</div>
+                            <div class="component-desc">Rich text content</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="image" data-type="content">
+                        <div class="component-icon">🖼️</div>
+                        <div class="component-info">
+                            <div class="component-name">Image</div>
+                            <div class="component-desc">Responsive image</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="card" data-type="content">
+                        <div class="component-icon">🃏</div>
+                        <div class="component-info">
+                            <div class="component-name">Content Card</div>
+                            <div class="component-desc">Card with header/body</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="gallery" data-type="content">
+                        <div class="component-icon">🖼️</div>
+                        <div class="component-info">
+                            <div class="component-name">Gallery</div>
+                            <div class="component-desc">Image gallery grid</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="video" data-type="content">
+                        <div class="component-icon">🎬</div>
+                        <div class="component-info">
+                            <div class="component-name">Video Player</div>
+                            <div class="component-desc">Embedded video</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="geometry-item" draggable="true" data-element="card">
-                    <div class="geometry-icon">🃏</div>
-                    <div class="geometry-name">Content Card</div>
+            </div>
+            
+            <!-- Interactive Components -->
+            <div class="library-page" id="interactive-page">
+                <div class="library-section">
+                    <div class="library-title">⚡ Interactive Elements</div>
+                    <div class="component-item" draggable="true" data-component="button" data-type="interactive">
+                        <div class="component-icon">🔲</div>
+                        <div class="component-info">
+                            <div class="component-name">Button</div>
+                            <div class="component-desc">Action button</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="form" data-type="interactive">
+                        <div class="component-icon">📝</div>
+                        <div class="component-info">
+                            <div class="component-name">Contact Form</div>
+                            <div class="component-desc">Input form with validation</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="navigation" data-type="interactive">
+                        <div class="component-icon">🧭</div>
+                        <div class="component-info">
+                            <div class="component-name">Navigation Menu</div>
+                            <div class="component-desc">Responsive nav menu</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="tabs" data-type="interactive">
+                        <div class="component-icon">📑</div>
+                        <div class="component-info">
+                            <div class="component-name">Tab Panel</div>
+                            <div class="component-desc">Tabbed content area</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="modal" data-type="interactive">
+                        <div class="component-icon">🔳</div>
+                        <div class="component-info">
+                            <div class="component-name">Modal Dialog</div>
+                            <div class="component-desc">Popup modal window</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="geometry-item" draggable="true" data-element="navigation">
-                    <div class="geometry-icon">🧭</div>
-                    <div class="geometry-name">Navigation</div>
-                </div>
-                <div class="geometry-item" draggable="true" data-element="button">
-                    <div class="geometry-icon">🔲</div>
-                    <div class="geometry-name">Button</div>
+            </div>
+            
+            <!-- 4D Effects Components -->
+            <div class="library-page" id="effects-page">
+                <div class="library-section">
+                    <div class="library-title">✨ 4D Visual Effects</div>
+                    <div class="component-item" draggable="true" data-component="torus-effect" data-geometry="torus" data-type="effect">
+                        <div class="component-icon">🍩</div>
+                        <div class="component-info">
+                            <div class="component-name">Torus Effect</div>
+                            <div class="component-desc">4D torus animation</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="fractal-effect" data-geometry="fractal" data-type="effect">
+                        <div class="component-icon">🌿</div>
+                        <div class="component-info">
+                            <div class="component-name">Fractal Effect</div>
+                            <div class="component-desc">Fractal pattern overlay</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="crystal-effect" data-geometry="crystal" data-type="effect">
+                        <div class="component-icon">💎</div>
+                        <div class="component-info">
+                            <div class="component-name">Crystal Effect</div>
+                            <div class="component-desc">Crystalline structure</div>
+                        </div>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="klein-effect" data-geometry="kleinbottle" data-type="effect">
+                        <div class="component-icon">🎭</div>
+                        <div class="component-info">
+                            <div class="component-name">Klein Effect</div>
+                            <div class="component-desc">Klein bottle topology</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -668,15 +1027,89 @@
             </div>
             
             <div class="property-group">
-                <div class="property-title">Relationships</div>
-                <div class="relationship-manager" id="relationshipManager">
-                    <p style="color: #888; font-size: 12px; text-align: center;">
-                        Select elements to create relationships
-                    </p>
+                <div class="property-title">🔗 Smart Linking System</div>
+                <div class="linking-controls">
+                    <div class="link-mode-selector">
+                        <div class="link-mode active" data-mode="focused" onclick="setLinkMode('focused')">
+                            <div class="mode-icon">🎯</div>
+                            <div class="mode-label">Focused</div>
+                        </div>
+                        <div class="link-mode" data-mode="linked" onclick="setLinkMode('linked')">
+                            <div class="mode-icon">🔗</div>
+                            <div class="mode-label">Linked</div>
+                        </div>
+                        <div class="link-mode" data-mode="environment" onclick="setLinkMode('environment')">
+                            <div class="mode-icon">🌍</div>
+                            <div class="mode-label">Environment</div>
+                        </div>
+                    </div>
+                    
+                    <div class="reaction-controls">
+                        <div class="reaction-type">
+                            <label class="property-label">Reaction Type</label>
+                            <select class="property-input" id="reactionType" onchange="updateReactionType()">
+                                <option value="congruent">Congruent (Same Direction)</option>
+                                <option value="inverse">Inverse (Opposite)</option>
+                                <option value="amplify">Amplify (Magnified)</option>
+                                <option value="dampen">Dampen (Reduced)</option>
+                                <option value="cascade">Cascade (Delayed)</option>
+                                <option value="oscillate">Oscillate (Rhythmic)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="reaction-strength">
+                            <label class="property-label">Reaction Strength</label>
+                            <input type="range" class="property-slider" min="0" max="2" step="0.1" value="1.0" 
+                                   id="reactionStrength" onchange="updateReactionStrength(this.value)">
+                            <span id="reactionStrengthValue">1.0</span>
+                        </div>
+                        
+                        <div class="reaction-delay">
+                            <label class="property-label">Reaction Delay (ms)</label>
+                            <input type="range" class="property-slider" min="0" max="1000" step="50" value="0" 
+                                   id="reactionDelay" onchange="updateReactionDelay(this.value)">
+                            <span id="reactionDelayValue">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="visual-guidance-controls">
+                        <div class="guidance-toggle">
+                            <label class="property-label">
+                                <input type="checkbox" id="showConnections" onchange="toggleConnections(this.checked)" checked>
+                                Show Connection Lines
+                            </label>
+                        </div>
+                        <div class="guidance-toggle">
+                            <label class="property-label">
+                                <input type="checkbox" id="showInfluenceZones" onchange="toggleInfluenceZones(this.checked)">
+                                Show Influence Zones
+                            </label>
+                        </div>
+                        <div class="guidance-toggle">
+                            <label class="property-label">
+                                <input type="checkbox" id="showReactionPreview" onchange="toggleReactionPreview(this.checked)">
+                                Preview Reactions
+                            </label>
+                        </div>
+                    </div>
                 </div>
-                <button class="toolbar-button" onclick="addRelationship()" style="width: 100%; margin-top: 10px;">
-                    Add Relationship
-                </button>
+                
+                <div class="relationship-manager" id="relationshipManager">
+                    <div class="active-links" id="activeLinks">
+                        <p style="color: #888; font-size: 12px; text-align: center;">
+                            No active links - select elements to create relationships
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="link-actions">
+                    <button class="toolbar-button" onclick="createSmartLink()" style="width: 48%; margin: 5px 1%;">
+                        🔗 Link Selected
+                    </button>
+                    <button class="toolbar-button" onclick="clearAllLinks()" style="width: 48%; margin: 5px 1%; background: rgba(255, 0, 0, 0.3); border-color: #ff0000; color: #ff0000;">
+                        🗑️ Clear Links
+                    </button>
+                </div>
             </div>
         </div>
     </div>

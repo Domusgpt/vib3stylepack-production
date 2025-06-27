@@ -12,7 +12,19 @@ class VIB34DEditorDashboard {
         this.elements = new Map();
         this.selectedElement = null;
         this.relationships = [];
+        this.smartLinks = [];
         this.draggedItem = null;
+        this.linkMode = 'focused'; // focused, linked, environment
+        this.reactionSettings = {
+            type: 'congruent',
+            strength: 1.0,
+            delay: 0
+        };
+        this.visualGuidance = {
+            showConnections: true,
+            showInfluenceZones: false,
+            showReactionPreview: false
+        };
         this.globalParameters = {
             intensity: 0.8,
             speed: 1.0,
@@ -22,28 +34,45 @@ class VIB34DEditorDashboard {
         
         this.setupDragAndDrop();
         this.setupEventListeners();
+        this.setupComponentLibrary();
         
-        console.log('🎨 VIB34D Editor Dashboard initialized');
+        console.log('🎨 VIB34D Editor Dashboard initialized with Smart Linking');
+    }
+    
+    setupComponentLibrary() {
+        // Setup component library tab switching
+        setTimeout(() => {
+            console.log('🔧 Setting up component library tabs');
+        }, 200);
     }
     
     setupDragAndDrop() {
         // Wait for DOM to be ready, then setup drag handlers
         setTimeout(() => {
-            // Drag start from library
+            // Drag start from library - support both old geometry items and new component items
             const geometryItems = document.querySelectorAll('.geometry-item');
-            console.log(`🔧 Setting up drag-and-drop for ${geometryItems.length} geometry items`);
+            const componentItems = document.querySelectorAll('.component-item');
+            const allItems = [...geometryItems, ...componentItems];
+            console.log(`🔧 Setting up drag-and-drop for ${allItems.length} items (${geometryItems.length} legacy + ${componentItems.length} components)`);
             
-            geometryItems.forEach(item => {
+            allItems.forEach(item => {
                 // Make sure draggable attribute is set
                 item.setAttribute('draggable', 'true');
                 
                 item.addEventListener('dragstart', (e) => {
                     console.log('🎯 Drag started:', e.currentTarget.dataset);
                     const draggedElement = e.currentTarget;
+                    
+                    // Support both legacy geometry items and new component items
                     this.draggedItem = {
+                        // Legacy support
                         geometry: draggedElement.dataset.geometry,
                         element: draggedElement.dataset.element,
-                        type: draggedElement.dataset.geometry || draggedElement.dataset.element
+                        // New component system
+                        component: draggedElement.dataset.component,
+                        type: draggedElement.dataset.type || draggedElement.dataset.geometry || draggedElement.dataset.element,
+                        // Combined identifier for createElement
+                        identifier: draggedElement.dataset.component || draggedElement.dataset.geometry || draggedElement.dataset.element
                     };
                     draggedElement.classList.add('dragging');
                     
@@ -523,6 +552,32 @@ ${elementsHTML}
         this.updateRelationshipDisplay();
         console.log('Deleted relationship:', relId);
     }
+    
+    updateActiveLinksList() {
+        const container = document.getElementById('activeLinks');
+        if (!container) return;
+        
+        if (this.smartLinks.length === 0) {
+            container.innerHTML = '<p style="color: #888; font-size: 12px; text-align: center;">No active links - select elements to create relationships</p>';
+            return;
+        }
+        
+        container.innerHTML = this.smartLinks.map(link => `
+            <div class="link-item">
+                <div class="link-info">
+                    <div class="link-elements">${link.source} ↔ ${link.target}</div>
+                    <div class="link-type">${link.type} (${link.strength}x, ${link.delay}ms)</div>
+                </div>
+                <button class="link-remove" onclick="editorDashboard.removeSmartLink('${link.id}')">×</button>
+            </div>
+        `).join('');
+    }
+    
+    removeSmartLink(linkId) {
+        this.smartLinks = this.smartLinks.filter(link => link.id !== linkId);
+        this.updateActiveLinksList();
+        console.log('Removed smart link:', linkId);
+    }
 }
 
 // Global functions for toolbar
@@ -699,6 +754,117 @@ function testDragDrop() {
     });
     
     alert('Check console for drag-drop test results. Try dragging geometry items to canvas!');
+}
+
+// Global functions for component library and smart linking
+function switchLibraryTab(tabName) {
+    // Hide all library pages
+    document.querySelectorAll('.library-page').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    // Remove active from all tabs
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Show selected page and activate tab
+    const targetPage = document.getElementById(tabName + '-page');
+    const targetTab = document.querySelector(`[data-tab="${tabName}"]`);
+    
+    if (targetPage) targetPage.classList.add('active');
+    if (targetTab) targetTab.classList.add('active');
+    
+    console.log(`📑 Switched to ${tabName} library tab`);
+}
+
+function setLinkMode(mode) {
+    if (!editorDashboard) return;
+    
+    editorDashboard.linkMode = mode;
+    
+    // Update UI
+    document.querySelectorAll('.link-mode').forEach(el => el.classList.remove('active'));
+    document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+    
+    console.log(`🔗 Link mode set to: ${mode}`);
+}
+
+function updateReactionType() {
+    if (!editorDashboard) return;
+    
+    const select = document.getElementById('reactionType');
+    editorDashboard.reactionSettings.type = select.value;
+    
+    console.log(`⚡ Reaction type set to: ${select.value}`);
+}
+
+function updateReactionStrength(value) {
+    if (!editorDashboard) return;
+    
+    editorDashboard.reactionSettings.strength = parseFloat(value);
+    document.getElementById('reactionStrengthValue').textContent = value;
+    
+    console.log(`💪 Reaction strength set to: ${value}`);
+}
+
+function updateReactionDelay(value) {
+    if (!editorDashboard) return;
+    
+    editorDashboard.reactionSettings.delay = parseInt(value);
+    document.getElementById('reactionDelayValue').textContent = value;
+    
+    console.log(`⏱️ Reaction delay set to: ${value}ms`);
+}
+
+function toggleConnections(enabled) {
+    if (!editorDashboard) return;
+    
+    editorDashboard.visualGuidance.showConnections = enabled;
+    // TODO: Implement visual connection lines
+    
+    console.log(`🔗 Connection lines: ${enabled ? 'enabled' : 'disabled'}`);
+}
+
+function toggleInfluenceZones(enabled) {
+    if (!editorDashboard) return;
+    
+    editorDashboard.visualGuidance.showInfluenceZones = enabled;
+    // TODO: Implement influence zone visualization
+    
+    console.log(`🌍 Influence zones: ${enabled ? 'enabled' : 'disabled'}`);
+}
+
+function toggleReactionPreview(enabled) {
+    if (!editorDashboard) return;
+    
+    editorDashboard.visualGuidance.showReactionPreview = enabled;
+    // TODO: Implement reaction preview
+    
+    console.log(`👁️ Reaction preview: ${enabled ? 'enabled' : 'disabled'}`);
+}
+
+function createSmartLink() {
+    if (!editorDashboard) return;
+    
+    // TODO: Implement smart linking based on selected elements
+    console.log('🔗 Creating smart link between selected elements...');
+    
+    if (editorDashboard.selectedElement) {
+        alert('Smart linking will be implemented - select multiple elements to create relationships');
+    } else {
+        alert('Please select an element first to create links');
+    }
+}
+
+function clearAllLinks() {
+    if (!editorDashboard) return;
+    
+    if (confirm('Clear all smart links?')) {
+        editorDashboard.smartLinks = [];
+        editorDashboard.updateActiveLinksList();
+        console.log('🗑️ All smart links cleared');
+    }
 }
 
 // Initialize the editor dashboard when DOM is ready
