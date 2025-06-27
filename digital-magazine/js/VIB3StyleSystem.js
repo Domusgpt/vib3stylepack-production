@@ -145,14 +145,17 @@ export class VIB3StyleSystem {
     destroyVisualizerForElement(element) {
         if (this.visualizers.has(element)) {
             const viz = this.visualizers.get(element);
+
+            // Unbind interactions first
+            if (this.interactionCoordinator && this.interactionCoordinator.unbindInteractionsFromElement) {
+                this.interactionCoordinator.unbindInteractionsFromElement(element);
+            }
+
             viz.destroy(); // Call VIB34D instance's destroy method
             this.visualizers.delete(element);
-            console.log(`VIB3StyleSystem: Destroyed visualizer for element:`, element, `. Total visualizers: ${this.visualizers.size}`);
-
-            // TODO: Need to also tell InteractionCoordinator to unbind listeners from this element.
-            // if (this.interactionCoordinator && this.interactionCoordinator.unbindInteractionsFromElement) {
-            //     this.interactionCoordinator.unbindInteractionsFromElement(element);
-            // }
+            console.log(`VIB3StyleSystem: Destroyed visualizer and unbound interactions for element:`, element.id || element.className, `. Total visualizers: ${this.visualizers.size}`);
+        } else {
+            // console.log("VIB3StyleSystem: No visualizer found to destroy for element:", element.id || element.className);
         }
     }
 
@@ -170,16 +173,20 @@ export class VIB3StyleSystem {
      * Destroys all visualizers and cleans up the system.
      */
     destroy() {
-        console.log(`VIB3StyleSystem: Destroying all ${this.visualizers.size} visualizers.`);
+        console.log(`VIB3StyleSystem: Destroying all ${this.visualizers.size} visualizers and unbinding interactions.`);
         this.visualizers.forEach((viz, element) => {
-            // In a full system, unbind interactions first
-            // if (this.interactionCoordinator && this.interactionCoordinator.unbindInteractionsFromElement) {
-            //    this.interactionCoordinator.unbindInteractionsFromElement(element);
-            // }
+            if (this.interactionCoordinator && this.interactionCoordinator.unbindInteractionsFromElement) {
+               this.interactionCoordinator.unbindInteractionsFromElement(element);
+            }
             viz.destroy();
         });
         this.visualizers.clear();
-        // TODO: Reset/cleanup InteractionCoordinator (remove all its listeners)
+
+        // Reset InteractionCoordinator state if it holds any global state beyond listeners on elements
+        // For now, unbinding from elements is the main part. If InteractionCoordinator had a global
+        // list of active listeners or something, that would be cleared here too.
+        // element._vib3BoundHandlers is cleaned by unbindInteractionsFromElement.
+
         this.isInitialized = false;
         console.log("VIB3StyleSystem: System destroyed and uninitialized.");
     }

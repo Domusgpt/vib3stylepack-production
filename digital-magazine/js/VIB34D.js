@@ -259,10 +259,19 @@ export class VIB34D {
 
 
     initWebGL() {
-        const gl = this.canvas.getContext('webgl');
+        // Try WebGL 2.0 first, then fallback to WebGL 1.0
+        let gl = this.canvas.getContext('webgl2');
         if (!gl) {
-            console.warn(`VIB34D ${this.id}: WebGL not supported or disabled.`);
-            return false;
+            gl = this.canvas.getContext('webgl');
+            if (!gl) {
+                console.warn(`VIB34D ${this.id}: WebGL not supported or disabled.`);
+                return false;
+            }
+            console.log(`VIB34D ${this.id}: Using WebGL 1.0 (VAO not available)`);
+            this.isWebGL2 = false;
+        } else {
+            console.log(`VIB34D ${this.id}: Using WebGL 2.0`);
+            this.isWebGL2 = true;
         }
         this.gl = gl;
 
@@ -345,9 +354,9 @@ export class VIB34D {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
-            // VAO setup for quad
-            this.vao = gl.createVertexArray();
-            if (this.vao) {
+            // VAO setup for quad (WebGL 2.0 only)
+            if (this.isWebGL2 && gl.createVertexArray) {
+                this.vao = gl.createVertexArray();
                 gl.bindVertexArray(this.vao);
                 const positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
                 if (positionAttributeLocation !== -1) {
@@ -356,10 +365,12 @@ export class VIB34D {
                 }
                 gl.bindVertexArray(null);
             } else {
-                const positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
-                 if (positionAttributeLocation !== -1) {
-                    gl.enableVertexAttribArray(positionAttributeLocation);
-                    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+                // WebGL 1.0 fallback - no VAO
+                this.vao = null;
+                this.positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "a_position");
+                if (this.positionAttributeLocation !== -1) {
+                    gl.enableVertexAttribArray(this.positionAttributeLocation);
+                    gl.vertexAttribPointer(this.positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
                 }
             }
         }

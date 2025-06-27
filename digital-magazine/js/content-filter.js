@@ -19,6 +19,16 @@ export function displayArticles(articles, containerId) {
         console.error(`Article container with ID "${containerId}" not found.`);
         return;
     }
+
+    // Destroy existing VIB3 instances before clearing
+    if (window.Vib3codeApp && window.Vib3codeApp.vib3System && window.Vib3codeApp.vib3System.destroyVisualizerForElement) {
+        Array.from(containerElement.childNodes).forEach(child => {
+            // Check if it's an element node and might have a VIB3 instance
+            if (child.nodeType === 1 && (child.dataset.vib3Style || child.dataset.vib3InteractionPreset)) {
+                window.Vib3codeApp.vib3System.destroyVisualizerForElement(child);
+            }
+        });
+    }
     containerElement.innerHTML = ''; // Clear existing articles
 
     if (!articles || articles.length === 0) {

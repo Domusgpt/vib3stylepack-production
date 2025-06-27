@@ -1,0 +1,52 @@
+{
+  "title": "The Art of the Graceful Exit: Data Export Strategies for Liberated Open Source Projects",
+  "slug": "open-source-data-export-ema",
+  "authorId": "gen-rl-millz",
+  "categoryId": "code-liberation",
+  "publicationDate": "2024-07-01T10:00:00Z",
+  "tags": ["Open Source", "Data Portability", "EMA", "Best Practices", "API Design", "Freedom"],
+  "featuredImage": "assets/images/placeholder-code-liberation.png",
+  "excerpt": "In the spirit of Exoditical Moral Architecture, we explore robust data export strategies that empower users and ensure true digital sovereignty within open source projects. It's not just about getting data in; it's about letting it leave, freely and completely.",
+  "body": [
+    {
+      "type": "paragraph",
+      "content": "One of the core tenets of Exoditical Moral Architecture (EMA) is that 'Portability is a Feature, Not a Footnote.' For open source projects, this isn't just a nice-to-have; it's a declaration of respect for user autonomy. This article dives into practical strategies for designing data export functionalities that truly liberate your users and their data."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "content": "Beyond the CSV: Comprehensive Data Export"
+    },
+    {
+      "type": "paragraph",
+      "content": "A simple CSV dump often isn't enough. True data portability considers relational data, metadata, version history, and configuration. We must think about exporting the 'soul' of a user's work, not just its tabular shadow."
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        "Standardized Formats: Embrace JSON, XML, SQLite dumps, or other widely adopted, non-proprietary formats.",
+        "Complete Archives: Offer options for a full-account data takeout, including all associated files and settings.",
+        "API-Driven Export: Provide robust API endpoints for programmatic data retrieval, enabling automated backups and migrations.",
+        "Clear Documentation: Make your export options easy to find, understand, and use. The exit door should be clearly marked."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "content": "Case Study: The 'Freedom Latch' Anti-Pattern"
+    },
+    {
+      "type": "paragraph",
+      "content": "We've all seen it: the project that claims openness but makes data export a convoluted, rate-limited, or incomplete process. This 'Freedom Latch' – where the door out is technically unlocked but practically unusable – is a betrayal of open source ideals. We'll look at common pitfalls and how to avoid them."
+    },
+    {
+      "type": "blockquote",
+      "content": "If your 'export' feature feels like a data hostage negotiation, you're not practicing EMA."
+    },
+    {
+      "type": "paragraph",
+      "content": "Building truly liberated software means designing for departure with the same care and attention we give to onboarding. It's a mark of confidence in your project's value – that users stay because they *want* to, not because they're trapped."
+    }
+  ]
+}
