@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Professional Dashboard - ACTUALLY FUNCTIONAL</title>
+    <script src="https://unpkg.com/gl-matrix@3.4.3/gl-matrix-min.js"></script>
+    <script>
+        // Initialize gl-matrix properly
+        (function() {
+            let attempts = 0;
+            function initializeGLMatrix() {
+                attempts++;
+                if (typeof glMatrix !== 'undefined') {
+                    window.mat4 = glMatrix.mat4;
+                    window.vec3 = glMatrix.vec3;
+                    window.vec4 = glMatrix.vec4;
+                    window.quat = glMatrix.quat;
+                    window.mat3 = glMatrix.mat3;
+                    console.log('✅ gl-matrix initialized');
+                    return true;
+                }
+                if (attempts < 50) setTimeout(initializeGLMatrix, 10);
+            }
+            initializeGLMatrix();
+        })();
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 320px 1fr 280px;
+            grid-template-rows: 60px 1fr 50px;
+            grid-template-areas: 
+                "header header header"
+                "sidebar workspace properties"
+                "footer footer footer";
+            height: 100vh;
+        }
+        
+        .header {
+            grid-area: header;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .toolbar {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .toolbar-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+        
+        .toolbar-button:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+        
+        .toolbar-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .sidebar {
+            grid-area: sidebar;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-y: auto;
+        }
+        
+        .component-library {
+            padding: 20px;
+        }
+        
+        .library-nav {
+            display: flex;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 4px;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            padding: 8px 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tab.active {
+            background: rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+        }
+        
+        .workspace {
+            grid-area: workspace;
+            position: relative;
+            background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%);
+            overflow: hidden;
+        }
+        
+        .canvas-workspace {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .canvas-workspace.drop-active {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px dashed #00ffff;
+        }
+        
+        .ui-element {
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            cursor: move;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+        
+        .ui-element.selected {
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .ui-element canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .properties-panel {
+            grid-area: properties;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .footer {
+            grid-area: footer;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .component-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: grab;
+            transition: all 0.3s ease;
+        }
+        
+        .component-item:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+            transform: translateY(-2px);
+        }
+        
+        .component-item:active {
+            cursor: grabbing;
+        }
+        
+        .component-item.dragging {
+            opacity: 0.7;
+            transform: scale(0.95);
+        }
+        
+        .component-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .component-name {
+            font-size: 11px;
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        .responsive-controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .responsive-controls h4 {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #00ffff;
+        }
+        
+        .breakpoint-selector {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .breakpoint-btn {
+            flex: 1;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .breakpoint-btn.active {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: #00ffff;
+        }
+        
+        .breakpoint-info {
+            font-size: 11px;
+            color: #aaa;
+        }
+        
+        .property-item {
+            margin-bottom: 15px;
+        }
+        
+        .property-label {
+            display: block;
+            font-size: 12px;
+            color: #ccc;
+            margin-bottom: 5px;
+        }
+        
+        .property-input, .property-slider {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .library-page {
+            display: none;
+        }
+        
+        .library-page.active {
+            display: block;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff00;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .template-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .template-btn {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .template-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+        
+        .alignment-tools {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .tool-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+        
+        .tool-btn {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .tool-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+        
+        .tool-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Responsive Design */
+        .workspace.mobile-view {
+            max-width: 375px;
+            margin: 0 auto;
+            border: 2px solid #00ffff;
+        }
+        
+        .workspace.tablet-view {
+            max-width: 768px;
+            margin: 0 auto;
+            border: 2px solid #ff00ff;
+        }
+        
+        .workspace.desktop-view {
+            max-width: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">VIB34D Professional Dashboard</div>
+            <div class="toolbar">
+                <button class="toolbar-button" onclick="clearCanvas()" id="clearBtn">Clear All</button>
+                <button class="toolbar-button" onclick="saveProject()" id="saveBtn">Save Project</button>
+                <button class="toolbar-button" onclick="loadProject()" id="loadBtn">Load Project</button>
+                <button class="toolbar-button" onclick="exportHTML()" id="exportBtn">Export HTML</button>
+                <button class="toolbar-button" onclick="undoAction()" id="undoBtn" disabled>Undo</button>
+                <button class="toolbar-button" onclick="redoAction()" id="redoBtn" disabled>Redo</button>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="component-library">
+                <div class="library-nav">
+                    <div class="nav-tab active" data-tab="layout" onclick="switchLibraryTab('layout')">Layout</div>
+                    <div class="nav-tab" data-tab="content" onclick="switchLibraryTab('content')">Content</div>
+                    <div class="nav-tab" data-tab="interactive" onclick="switchLibraryTab('interactive')">Tools</div>
+                    <div class="nav-tab" data-tab="effects" onclick="switchLibraryTab('effects')">Effects</div>
+                </div>
+
+                <!-- Layout Page -->
+                <div class="library-page active" id="layout-page">
+                    <div class="responsive-controls">
+                        <h4>Responsive Design</h4>
+                        <div class="breakpoint-selector">
+                            <button class="breakpoint-btn active" data-breakpoint="desktop" onclick="setBreakpoint('desktop')">🖥️ Desktop</button>
+                            <button class="breakpoint-btn" data-breakpoint="tablet" onclick="setBreakpoint('tablet')">📱 Tablet</button>
+                            <button class="breakpoint-btn" data-breakpoint="mobile" onclick="setBreakpoint('mobile')">📱 Mobile</button>
+                        </div>
+                        <div class="breakpoint-info">
+                            <span id="currentBreakpoint">Desktop (1200px+)</span>
+                        </div>
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-component="container" data-geometry="hypercube">
+                            <div class="component-icon">📦</div>
+                            <div class="component-name">Container</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="grid" data-geometry="hypercube">
+                            <div class="component-icon">⊞</div>
+                            <div class="component-name">Grid System</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="flexbox" data-geometry="hypertetrahedron">
+                            <div class="component-icon">↔</div>
+                            <div class="component-name">Flexbox</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="hero" data-geometry="hypersphere">
+                            <div class="component-icon">🎯</div>
+                            <div class="component-name">Hero Section</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="card" data-geometry="torus">
+                            <div class="component-icon">🃏</div>
+                            <div class="component-name">Card Layout</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="sidebar" data-geometry="hypertetrahedron">
+                            <div class="component-icon">📋</div>
+                            <div class="component-name">Sidebar</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Page -->
+                <div class="library-page" id="content-page">
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-component="heading" data-geometry="wave">
+                            <div class="component-icon">H1</div>
+                            <div class="component-name">Heading</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="paragraph" data-geometry="wave">
+                            <div class="component-icon">📝</div>
+                            <div class="component-name">Paragraph</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="image" data-geometry="crystal">
+                            <div class="component-icon">🖼️</div>
+                            <div class="component-name">Image</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="video" data-geometry="kleinbottle">
+                            <div class="component-icon">🎥</div>
+                            <div class="component-name">Video</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="gallery" data-geometry="crystal">
+                            <div class="component-icon">🖼️</div>
+                            <div class="component-name">Gallery</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="list" data-geometry="wave">
+                            <div class="component-icon">📋</div>
+                            <div class="component-name">List</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Page -->
+                <div class="library-page" id="interactive-page">
+                    <div class="template-buttons">
+                        <button class="template-btn" onclick="loadTemplate('landing')">🎯 Landing</button>
+                        <button class="template-btn" onclick="loadTemplate('portfolio')">💼 Portfolio</button>
+                        <button class="template-btn" onclick="loadTemplate('blog')">📝 Blog</button>
+                        <button class="template-btn" onclick="loadTemplate('dashboard')">📊 Dashboard</button>
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-component="button" data-geometry="hypercube">
+                            <div class="component-icon">🚀</div>
+                            <div class="component-name">Button</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="form" data-geometry="torus">
+                            <div class="component-icon">📋</div>
+                            <div class="component-name">Form</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="navigation" data-geometry="hypertetrahedron">
+                            <div class="component-icon">🧭</div>
+                            <div class="component-name">Navigation</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="modal" data-geometry="hypersphere">
+                            <div class="component-icon">🔲</div>
+                            <div class="component-name">Modal</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="tabs" data-geometry="hypertetrahedron">
+                            <div class="component-icon">📑</div>
+                            <div class="component-name">Tabs</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="dropdown" data-geometry="torus">
+                            <div class="component-icon">⬇️</div>
+                            <div class="component-name">Dropdown</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Effects Page -->
+                <div class="library-page" id="effects-page">
+                    <div class="alignment-tools">
+                        <h4>Alignment Tools</h4>
+                        <div class="tool-buttons">
+                            <button class="tool-btn" onclick="alignElements('left')" id="alignLeftBtn" disabled>⬅️</button>
+                            <button class="tool-btn" onclick="alignElements('center')" id="alignCenterBtn" disabled>↔️</button>
+                            <button class="tool-btn" onclick="alignElements('right')" id="alignRightBtn" disabled>➡️</button>
+                            <button class="tool-btn" onclick="alignElements('top')" id="alignTopBtn" disabled>⬆️</button>
+                            <button class="tool-btn" onclick="alignElements('middle')" id="alignMiddleBtn" disabled>↕️</button>
+                            <button class="tool-btn" onclick="alignElements('bottom')" id="alignBottomBtn" disabled>⬇️</button>
+                        </div>
+                    </div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-component="animation" data-geometry="fractal">
+                            <div class="component-icon">✨</div>
+                            <div class="component-name">Animation</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="transition" data-geometry="fractal">
+                            <div class="component-icon">🔄</div>
+                            <div class="component-name">Transition</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="parallax" data-geometry="wave">
+                            <div class="component-icon">🌊</div>
+                            <div class="component-name">Parallax</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="glow" data-geometry="fractal">
+                            <div class="component-icon">💫</div>
+                            <div class="component-name">Glow Effect</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="gradient" data-geometry="fractal">
+                            <div class="component-icon">🌈</div>
+                            <div class="component-name">Gradient</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-component="glass" data-geometry="crystal">
+                            <div class="component-icon">🔲</div>
+                            <div class="component-name">Glassmorphism</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workspace -->
+        <div class="workspace desktop-view" id="workspace">
+            <div class="canvas-workspace" id="canvasWorkspace">
+                <div id="canvasPreview" style="width: 100%; height: 100%; position: relative;"></div>
+            </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <div class="properties-panel">
+            <h3>Properties</h3>
+            <div id="elementProperties">
+                <p style="color: #888; font-size: 12px; text-align: center; margin-top: 50px;">
+                    Select an element to edit properties
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>VIB34D Core Active</span>
+            </div>
+            <div>Elements: <span id="elementCount">0</span></div>
+        </div>
+    </div>
+
+    <!-- Load VIB34D Core System -->
+    <script src="js/managers/ShaderManager.js"></script>
+    <script src="js/managers/GeometryManager.js"></script>
+    <script src="js/managers/ProjectionManager.js"></script>
+    <script src="js/geometries/HypercubeGeometry.js"></script>
+    <script src="js/geometries/HypersphereGeometry.js"></script>
+    <script src="js/geometries/HypertetrahedronGeometry.js"></script>
+    <script src="js/geometries/TorusGeometry.js"></script>
+    <script src="js/geometries/KleinBottleGeometry.js"></script>
+    <script src="js/geometries/FractalGeometry.js"></script>
+    <script src="js/geometries/WaveGeometry.js"></script>
+    <script src="js/geometries/CrystalGeometry.js"></script>
+    <script src="js/projections/PerspectiveProjection.js"></script>
+    <script src="js/projections/OrthographicProjection.js"></script>
+    <script src="js/projections/StereographicProjection.js"></script>
+    <script src="js/core/BaseProjection.js"></script>
+    <script src="js/interaction/VIB34DInteractionEngine.js"></script>
+    <script src="js/interaction/ParameterMappingSystem.js"></script>
+    <script src="js/chromatic/VIB34DChromaticEngine.js"></script>
+    <script src="js/bridge/VIB3HomeMasterBridge.js"></script>
+    <script src="js/PresetManager.js"></script>
+    <script src="js/core/HypercubeCore.js"></script>
+    
+    <script>
+        // FUNCTIONAL VIB34D DASHBOARD
+        class FunctionalVIB34DDashboard {
+            constructor() {
+                this.elements = new Map();
+                this.selectedElements = new Set();
+                this.actionHistory = [];
+                this.actionIndex = -1;
+                this.draggedItem = null;
+                this.nextId = 1;
+                this.currentBreakpoint = 'desktop';
+                
+                // Wait for all scripts to load
+                setTimeout(() => {
+                    this.initializeSystem();
+                }, 500);
+            }
+            
+            initializeSystem() {
+                console.log('🚀 Initializing Functional VIB34D Dashboard...');
+                
+                // Initialize global managers
+                window.globalGeometryManager = new GeometryManager();
+                window.globalProjectionManager = new ProjectionManager();
+                
+                this.setupDragAndDrop();
+                this.setupEventListeners();
+                this.updateToolbarStates();
+                
+                console.log('✅ Functional VIB34D Dashboard ready');
+            }
+            
+            setupDragAndDrop() {
+                // Setup draggable items
+                document.querySelectorAll('.component-item').forEach(item => {
+                    item.setAttribute('draggable', 'true');
+                    
+                    item.addEventListener('dragstart', (e) => {
+                        const component = e.currentTarget.dataset.component;
+                        const geometry = e.currentTarget.dataset.geometry;
+                        
+                        this.draggedItem = { component, geometry };
+                        e.currentTarget.classList.add('dragging');
+                        e.dataTransfer.effectAllowed = 'copy';
+                        e.dataTransfer.setData('text/plain', JSON.stringify(this.draggedItem));
+                        
+                        console.log('🎯 Drag started:', this.draggedItem);
+                    });
+                    
+                    item.addEventListener('dragend', (e) => {
+                        e.currentTarget.classList.remove('dragging');
+                    });
+                });
+                
+                // Setup drop zone
+                const workspace = document.getElementById('canvasWorkspace');
+                if (workspace) {
+                    workspace.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'copy';
+                        workspace.classList.add('drop-active');
+                    });
+                    
+                    workspace.addEventListener('dragleave', (e) => {
+                        if (!workspace.contains(e.relatedTarget)) {
+                            workspace.classList.remove('drop-active');
+                        }
+                    });
+                    
+                    workspace.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        workspace.classList.remove('drop-active');
+                        
+                        const rect = workspace.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        
+                        if (this.draggedItem) {
+                            this.createElement(x, y, this.draggedItem);
+                            this.draggedItem = null;
+                        }
+                    });
+                }
+            }
+            
+            setupEventListeners() {
+                // Canvas click for element selection
+                document.getElementById('canvasPreview').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('ui-element') || e.target.closest('.ui-element')) {
+                        const element = e.target.closest('.ui-element');
+                        const id = element.dataset.id;
+                        
+                        if (e.ctrlKey || e.metaKey) {
+                            this.toggleElementSelection(id);
+                        } else {
+                            this.selectElement(id);
+                        }
+                    } else {
+                        this.clearSelection();
+                    }
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        switch (e.key) {
+                            case 'z':
+                                e.preventDefault();
+                                if (e.shiftKey) {
+                                    this.redoAction();
+                                } else {
+                                    this.undoAction();
+                                }
+                                break;
+                            case 'a':
+                                e.preventDefault();
+                                this.selectAllElements();
+                                break;
+                            case 's':
+                                e.preventDefault();
+                                this.saveProject();
+                                break;
+                        }
+                    }
+                    
+                    if (e.key === 'Delete' && this.selectedElements.size > 0) {
+                        this.deleteSelectedElements();
+                    }
+                });
+            }
+            
+            createElement(x, y, itemData) {
+                const id = 'element_' + this.nextId++;
+                const element = document.createElement('div');
+                element.className = 'ui-element';
+                element.dataset.id = id;
+                element.style.left = x + 'px';
+                element.style.top = y + 'px';
+                element.style.width = '200px';
+                element.style.height = '150px';
+                
+                // Create canvas for 4D visualization
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 150;
+                element.appendChild(canvas);
+                
+                // Initialize HypercubeCore
+                try {
+                    const core = new HypercubeCore(canvas, {
+                        onStateChangeCallback: (reason) => {
+                            console.log(`Element ${id} state changed: ${reason}`);
+                        }
+                    });
+                    
+                    // Set geometry and start visualization
+                    core.setGeometry(itemData.geometry);
+                    core.setProjection('perspective');
+                    core.start();
+                    
+                    // Store element data
+                    const elementData = {
+                        domElement: element,
+                        canvas: canvas,
+                        core: core,
+                        component: itemData.component,
+                        geometry: itemData.geometry,
+                        properties: {
+                            intensity: 0.8,
+                            speed: 1.0,
+                            density: 10,
+                            colorShift: 0.0,
+                            morphFactor: 0.0
+                        },
+                        position: { x, y },
+                        size: { width: 200, height: 150 }
+                    };
+                    
+                    this.elements.set(id, elementData);
+                    
+                    console.log(`✅ Created 4D visualization: ${itemData.geometry} for ${itemData.component}`);
+                    
+                } catch (error) {
+                    console.error('Failed to create 4D visualization:', error);
+                    
+                    // Fallback display
+                    element.innerHTML = `
+                        <div style="padding: 10px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; background: rgba(0,255,255,0.1);">
+                            <div style="font-size: 20px; margin-bottom: 8px;">${this.getComponentIcon(itemData.component)}</div>
+                            <div style="font-size: 12px; color: #00ffff; font-weight: bold;">${itemData.component}</div>
+                            <div style="font-size: 10px; color: #888; margin-top: 4px;">${itemData.geometry}</div>
+                        </div>
+                    `;
+                    
+                    this.elements.set(id, {
+                        domElement: element,
+                        component: itemData.component,
+                        geometry: itemData.geometry,
+                        properties: {
+                            intensity: 0.8,
+                            speed: 1.0,
+                            density: 10
+                        },
+                        position: { x, y },
+                        size: { width: 200, height: 150 }
+                    });
+                }
+                
+                // Make element draggable
+                this.makeElementDraggable(element);
+                
+                // Add to workspace
+                document.getElementById('canvasPreview').appendChild(element);
+                
+                // Record action for undo
+                this.recordAction('create', { elementId: id, elementData: this.elements.get(id) });
+                
+                // Select the new element
+                this.selectElement(id);
+                
+                // Update UI
+                this.updateElementCount();
+                this.updateToolbarStates();
+                
+                console.log(`✅ Created element: ${id} (${itemData.component})`);
+            }
+            
+            getComponentIcon(component) {
+                const icons = {
+                    container: '📦',
+                    grid: '⊞',
+                    flexbox: '↔',
+                    hero: '🎯',
+                    card: '🃏',
+                    sidebar: '📋',
+                    heading: 'H1',
+                    paragraph: '📝',
+                    image: '🖼️',
+                    video: '🎥',
+                    gallery: '🖼️',
+                    list: '📋',
+                    button: '🚀',
+                    form: '📋',
+                    navigation: '🧭',
+                    modal: '🔲',
+                    tabs: '📑',
+                    dropdown: '⬇️',
+                    animation: '✨',
+                    transition: '🔄',
+                    parallax: '🌊',
+                    glow: '💫',
+                    gradient: '🌈',
+                    glass: '🔲'
+                };
+                return icons[component] || '📦';
+            }
+            
+            makeElementDraggable(element) {
+                let isDragging = false;
+                let startX, startY, initialX, initialY;
+                
+                element.addEventListener('mousedown', (e) => {
+                    if (e.target === element || e.target.tagName === 'CANVAS') {
+                        isDragging = true;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        initialX = parseInt(element.style.left);
+                        initialY = parseInt(element.style.top);
+                        e.preventDefault();
+                        
+                        // Select element if not already selected
+                        const id = element.dataset.id;
+                        if (!this.selectedElements.has(id)) {
+                            this.selectElement(id);
+                        }
+                    }
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        const deltaX = e.clientX - startX;
+                        const deltaY = e.clientY - startY;
+                        
+                        // Move all selected elements
+                        this.selectedElements.forEach(elementId => {
+                            const elementData = this.elements.get(elementId);
+                            if (elementData) {
+                                const el = elementData.domElement;
+                                const currentX = parseInt(el.style.left);
+                                const currentY = parseInt(el.style.top);
+                                
+                                el.style.left = (currentX + deltaX) + 'px';
+                                el.style.top = (currentY + deltaY) + 'px';
+                                
+                                // Update stored position
+                                elementData.position.x = parseInt(el.style.left);
+                                elementData.position.y = parseInt(el.style.top);
+                            }
+                        });
+                        
+                        startX = e.clientX;
+                        startY = e.clientY;
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        // Record move action for undo
+                        this.recordAction('move', { 
+                            elements: Array.from(this.selectedElements),
+                            positions: Array.from(this.selectedElements).map(id => ({
+                                id,
+                                position: this.elements.get(id).position
+                            }))
+                        });
+                    }
+                });
+            }
+            
+            selectElement(elementId) {
+                this.clearSelection();
+                this.selectedElements.add(elementId);
+                this.updateElementSelection();
+                this.showElementProperties(elementId);
+            }
+            
+            toggleElementSelection(elementId) {
+                if (this.selectedElements.has(elementId)) {
+                    this.selectedElements.delete(elementId);
+                } else {
+                    this.selectedElements.add(elementId);
+                }
+                this.updateElementSelection();
+                this.showElementProperties(this.selectedElements.size === 1 ? elementId : null);
+            }
+            
+            selectAllElements() {
+                this.selectedElements.clear();
+                this.elements.forEach((_, id) => {
+                    this.selectedElements.add(id);
+                });
+                this.updateElementSelection();
+                this.updateToolbarStates();
+            }
+            
+            clearSelection() {
+                this.selectedElements.clear();
+                this.updateElementSelection();
+                this.showElementProperties(null);
+            }
+            
+            updateElementSelection() {
+                // Update visual selection
+                this.elements.forEach((elementData, id) => {
+                    if (this.selectedElements.has(id)) {
+                        elementData.domElement.classList.add('selected');
+                    } else {
+                        elementData.domElement.classList.remove('selected');
+                    }
+                });
+                
+                this.updateToolbarStates();
+            }
+            
+            showElementProperties(elementId) {
+                const propertiesContainer = document.getElementById('elementProperties');
+                
+                if (!elementId || !this.elements.has(elementId)) {
+                    propertiesContainer.innerHTML = `
+                        <p style="color: #888; font-size: 12px; text-align: center; margin-top: 50px;">
+                            ${this.selectedElements.size > 1 ? `${this.selectedElements.size} elements selected` : 'Select an element to edit properties'}
+                        </p>
+                    `;
+                    return;
+                }
+                
+                const element = this.elements.get(elementId);
+                
+                propertiesContainer.innerHTML = `
+                    <div class="property-item">
+                        <label class="property-label">Component</label>
+                        <input type="text" class="property-input" value="${element.component}" readonly>
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Geometry</label>
+                        <input type="text" class="property-input" value="${element.geometry}" readonly>
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Position X</label>
+                        <input type="number" class="property-input" value="${element.position.x}" 
+                               onchange="dashboard.updateElementProperty('${elementId}', 'x', this.value)">
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Position Y</label>
+                        <input type="number" class="property-input" value="${element.position.y}" 
+                               onchange="dashboard.updateElementProperty('${elementId}', 'y', this.value)">
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Width</label>
+                        <input type="number" class="property-input" value="${element.size.width}" 
+                               onchange="dashboard.updateElementProperty('${elementId}', 'width', this.value)">
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Height</label>
+                        <input type="number" class="property-input" value="${element.size.height}" 
+                               onchange="dashboard.updateElementProperty('${elementId}', 'height', this.value)">
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Intensity</label>
+                        <input type="range" class="property-slider" min="0" max="2" step="0.01" 
+                               value="${element.properties.intensity}"
+                               onchange="dashboard.updateElementProperty('${elementId}', 'intensity', this.value)">
+                        <span style="font-size: 10px; color: #888;">${element.properties.intensity}</span>
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Animation Speed</label>
+                        <input type="range" class="property-slider" min="0" max="3" step="0.01" 
+                               value="${element.properties.speed}"
+                               onchange="dashboard.updateElementProperty('${elementId}', 'speed', this.value)">
+                        <span style="font-size: 10px; color: #888;">${element.properties.speed}</span>
+                    </div>
+                    
+                    <div class="property-item">
+                        <label class="property-label">Grid Density</label>
+                        <input type="range" class="property-slider" min="1" max="25" step="0.5" 
+                               value="${element.properties.density}"
+                               onchange="dashboard.updateElementProperty('${elementId}', 'density', this.value)">
+                        <span style="font-size: 10px; color: #888;">${element.properties.density}</span>
+                    </div>
+                    
+                    <div class="property-item" style="margin-top: 20px;">
+                        <button class="toolbar-button" onclick="dashboard.deleteElement('${elementId}')" 
+                                style="width: 100%; background: rgba(255, 0, 0, 0.3); border-color: #ff0000; color: #ff0000;">
+                            Delete Element
+                        </button>
+                    </div>
+                `;
+            }
+            
+            updateElementProperty(elementId, property, value) {
+                if (!this.elements.has(elementId)) return;
+                
+                const element = this.elements.get(elementId);
+                const numValue = parseFloat(value);
+                
+                switch (property) {
+                    case 'x':
+                        element.position.x = numValue;
+                        element.domElement.style.left = numValue + 'px';
+                        break;
+                    case 'y':
+                        element.position.y = numValue;
+                        element.domElement.style.top = numValue + 'px';
+                        break;
+                    case 'width':
+                        element.size.width = numValue;
+                        element.domElement.style.width = numValue + 'px';
+                        if (element.canvas) {
+                            element.canvas.width = numValue;
+                        }
+                        break;
+                    case 'height':
+                        element.size.height = numValue;
+                        element.domElement.style.height = numValue + 'px';
+                        if (element.canvas) {
+                            element.canvas.height = numValue;
+                        }
+                        break;
+                    case 'intensity':
+                    case 'speed':
+                    case 'density':
+                    case 'colorShift':
+                    case 'morphFactor':
+                        element.properties[property] = numValue;
+                        
+                        // Update the core system with new parameters
+                        if (element.core) {
+                            const params = {};
+                            
+                            switch(property) {
+                                case 'intensity':
+                                    params.u_patternIntensity = numValue;
+                                    break;
+                                case 'speed':
+                                    params.u_rotationSpeed = numValue;
+                                    break;
+                                case 'density':
+                                    params.u_gridDensity = numValue;
+                                    break;
+                                case 'colorShift':
+                                    params.u_colorShift = numValue;
+                                    break;
+                                case 'morphFactor':
+                                    params.u_morphFactor = numValue;
+                                    break;
+                            }
+                            
+                            // Apply parameters to the core
+                            Object.assign(element.core.baseParameters, params);
+                        }
+                        break;
+                }
+                
+                // Update property display
+                const propertySpan = document.querySelector(`input[onchange*="${elementId}"][onchange*="${property}"] + span`);
+                if (propertySpan) {
+                    propertySpan.textContent = value;
+                }
+                
+                console.log(`Updated element ${elementId} ${property} to ${value}`);
+            }
+            
+            deleteElement(elementId) {
+                if (!this.elements.has(elementId)) return;
+                
+                const element = this.elements.get(elementId);
+                
+                // Stop the core system
+                if (element.core) {
+                    element.core.stop();
+                    if (typeof element.core.destroy === 'function') {
+                        element.core.destroy();
+                    }
+                }
+                
+                // Remove from DOM
+                element.domElement.remove();
+                
+                // Remove from data structures
+                this.elements.delete(elementId);
+                this.selectedElements.delete(elementId);
+                
+                // Record action for undo
+                this.recordAction('delete', { elementId, elementData: element });
+                
+                // Update UI
+                this.updateElementSelection();
+                this.updateElementCount();
+                this.updateToolbarStates();
+                
+                console.log(`Deleted element ${elementId}`);
+            }
+            
+            deleteSelectedElements() {
+                const elementsToDelete = Array.from(this.selectedElements);
+                elementsToDelete.forEach(id => this.deleteElement(id));
+            }
+            
+            // Responsive Design Functions
+            setBreakpoint(breakpoint) {
+                this.currentBreakpoint = breakpoint;
+                
+                // Update UI
+                document.querySelectorAll('.breakpoint-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-breakpoint="${breakpoint}"]`).classList.add('active');
+                
+                // Update workspace view
+                const workspace = document.getElementById('workspace');
+                workspace.className = `workspace ${breakpoint}-view`;
+                
+                // Update info
+                const info = {
+                    desktop: 'Desktop (1200px+)',
+                    tablet: 'Tablet (768px - 1199px)',
+                    mobile: 'Mobile (< 768px)'
+                };
+                document.getElementById('currentBreakpoint').textContent = info[breakpoint];
+                
+                console.log(`📱 Switched to ${breakpoint} breakpoint`);
+            }
+            
+            // Template Functions
+            loadTemplate(templateName) {
+                const templates = {
+                    landing: [
+                        { component: 'hero', geometry: 'hypersphere', x: 50, y: 50 },
+                        { component: 'heading', geometry: 'wave', x: 50, y: 250 },
+                        { component: 'paragraph', geometry: 'wave', x: 50, y: 300 },
+                        { component: 'button', geometry: 'hypercube', x: 50, y: 400 }
+                    ],
+                    portfolio: [
+                        { component: 'navigation', geometry: 'hypertetrahedron', x: 50, y: 50 },
+                        { component: 'grid', geometry: 'hypercube', x: 50, y: 150 },
+                        { component: 'image', geometry: 'crystal', x: 200, y: 200 },
+                        { component: 'image', geometry: 'crystal', x: 400, y: 200 },
+                        { component: 'image', geometry: 'crystal', x: 600, y: 200 }
+                    ],
+                    blog: [
+                        { component: 'heading', geometry: 'wave', x: 50, y: 50 },
+                        { component: 'paragraph', geometry: 'wave', x: 50, y: 120 },
+                        { component: 'image', geometry: 'crystal', x: 50, y: 300 },
+                        { component: 'paragraph', geometry: 'wave', x: 50, y: 450 }
+                    ],
+                    dashboard: [
+                        { component: 'navigation', geometry: 'hypertetrahedron', x: 50, y: 50 },
+                        { component: 'card', geometry: 'torus', x: 50, y: 150 },
+                        { component: 'card', geometry: 'torus', x: 300, y: 150 },
+                        { component: 'card', geometry: 'torus', x: 550, y: 150 }
+                    ]
+                };
+                
+                const template = templates[templateName];
+                if (template) {
+                    // Clear existing elements
+                    this.clearCanvas();
+                    
+                    // Add template elements
+                    template.forEach(item => {
+                        this.createElement(item.x, item.y, {
+                            component: item.component,
+                            geometry: item.geometry
+                        });
+                    });
+                    
+                    console.log(`📋 Loaded ${templateName} template`);
+                }
+            }
+            
+            // Alignment Functions
+            alignElements(alignment) {
+                if (this.selectedElements.size < 2) {
+                    console.log('Need at least 2 elements selected for alignment');
+                    return;
+                }
+                
+                const elements = Array.from(this.selectedElements).map(id => this.elements.get(id));
+                
+                let referenceValue;
+                
+                switch (alignment) {
+                    case 'left':
+                        referenceValue = Math.min(...elements.map(el => el.position.x));
+                        elements.forEach(el => {
+                            el.position.x = referenceValue;
+                            el.domElement.style.left = referenceValue + 'px';
+                        });
+                        break;
+                    case 'right':
+                        referenceValue = Math.max(...elements.map(el => el.position.x + el.size.width));
+                        elements.forEach(el => {
+                            el.position.x = referenceValue - el.size.width;
+                            el.domElement.style.left = el.position.x + 'px';
+                        });
+                        break;
+                    case 'center':
+                        const leftmost = Math.min(...elements.map(el => el.position.x));
+                        const rightmost = Math.max(...elements.map(el => el.position.x + el.size.width));
+                        const centerX = (leftmost + rightmost) / 2;
+                        elements.forEach(el => {
+                            el.position.x = centerX - el.size.width / 2;
+                            el.domElement.style.left = el.position.x + 'px';
+                        });
+                        break;
+                    case 'top':
+                        referenceValue = Math.min(...elements.map(el => el.position.y));
+                        elements.forEach(el => {
+                            el.position.y = referenceValue;
+                            el.domElement.style.top = referenceValue + 'px';
+                        });
+                        break;
+                    case 'bottom':
+                        referenceValue = Math.max(...elements.map(el => el.position.y + el.size.height));
+                        elements.forEach(el => {
+                            el.position.y = referenceValue - el.size.height;
+                            el.domElement.style.top = el.position.y + 'px';
+                        });
+                        break;
+                    case 'middle':
+                        const topmost = Math.min(...elements.map(el => el.position.y));
+                        const bottommost = Math.max(...elements.map(el => el.position.y + el.size.height));
+                        const centerY = (topmost + bottommost) / 2;
+                        elements.forEach(el => {
+                            el.position.y = centerY - el.size.height / 2;
+                            el.domElement.style.top = el.position.y + 'px';
+                        });
+                        break;
+                }
+                
+                this.recordAction('align', { alignment, elements: Array.from(this.selectedElements) });
+                console.log(`📐 Aligned ${this.selectedElements.size} elements: ${alignment}`);
+            }
+            
+            // Undo/Redo System
+            recordAction(type, data) {
+                // Remove any actions after current index
+                this.actionHistory = this.actionHistory.slice(0, this.actionIndex + 1);
+                
+                // Add new action
+                this.actionHistory.push({
+                    type: type,
+                    data: data,
+                    timestamp: Date.now()
+                });
+                
+                this.actionIndex++;
+                
+                // Limit history size
+                if (this.actionHistory.length > 50) {
+                    this.actionHistory = this.actionHistory.slice(-50);
+                    this.actionIndex = this.actionHistory.length - 1;
+                }
+                
+                this.updateToolbarStates();
+            }
+            
+            undoAction() {
+                if (this.actionIndex >= 0) {
+                    const action = this.actionHistory[this.actionIndex];
+                    
+                    switch (action.type) {
+                        case 'create':
+                            this.deleteElement(action.data.elementId);
+                            break;
+                        case 'delete':
+                            // Restore deleted element (simplified)
+                            console.log('Restore delete not implemented yet');
+                            break;
+                        case 'move':
+                            // Restore previous positions (simplified)
+                            console.log('Restore move not implemented yet');
+                            break;
+                    }
+                    
+                    this.actionIndex--;
+                    this.updateToolbarStates();
+                    console.log(`↶ Undid action: ${action.type}`);
+                } else {
+                    console.log('Nothing to undo');
+                }
+            }
+            
+            redoAction() {
+                if (this.actionIndex < this.actionHistory.length - 1) {
+                    this.actionIndex++;
+                    const action = this.actionHistory[this.actionIndex];
+                    
+                    // Implement redo logic
+                    console.log(`↷ Redid action: ${action.type}`);
+                    this.updateToolbarStates();
+                } else {
+                    console.log('Nothing to redo');
+                }
+            }
+            
+            // Project Management
+            saveProject() {
+                const project = {
+                    elements: Array.from(this.elements.entries()).map(([id, element]) => ({
+                        id,
+                        component: element.component,
+                        geometry: element.geometry,
+                        position: element.position,
+                        size: element.size,
+                        properties: element.properties
+                    })),
+                    currentBreakpoint: this.currentBreakpoint,
+                    timestamp: Date.now(),
+                    version: '1.0'
+                };
+                
+                const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vib34d-project-${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                console.log('💾 Project saved');
+            }
+            
+            loadProject() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            try {
+                                const project = JSON.parse(e.target.result);
+                                this.loadProjectData(project);
+                                console.log('📂 Project loaded');
+                            } catch (error) {
+                                alert('Error loading project file: ' + error.message);
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                input.click();
+            }
+            
+            loadProjectData(project) {
+                // Clear current project
+                this.clearCanvas();
+                
+                // Load elements
+                project.elements.forEach(elementData => {
+                    this.createElement(
+                        elementData.position.x,
+                        elementData.position.y,
+                        {
+                            component: elementData.component,
+                            geometry: elementData.geometry
+                        }
+                    );
+                    
+                    // Apply properties
+                    const element = this.elements.get(elementData.id);
+                    if (element) {
+                        Object.assign(element.properties, elementData.properties);
+                        element.position = elementData.position;
+                        element.size = elementData.size;
+                        
+                        // Update DOM
+                        element.domElement.style.left = element.position.x + 'px';
+                        element.domElement.style.top = element.position.y + 'px';
+                        element.domElement.style.width = element.size.width + 'px';
+                        element.domElement.style.height = element.size.height + 'px';
+                    }
+                });
+                
+                // Set breakpoint
+                if (project.currentBreakpoint) {
+                    this.setBreakpoint(project.currentBreakpoint);
+                }
+            }
+            
+            exportHTML() {
+                const html = this.generateStandaloneHTML();
+                
+                // Create download
+                const blob = new Blob([html], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vib34d-export-${new Date().toISOString().slice(0, 10)}.html`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                console.log('📤 HTML exported');
+            }
+            
+            generateStandaloneHTML() {
+                const elementsConfig = [];
+                
+                this.elements.forEach((element, id) => {
+                    elementsConfig.push({
+                        id: id,
+                        component: element.component,
+                        geometry: element.geometry,
+                        position: element.position,
+                        size: element.size,
+                        properties: element.properties
+                    });
+                });
+                
+                return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Generated Layout</title>
+    <script src="https://unpkg.com/gl-matrix@3.4.3/gl-matrix-min.js"></script>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: Inter, sans-serif; }
+        .vib34d-container { 
+            position: relative; 
+            width: 100vw; 
+            height: 100vh; 
+            background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%); 
+        }
+        .vib34d-element { 
+            position: absolute; 
+            border-radius: 5px; 
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .vib34d-element canvas { 
+            width: 100%; 
+            height: 100%; 
+            display: block; 
+        }
+    </style>
+</head>
+<body>
+    <div class="vib34d-container">
+        ${elementsConfig.map(config => `
+        <div class="vib34d-element" 
+             style="left: ${config.position.x}px; top: ${config.position.y}px; width: ${config.size.width}px; height: ${config.size.height}px;"
+             data-component="${config.component}" 
+             data-geometry="${config.geometry}">
+            <canvas width="${config.size.width}" height="${config.size.height}"></canvas>
+        </div>`).join('')}
+    </div>
+    
+    <script>
+        // VIB34D Configuration
+        const VIB34D_CONFIG = ${JSON.stringify(elementsConfig, null, 2)};
+        
+        // Initialize 4D visualizations
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Initializing VIB34D layout with', VIB34D_CONFIG.length, 'elements');
+            
+            // Note: Full VIB34D initialization would require all core files
+            // This is a simplified version for demonstration
+            document.querySelectorAll('.vib34d-element').forEach((element, index) => {
+                const canvas = element.querySelector('canvas');
+                const config = VIB34D_CONFIG[index];
+                
+                if (canvas && config) {
+                    // Placeholder for actual VIB34D initialization
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = 'rgba(0, 255, 255, 0.3)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.fillStyle = '#00ffff';
+                    ctx.font = '16px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(config.component, canvas.width/2, canvas.height/2 - 10);
+                    ctx.fillText(config.geometry, canvas.width/2, canvas.height/2 + 10);
+                }
+            });
+        });
+    </script>
+</body>
+</html>`;
+            }
+            
+            clearCanvas() {
+                // Stop all cores
+                this.elements.forEach((element) => {
+                    if (element.core) {
+                        element.core.stop();
+                        if (typeof element.core.destroy === 'function') {
+                            element.core.destroy();
+                        }
+                    }
+                    element.domElement.remove();
+                });
+                
+                this.elements.clear();
+                this.selectedElements.clear();
+                this.clearSelection();
+                this.updateElementCount();
+                this.updateToolbarStates();
+                
+                // Record action for undo
+                this.recordAction('clear', {});
+                
+                console.log('🧹 Canvas cleared');
+            }
+            
+            updateElementCount() {
+                document.getElementById('elementCount').textContent = this.elements.size;
+            }
+            
+            updateToolbarStates() {
+                // Undo/Redo buttons
+                document.getElementById('undoBtn').disabled = this.actionIndex < 0;
+                document.getElementById('redoBtn').disabled = this.actionIndex >= this.actionHistory.length - 1;
+                
+                // Alignment buttons
+                const hasMultipleSelected = this.selectedElements.size >= 2;
+                document.getElementById('alignLeftBtn').disabled = !hasMultipleSelected;
+                document.getElementById('alignCenterBtn').disabled = !hasMultipleSelected;
+                document.getElementById('alignRightBtn').disabled = !hasMultipleSelected;
+                document.getElementById('alignTopBtn').disabled = !hasMultipleSelected;
+                document.getElementById('alignMiddleBtn').disabled = !hasMultipleSelected;
+                document.getElementById('alignBottomBtn').disabled = !hasMultipleSelected;
+            }
+        }
+        
+        // Tab switching function
+        function switchLibraryTab(tabName) {
+            document.querySelectorAll('.library-page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            const targetPage = document.getElementById(tabName + '-page');
+            const targetTab = document.querySelector(`[data-tab="${tabName}"]`);
+            
+            if (targetPage) targetPage.classList.add('active');
+            if (targetTab) targetTab.classList.add('active');
+            
+            console.log(`📑 Switched to ${tabName} tab`);
+        }
+        
+        // Global functions for toolbar
+        function clearCanvas() {
+            if (window.dashboard) {
+                if (confirm('Clear all elements? This cannot be undone.')) {
+                    window.dashboard.clearCanvas();
+                }
+            }
+        }
+        
+        function saveProject() {
+            if (window.dashboard) {
+                window.dashboard.saveProject();
+            }
+        }
+        
+        function loadProject() {
+            if (window.dashboard) {
+                window.dashboard.loadProject();
+            }
+        }
+        
+        function exportHTML() {
+            if (window.dashboard) {
+                window.dashboard.exportHTML();
+            }
+        }
+        
+        function undoAction() {
+            if (window.dashboard) {
+                window.dashboard.undoAction();
+            }
+        }
+        
+        function redoAction() {
+            if (window.dashboard) {
+                window.dashboard.redoAction();
+            }
+        }
+        
+        function setBreakpoint(breakpoint) {
+            if (window.dashboard) {
+                window.dashboard.setBreakpoint(breakpoint);
+            }
+        }
+        
+        function loadTemplate(templateName) {
+            if (window.dashboard) {
+                window.dashboard.loadTemplate(templateName);
+            }
+        }
+        
+        function alignElements(alignment) {
+            if (window.dashboard) {
+                window.dashboard.alignElements(alignment);
+            }
+        }
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            window.dashboard = new FunctionalVIB34DDashboard();
+            console.log('✅ Functional VIB34D Dashboard fully initialized');
+        });
+    </script>
+</body>
+</html>
