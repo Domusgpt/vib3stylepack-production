@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Dashboard Functional Test</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #000; color: #0f0; padding: 20px; }
+        .test-result { padding: 10px; margin: 5px 0; border-left: 3px solid; }
+        .pass { border-color: #0f0; background: rgba(0, 255, 0, 0.1); }
+        .fail { border-color: #f00; background: rgba(255, 0, 0, 0.1); }
+        .warning { border-color: #ff0; background: rgba(255, 255, 0, 0.1); }
+        .info { border-color: #0ff; background: rgba(0, 255, 255, 0.1); }
+        iframe { width: 100%; height: 600px; border: 2px solid #0ff; margin: 20px 0; }
+        button { background: #333; color: #0f0; border: 1px solid #0f0; padding: 10px; margin: 5px; cursor: pointer; }
+        button:hover { background: #0f0; color: #000; }
+        #testResults { max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 VIB34D Dashboard Functional Test Suite</h1>
+    
+    <div class="test-result info">
+        <strong>Testing:</strong> https://domusgpt.github.io/vib3stylepack-production/VIB34D_EDITOR_DASHBOARD.html
+    </div>
+    
+    <button onclick="runAllTests()">🚀 Run All Tests</button>
+    <button onclick="testBasicLoad()">📄 Test Basic Load</button>
+    <button onclick="testInteractivity()">🖱️ Test Interactivity</button>
+    <button onclick="testDragDrop()">📦 Test Drag & Drop</button>
+    <button onclick="clearResults()">🗑️ Clear Results</button>
+    
+    <div id="testResults"></div>
+    
+    <!-- Dashboard iframe for testing -->
+    <iframe id="dashboardFrame" src="https://domusgpt.github.io/vib3stylepack-production/VIB34D_EDITOR_DASHBOARD.html"></iframe>
+    
+    <script>
+        const results = document.getElementById('testResults');
+        let testCount = 0;
+        
+        function log(message, type = 'info') {
+            testCount++;
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>[${testCount}]</strong> ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function clearResults() {
+            results.innerHTML = '';
+            testCount = 0;
+        }
+        
+        async function runAllTests() {
+            clearResults();
+            log('🧪 Starting comprehensive VIB34D Dashboard test suite...', 'info');
+            
+            await testBasicLoad();
+            await testInteractivity();
+            await testDragDrop();
+            await testGeometryRendering();
+            await testPropertyControls();
+            await testExportFunctionality();
+            
+            log('✅ Test suite completed!', 'pass');
+        }
+        
+        async function testBasicLoad() {
+            log('📄 Testing basic dashboard loading...', 'info');
+            
+            try {
+                const iframe = document.getElementById('dashboardFrame');
+                
+                // Wait for iframe to load
+                await new Promise((resolve) => {
+                    iframe.onload = resolve;
+                    setTimeout(resolve, 5000); // Timeout after 5 seconds
+                });
+                
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Test 1: Check if main elements exist
+                const elementLibrary = iframeDoc.querySelector('.element-library');
+                const canvasWorkspace = iframeDoc.querySelector('.canvas-workspace');
+                const propertiesPanel = iframeDoc.querySelector('.properties-panel');
+                
+                if (elementLibrary) {
+                    log('✅ Element library panel found', 'pass');
+                } else {
+                    log('❌ Element library panel missing', 'fail');
+                }
+                
+                if (canvasWorkspace) {
+                    log('✅ Canvas workspace found', 'pass');
+                } else {
+                    log('❌ Canvas workspace missing', 'fail');
+                }
+                
+                if (propertiesPanel) {
+                    log('✅ Properties panel found', 'pass');
+                } else {
+                    log('❌ Properties panel missing', 'fail');
+                }
+                
+                // Test 2: Check for geometry items
+                const geometryItems = iframeDoc.querySelectorAll('.geometry-item');
+                log(`✅ Found ${geometryItems.length} geometry items`, geometryItems.length >= 8 ? 'pass' : 'warning');
+                
+                // Test 3: Check if JavaScript loaded
+                const iframeWindow = iframe.contentWindow;
+                if (typeof iframeWindow.VIB34DEditorDashboard !== 'undefined') {
+                    log('✅ VIB34DEditorDashboard class loaded', 'pass');
+                } else {
+                    log('❌ VIB34DEditorDashboard class not loaded', 'fail');
+                }
+                
+                if (typeof iframeWindow.HypercubeCore !== 'undefined') {
+                    log('✅ HypercubeCore class loaded', 'pass');
+                } else {
+                    log('❌ HypercubeCore class not loaded', 'fail');
+                }
+                
+                // Test 4: Check if gl-matrix loaded
+                if (typeof iframeWindow.mat4 !== 'undefined') {
+                    log('✅ gl-matrix library loaded', 'pass');
+                } else {
+                    log('❌ gl-matrix library not loaded', 'fail');
+                }
+                
+                // Test 5: Check if dashboard instance exists
+                if (typeof iframeWindow.editorDashboard !== 'undefined') {
+                    log('✅ Editor dashboard instance created', 'pass');
+                } else {
+                    log('❌ Editor dashboard instance not created', 'fail');
+                }
+                
+            } catch (error) {
+                log(`❌ Basic load test failed: ${error.message}`, 'fail');
+            }
+        }
+        
+        async function testInteractivity() {
+            log('🖱️ Testing dashboard interactivity...', 'info');
+            
+            try {
+                const iframe = document.getElementById('dashboardFrame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const iframeWindow = iframe.contentWindow;
+                
+                // Test toolbar buttons
+                const toolbarButtons = iframeDoc.querySelectorAll('.toolbar-button');
+                log(`✅ Found ${toolbarButtons.length} toolbar buttons`, toolbarButtons.length >= 4 ? 'pass' : 'warning');
+                
+                // Test property sliders
+                const propertySliders = iframeDoc.querySelectorAll('.property-slider');
+                log(`✅ Found ${propertySliders.length} property sliders`, propertySliders.length >= 4 ? 'pass' : 'warning');
+                
+                // Test global parameter functions
+                if (typeof iframeWindow.updateGlobalParameter === 'function') {
+                    log('✅ updateGlobalParameter function exists', 'pass');
+                } else {
+                    log('❌ updateGlobalParameter function missing', 'fail');
+                }
+                
+                // Test clear canvas function
+                if (typeof iframeWindow.clearCanvas === 'function') {
+                    log('✅ clearCanvas function exists', 'pass');
+                } else {
+                    log('❌ clearCanvas function missing', 'fail');
+                }
+                
+                // Test export function
+                if (typeof iframeWindow.exportHTML === 'function') {
+                    log('✅ exportHTML function exists', 'pass');
+                } else {
+                    log('❌ exportHTML function missing', 'fail');
+                }
+                
+            } catch (error) {
+                log(`❌ Interactivity test failed: ${error.message}`, 'fail');
+            }
+        }
+        
+        async function testDragDrop() {
+            log('📦 Testing drag-and-drop functionality...', 'info');
+            
+            try {
+                const iframe = document.getElementById('dashboardFrame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const iframeWindow = iframe.contentWindow;
+                
+                // Check if geometry items are draggable
+                const geometryItems = iframeDoc.querySelectorAll('.geometry-item[draggable="true"]');
+                log(`✅ Found ${geometryItems.length} draggable geometry items`, geometryItems.length >= 8 ? 'pass' : 'warning');
+                
+                // Check if canvas workspace accepts drops
+                const canvasWorkspace = iframeDoc.querySelector('.canvas-workspace');
+                if (canvasWorkspace) {
+                    log('✅ Canvas workspace ready for drops', 'pass');
+                } else {
+                    log('❌ Canvas workspace not found', 'fail');
+                }
+                
+                // Test if dashboard has drag handlers
+                if (iframeWindow.editorDashboard && typeof iframeWindow.editorDashboard.createElement === 'function') {
+                    log('✅ createElement function available for drops', 'pass');
+                } else {
+                    log('❌ createElement function not available', 'fail');
+                }
+                
+                // Simulate a drop test
+                try {
+                    if (iframeWindow.editorDashboard) {
+                        const mockItemData = {
+                            geometry: 'hypercube',
+                            type: 'hypercube'
+                        };
+                        
+                        // Try to create an element
+                        const initialCount = iframeWindow.editorDashboard.elements.size;
+                        log(`📊 Initial element count: ${initialCount}`, 'info');
+                        
+                        // This would normally be triggered by a drop event
+                        log('⚠️ Drop simulation requires actual user interaction', 'warning');
+                    }
+                } catch (error) {
+                    log(`⚠️ Drop simulation error: ${error.message}`, 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Drag-drop test failed: ${error.message}`, 'fail');
+            }
+        }
+        
+        async function testGeometryRendering() {
+            log('🔮 Testing 4D geometry rendering...', 'info');
+            
+            try {
+                const iframe = document.getElementById('dashboardFrame');
+                const iframeWindow = iframe.contentWindow;
+                
+                // Check if HypercubeCore can be instantiated
+                if (typeof iframeWindow.HypercubeCore !== 'undefined') {
+                    log('✅ HypercubeCore class available', 'pass');
+                    
+                    // Test canvas creation
+                    const testCanvas = iframeWindow.document.createElement('canvas');
+                    testCanvas.width = 200;
+                    testCanvas.height = 150;
+                    
+                    try {
+                        const core = new iframeWindow.HypercubeCore(testCanvas);
+                        log('✅ HypercubeCore instance created successfully', 'pass');
+                        
+                        // Test geometry setting
+                        if (typeof core.setGeometry === 'function') {
+                            log('✅ setGeometry method available', 'pass');
+                        } else {
+                            log('❌ setGeometry method missing', 'fail');
+                        }
+                        
+                        // Test projection setting
+                        if (typeof core.setProjection === 'function') {
+                            log('✅ setProjection method available', 'pass');
+                        } else {
+                            log('❌ setProjection method missing', 'fail');
+                        }
+                        
+                        // Clean up
+                        if (typeof core.destroy === 'function') {
+                            core.destroy();
+                        }
+                        
+                    } catch (coreError) {
+                        log(`⚠️ HypercubeCore instantiation issue: ${coreError.message}`, 'warning');
+                    }
+                    
+                } else {
+                    log('❌ HypercubeCore class not available', 'fail');
+                }
+                
+            } catch (error) {
+                log(`❌ Geometry rendering test failed: ${error.message}`, 'fail');
+            }
+        }
+        
+        async function testPropertyControls() {
+            log('🎛️ Testing property controls...', 'info');
+            
+            try {
+                const iframe = document.getElementById('dashboardFrame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const iframeWindow = iframe.contentWindow;
+                
+                // Test global parameter sliders
+                const intensitySlider = iframeDoc.querySelector('input[onchange*="intensity"]');
+                const speedSlider = iframeDoc.querySelector('input[onchange*="speed"]');
+                const densitySlider = iframeDoc.querySelector('input[onchange*="density"]');
+                const saturationSlider = iframeDoc.querySelector('input[onchange*="saturation"]');
+                
+                if (intensitySlider) log('✅ Intensity slider found', 'pass');
+                else log('❌ Intensity slider missing', 'fail');
+                
+                if (speedSlider) log('✅ Speed slider found', 'pass');
+                else log('❌ Speed slider missing', 'fail');
+                
+                if (densitySlider) log('✅ Density slider found', 'pass');
+                else log('❌ Density slider missing', 'fail');
+                
+                if (saturationSlider) log('✅ Saturation slider found', 'pass');
+                else log('❌ Saturation slider missing', 'fail');
+                
+                // Test value display elements
+                const valueDisplays = iframeDoc.querySelectorAll('span[id$="Value"]');
+                log(`✅ Found ${valueDisplays.length} parameter value displays`, valueDisplays.length >= 4 ? 'pass' : 'warning');
+                
+            } catch (error) {
+                log(`❌ Property controls test failed: ${error.message}`, 'fail');
+            }
+        }
+        
+        async function testExportFunctionality() {
+            log('📤 Testing export functionality...', 'info');
+            
+            try {
+                const iframe = document.getElementById('dashboardFrame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const iframeWindow = iframe.contentWindow;
+                
+                // Check for export modal
+                const exportModal = iframeDoc.querySelector('#exportModal');
+                if (exportModal) {
+                    log('✅ Export modal found', 'pass');
+                } else {
+                    log('❌ Export modal missing', 'fail');
+                }
+                
+                // Check for export functions
+                if (typeof iframeWindow.exportHTML === 'function') {
+                    log('✅ exportHTML function exists', 'pass');
+                } else {
+                    log('❌ exportHTML function missing', 'fail');
+                }
+                
+                if (typeof iframeWindow.copyToClipboard === 'function') {
+                    log('✅ copyToClipboard function exists', 'pass');
+                } else {
+                    log('❌ copyToClipboard function missing', 'fail');
+                }
+                
+                if (typeof iframeWindow.downloadHTML === 'function') {
+                    log('✅ downloadHTML function exists', 'pass');
+                } else {
+                    log('❌ downloadHTML function missing', 'fail');
+                }
+                
+                // Test save/load functions
+                if (typeof iframeWindow.saveProject === 'function') {
+                    log('✅ saveProject function exists', 'pass');
+                } else {
+                    log('❌ saveProject function missing', 'fail');
+                }
+                
+                if (typeof iframeWindow.loadProject === 'function') {
+                    log('✅ loadProject function exists', 'pass');
+                } else {
+                    log('❌ loadProject function missing', 'fail');
+                }
+                
+            } catch (error) {
+                log(`❌ Export functionality test failed: ${error.message}`, 'fail');
+            }
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🚀 Auto-running test suite...', 'info');
+                runAllTests();
+            }, 2000);
+        });
+        
+        // Monitor iframe for console errors
+        document.getElementById('dashboardFrame').onload = function() {
+            try {
+                const iframeWindow = this.contentWindow;
+                const originalError = iframeWindow.console.error;
+                const originalWarn = iframeWindow.console.warn;
+                
+                iframeWindow.console.error = function(...args) {
+                    log(`🚫 Dashboard Error: ${args.join(' ')}`, 'fail');
+                    originalError.apply(this, args);
+                };
+                
+                iframeWindow.console.warn = function(...args) {
+                    log(`⚠️ Dashboard Warning: ${args.join(' ')}`, 'warning');
+                    originalWarn.apply(this, args);
+                };
+                
+                log('📡 Console monitoring active', 'info');
+                
+            } catch (e) {
+                log('⚠️ Cannot monitor iframe console (CORS restrictions)', 'warning');
+            }
+        };
+    </script>
+</body>
+</html>
