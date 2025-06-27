@@ -484,15 +484,15 @@ class HypercubeCore {
 }
 
 // Mock dependencies (ensure PresetManager and VIB3_PRESETS_EXPANDED are mocked correctly if presets.js isn't loaded first)
-if (typeof ShaderManager === 'undefined') { global.ShaderManager = class { constructor(gl) {this.gl = gl;} createProgram(vs, fs) {return true;} useProgram(){} getUniformLocation(name){return null;} getAttributeLocation(name){return -1;} setUniformMatrix4fv(){} setUniform1f(){} setUniform2fv(){} setUniform3fv(){} setUniform4fv(){} destroy(){} }; }
-if (typeof GeometryManager === 'undefined') { global.GeometryManager = class { constructor(){} createGeometryInstance(name, params){return null;} }; }
-if (typeof ProjectionManager === 'undefined') { global.ProjectionManager = class { constructor(){} createProjectionInstance(name, params){return null;} }; }
-if (typeof VIB34DInteractionEngine === 'undefined') { global.VIB34DInteractionEngine = class { constructor(canvas){} getInteractionState(){ return { mouseMovement: { normalizedX:0, normalizedY:0}, audioBass:0, audioMid:0, audioHigh:0, idle:{decayFactor:1}, scroll:{intensity:0}, pattern:{type:'casual'}, clickHold:{intensity:0} }; } update(){} destroy(){} }; }
-if (typeof ParameterMappingSystem === 'undefined') { global.ParameterMappingSystem = class { constructor(baseParams, interactionEng){this.baseParameters = baseParams;} setBaseParameters(p){this.baseParameters=p;} getEffectiveParameters(){ return this.baseParameters || {}; } update(){} }; }
-if (typeof VIB34DChromaticEngine === 'undefined') { global.VIB34DChromaticEngine = class { constructor(){} update(geom, interact, time){} getCurrentColor(){ return {hsl:{h:0,s:0,l:0}, bgHsl:{h:0,s:0,l:0}, contentHsl:{h:0,s:0,l:0}, accentHsl:{h:0,s:0,l:0}}; } getHslCssString(c){return "";} }; }
-if (typeof VIB3HomeMasterBridge === 'undefined') { global.VIB3HomeMasterBridge = class { constructor(hcCore){} navigateToFace(faceId){} update(deltaTime){} }; }
-if (typeof PresetManager === 'undefined') { global.PresetManager = class { constructor(core, presets){} loadUserPresetsFromLocalStorage(){} getAllPresetNames(){return [];} loadPresetByName(name){} saveCurrentSettingsAsUserPreset(name){} exportUserPresetsToString(){} importUserPresetsFromString(json){} }; }
-if (typeof VIB3_PRESETS_EXPANDED === 'undefined') { global.VIB3_PRESETS_EXPANDED = []; }
+if (typeof ShaderManager === 'undefined') { window.ShaderManager = class { constructor(gl) {this.gl = gl;} createProgram(vs, fs) {return true;} useProgram(){} getUniformLocation(name){return null;} getAttributeLocation(name){return -1;} setUniformMatrix4fv(){} setUniform1f(){} setUniform2fv(){} setUniform3fv(){} setUniform4fv(){} destroy(){} }; }
+if (typeof GeometryManager === 'undefined') { window.GeometryManager = class { constructor(){} createGeometryInstance(name, params){return null;} }; }
+if (typeof ProjectionManager === 'undefined') { window.ProjectionManager = class { constructor(){} createProjectionInstance(name, params){return null;} }; }
+if (typeof VIB34DInteractionEngine === 'undefined') { window.VIB34DInteractionEngine = class { constructor(canvas){} getInteractionState(){ return { mouseMovement: { normalizedX:0, normalizedY:0}, audioBass:0, audioMid:0, audioHigh:0, idle:{decayFactor:1}, scroll:{intensity:0}, pattern:{type:'casual'}, clickHold:{intensity:0} }; } update(){} destroy(){} }; }
+if (typeof ParameterMappingSystem === 'undefined') { window.ParameterMappingSystem = class { constructor(baseParams, interactionEng){this.baseParameters = baseParams;} setBaseParameters(p){this.baseParameters=p;} getEffectiveParameters(){ return this.baseParameters || {}; } update(){} }; }
+if (typeof VIB34DChromaticEngine === 'undefined') { window.VIB34DChromaticEngine = class { constructor(){} update(geom, interact, time){} getCurrentColor(){ return {hsl:{h:0,s:0,l:0}, bgHsl:{h:0,s:0,l:0}, contentHsl:{h:0,s:0,l:0}, accentHsl:{h:0,s:0,l:0}}; } getHslCssString(c){return "";} }; }
+if (typeof VIB3HomeMasterBridge === 'undefined') { window.VIB3HomeMasterBridge = class { constructor(hcCore){} navigateToFace(faceId){} update(deltaTime){} }; }
+if (typeof PresetManager === 'undefined') { window.PresetManager = class { constructor(core, presets){} loadUserPresetsFromLocalStorage(){} getAllPresetNames(){return [];} loadPresetByName(name){} saveCurrentSettingsAsUserPreset(name){} exportUserPresetsToString(){} importUserPresetsFromString(json){} }; }
+if (typeof VIB3_PRESETS_EXPANDED === 'undefined') { window.VIB3_PRESETS_EXPANDED = []; }
 // The mat4 mock previously here has been removed.
 // Ensure gl-matrix.js is loaded via <script> tag in HTML before this file.
 // Then, access mat4 via `glMatrix.mat4` (or destructure: `const { mat4 } = glMatrix;`).
