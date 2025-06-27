@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB3 Framework Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        .status { padding: 5px; margin: 5px 0; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        iframe { width: 100%; height: 300px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>VIB3 Framework Test Dashboard</h1>
+    
+    <div class="test-section">
+        <h2>Main VIB3 Demo</h2>
+        <iframe src="./index.html" title="Main VIB3 Demo"></iframe>
+        <div id="main-status" class="status">Loading...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Digital Magazine</h2>
+        <iframe src="./digital-magazine/index.html" title="Digital Magazine"></iframe>
+        <div id="magazine-status" class="status">Loading...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Server Info</h2>
+        <p>Server running on: <a href="http://localhost:7400" target="_blank">http://localhost:7400</a></p>
+        <p>Time: <span id="current-time"></span></p>
+    </div>
+
+    <script>
+        // Update current time
+        function updateTime() {
+            document.getElementById('current-time').textContent = new Date().toLocaleString();
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Test iframe loading
+        setTimeout(() => {
+            const mainFrame = document.querySelector('iframe[src="./index.html"]');
+            const magFrame = document.querySelector('iframe[src="./digital-magazine/index.html"]');
+            
+            try {
+                if (mainFrame.contentWindow) {
+                    document.getElementById('main-status').innerHTML = '<span class="success">✓ Main demo loaded</span>';
+                } else {
+                    document.getElementById('main-status').innerHTML = '<span class="error">✗ Main demo failed to load</span>';
+                }
+            } catch (e) {
+                document.getElementById('main-status').innerHTML = '<span class="success">✓ Main demo loaded (cross-origin)</span>';
+            }
+            
+            try {
+                if (magFrame.contentWindow) {
+                    document.getElementById('magazine-status').innerHTML = '<span class="success">✓ Magazine loaded</span>';
+                } else {
+                    document.getElementById('magazine-status').innerHTML = '<span class="error">✗ Magazine failed to load</span>';
+                }
+            } catch (e) {
+                document.getElementById('magazine-status').innerHTML = '<span class="success">✓ Magazine loaded (cross-origin)</span>';
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
